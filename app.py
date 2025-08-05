@@ -39,11 +39,5 @@ app.register_blueprint(auth_bp)
 app.register_blueprint(main_bp)
 app.register_blueprint(eye_detection_bp)
 
-# Add route for eye analysis page
-# @app.route('/eye-analysis')
-# def eye_analysis():
-#     """Serve the eye analysis page"""
-#     return send_from_directory('templates', 'eye-analysis.html')
-
 if __name__ == '__main__':
     app.run(debug=True)
