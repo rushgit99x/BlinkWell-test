@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+    <title>BlinkWell - Personalized Eye Health & Risk Prediction</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="static/css/style-index.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav id="navbar">
+        <div class="nav-container">
+            <a href="#" class="logo">
+                <i class="fas fa-eye"></i>
+                BlinkWell
+            </a>
+            <div class="nav-links">
+                <a href="{{ url_for('main.index') }}">Home</a>
+                <a href="#features">Features</a>
+                <a href="{{ url_for('main.about') }}">About</a>
+                <a href="{{ url_for('main.contact') }}">Contact</a>
+                <div class="cta-buttons">
+                    <a href="{{ url_for('auth.login') }}" class="btn btn-primary2">Get Started</a>
+                </div>
+            </div>
+            <div class="mobile-menu">
+                <i class="fas fa-bars"></i>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-content fade-in-up"><br><br>
+            <br><br><br><h1>Protect Your Vision with AI-Powered Eye Health</h1>
+            <p class="subtitle">
+                Get personalized recommendations and predict future eye disease risks through our advanced lifestyle-based analysis and machine learning technology.
+            </p>
+            
+            <div class="hero-features">
+                <div class="feature-card">
+                    <i class="fas fa-brain feature-icon"></i>
+                    <h3>AI Risk Prediction</h3>
+                    <p>Advanced machine learning models analyze your lifestyle patterns to predict dry eye disease risk with explainable insights.</p>
+                </div>
+                <div class="feature-card">
+                    <i class="fas fa-camera feature-icon"></i>
+                    <h3>Fundus Analysis</h3>
+                    <p>Upload eye fundus photographs for comprehensive health assessment and early detection of potential issues.</p>
+                </div>
+                <div class="feature-card">
+                    <i class="fas fa-chart-line feature-icon"></i>
+                    <h3>Progress Tracking</h3>
+                    <p>Monitor your eye health journey with habit tracking and risk recalculation over time.</p>
+                </div>
+            </div>
+
+            <div class="cta-buttons">
+                <a href="{{ url_for('auth.register') }}" class="btn btn-primary1">Get Started Free</a>
+                <a href="#features" class="btn btn-outline">Learn More</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="features-section">
+        <div class="features-container">
+            <h2>Comprehensive Eye Health Platform</h2>
+            <div class="features-grid">
+                <div class="feature-item">
+                    <i class="fas fa-user-md"></i>
+                    <h3>Personalized Health Assessment</h3>
+                    <p>Complete lifestyle questionnaires and upload fundus photographs for comprehensive eye health evaluation tailored to your unique profile.</p>
+                </div>
+                <div class="feature-item">
+                    <i class="fas fa-robot"></i>
+                    <h3>AI-Powered Risk Analysis</h3>
+                    <p>Our machine learning algorithms analyze your data to provide accurate dry eye risk scores with clear explanations of contributing factors.</p>
+                </div>
+                <div class="feature-item">
+                    <i class="fas fa-lightbulb"></i>
+                    <h3>Smart Recommendations</h3>
+                    <p>Receive personalized habit change suggestions with quantified impact predictions to improve your eye health outcomes.</p>
+                </div>
+                <div class="feature-item">
+                    <i class="fas fa-calendar-check"></i>
+                    <h3>Daily & Weekly Plans</h3>
+                    <p>Follow structured daily routines with reminders for water intake, screen breaks, and other eye-healthy habits.</p>
+                </div>
+                <div class="feature-item">
+                    <i class="fas fa-chart-bar"></i>
+                    <h3>Progress Dashboard</h3>
+                    <p>Track your habits, monitor improvements, and watch your risk scores improve over time with detailed analytics.</p>
+                </div>
+                <div class="feature-item">
+                    <i class="fas fa-comments"></i>
+                    <h3>AI Health Assistant</h3>
+                    <p>Get instant answers to eye health questions from our intelligent chatbot trained on the latest dry eye disease research.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <div class="footer-logo">
+                        <i class="fas fa-eye"></i>
+                        <span>BlinkWell</span>
+                    </div>
+                    <p class="footer-description">
+                        Empowering people to protect their vision through AI-powered personalized eye health recommendations and risk prediction.
+                    </p>
+                    <div class="social-links">
+                        <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+                        <a href="#" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+                        <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                    </div>
+                </div>
+
+                <div class="footer-section">
+                    <h4>Platform</h4>
+                    <ul>
+                        <li><a href="#features">Features</a></li>
+                        <li><a href="#auth">Get Started</a></li>
+                        <li><a href="#">Risk Assessment</a></li>
+                        <li><a href="#">Progress Tracking</a></li>
+                        <li><a href="#">AI Chatbot</a></li>
+                    </ul>
+                </div>
+
+                <div class="footer-section">
+                    <h4>Resources</h4>
+                    <ul>
+                        <li><a href="#">Eye Health Guide</a></li>
+                        <li><a href="#">Research & Studies</a></li>
+                        <li><a href="#">FAQ</a></li>
+                        <li><a href="#">Blog</a></li>
+                        <li><a href="#">Help Center</a></li>
+                    </ul>
+                </div>
+
+                <div class="footer-section">
+                    <h4>Company</h4>
+                    <ul>
+                        <li><a href="{{ url_for('main.about') }}">About Us</a></li>
+                        <li><a href="#">Privacy Policy</a></li>
+                        <li><a href="#">Terms of Service</a></li>
+                        <li><a href="{{ url_for('main.contact') }}">Contact</a></li>
+                        <li><a href="#">Careers</a></li>
+                    </ul>
+                </div>
+
+                <div class="footer-section">
+                    <h4>Contact Info</h4>
+                    <div class="contact-info">
+                        <div class="contact-item">
+                            <i class="fas fa-envelope"></i>
+                            <span>support@blinkwell.com</span>
+                        </div>
+                        <div class="contact-item">
+                            <i class="fas fa-phone"></i>
+                            <span>+1 (555) 123-4567</span>
+                        </div>
+                        <div class="contact-item">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span>123 Health St, Medical District<br>City, State 12345</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="footer-bottom">
+                <div class="footer-bottom-content">
+                    <p>© 2025 BlinkWell. All rights reserved.</p>
+                    <div class="footer-bottom-links">
+                        <a href="#">Privacy</a>
+                        <a href="#">Terms</a>
+                        <a href="#">Security</a>
+                        <a href="#">Accessibility</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="static/js/js-index.js"></script>
+</body>
+</html>

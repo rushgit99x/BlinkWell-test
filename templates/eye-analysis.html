@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eye Disease Analysis - BlinkWell</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .analysis-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            margin-bottom: 30px;
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            padding: 30px;
+            text-align: center;
+            color: white;
+        }
+
+        .card-content {
+            padding: 40px;
+        }
+
+        .upload-section {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 15px;
+            padding: 60px 20px;
+            background: #f8f9ff;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+
+        .upload-area:hover {
+            border-color: #5a67d8;
+            background: #f0f2ff;
+        }
+
+        .upload-area.dragover {
+            border-color: #4c51bf;
+            background: #e6f3ff;
+        }
+
+        .upload-icon {
+            font-size: 4rem;
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+
+        .upload-text {
+            font-size: 1.2rem;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .upload-subtext {
+            color: #999;
+            font-size: 0.9rem;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .preview-container {
+            display: none;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .preview-image {
+            max-width: 300px;
+            max-height: 300px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            margin-bottom: 20px;
+        }
+
+        .analyze-btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .analyze-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+        }
+
+        .analyze-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .loading-spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid transparent;
+            border-top: 2px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .results-section {
+            display: none;
+            margin-top: 40px;
+        }
+
+        .result-card {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 20px;
+        }
+
+        .result-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .result-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: white;
+        }
+
+        .result-icon.healthy {
+            background: linear-gradient(135deg, #10b981, #059669);
+        }
+
+        .result-icon.dry-eyes {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+        }
+
+        .result-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .result-confidence {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .confidence-bar {
+            width: 100%;
+            height: 8px;
+            background: #e5e7eb;
+            border-radius: 4px;
+            margin: 15px 0;
+        }
+
+        .confidence-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        .confidence-fill.high {
+            background: linear-gradient(90deg, #10b981, #059669);
+        }
+
+        .confidence-fill.medium {
+            background: linear-gradient(90deg, #f59e0b, #d97706);
+        }
+
+        .confidence-fill.low {
+            background: linear-gradient(90deg, #ef4444, #dc2626);
+        }
+
+        .recommendations {
+            margin-top: 30px;
+        }
+
+        .recommendations h3 {
+            color: #333;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .recommendation-list {
+            list-style: none;
+        }
+
+        .recommendation-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .recommendation-icon {
+            width: 30px;
+            height: 30px;
+            background: #667eea;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            flex-shrink: 0;
+            font-size: 0.8rem;
+        }
+
+        .urgency-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        .urgency-high {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .urgency-medium {
+            background: #fef3c7;
+            color: #d97706;
+        }
+
+        .urgency-low {
+            background: #d1fae5;
+            color: #059669;
+        }
+
+        .error-message {
+            background: #fee2e2;
+            color: #dc2626;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .success-message {
+            background: #d1fae5;
+            color: #059669;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .history-section {
+            margin-top: 40px;
+        }
+
+        .history-item {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .history-date {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .btn-secondary {
+            background: #f8f9fa;
+            color: #666;
+            border: 2px solid #e1e5e9;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-secondary:hover {
+            background: #e9ecef;
+            color: #333;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .card-content {
+                padding: 25px;
+            }
+
+            .upload-area {
+                padding: 40px 15px;
+            }
+
+            .upload-icon {
+                font-size: 3rem;
+            }
+
+            .result-header {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-eye"></i> Eye Disease Analysis</h1>
+            <p>Upload an eye image to check for dry eye disease using AI analysis</p>
+        </div>
+
+        <div class="analysis-card">
+            <div class="card-header">
+                <h3>AI-Powered Eye Health Analysis</h3>
+                <p>Our advanced machine learning model analyzes eye images to detect signs of dry eye disease</p>
+            </div>
+
+            <div class="card-content">
+                <!-- Upload Section -->
+                <div class="upload-section">
+                    <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
+                        <div class="upload-icon">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                        </div>
+                        <div class="upload-text">Click to upload or drag and drop</div>
+                        <div class="upload-subtext">PNG, JPG, JPEG files only (Max 5MB)</div>
+                    </div>
+                    
+                    <input type="file" id="fileInput" class="file-input" accept="image/*">
+                    
+                    <div class="preview-container" id="previewContainer">
+                        <img id="previewImage" class="preview-image" alt="Preview">
+                        <br>
+                        <button id="analyzeBtn" class="analyze-btn" onclick="analyzeImage()">
+                            <i class="fas fa-search"></i>
+                            Analyze Image
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Results Section -->
+                <div class="results-section" id="resultsSection">
+                    <div class="result-card" id="resultCard">
+                        <div class="result-header">
+                            <div class="result-icon" id="resultIcon">
+                                <i class="fas fa-eye"></i>
+                            </div>
+                            <div>
+                                <div class="result-title" id="resultTitle">Analysis Result</div>
+                                <div class="result-confidence" id="resultConfidence">Confidence Level</div>
+                            </div>
+                        </div>
+                        
+                        <div class="confidence-bar">
+                            <div class="confidence-fill" id="confidenceFill" style="width: 0%"></div>
+                        </div>
+
+                        <div class="recommendations" id="recommendationsSection">
+                            <h3>
+                                <i class="fas fa-lightbulb"></i>
+                                Recommendations
+                                <span class="urgency-indicator" id="urgencyIndicator">
+                                    <i class="fas fa-exclamation-circle"></i>
+                                    Priority Level
+                                </span>
+                            </h3>
+                            <ul class="recommendation-list" id="recommendationList">
+                                <!-- Recommendations will be populated here -->
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Messages -->
+                <div class="error-message" id="errorMessage"></div>
+                <div class="success-message" id="successMessage"></div>
+
+                <!-- Navigation -->
+                <div style="text-align: center; margin-top: 30px;">
+                    <a href="/dashboard" class="btn-secondary">
+                        <i class="fas fa-arrow-left"></i>
+                        Back to Dashboard
+                    </a>
+                    <button class="btn-secondary" onclick="showHistory()" style="margin-left: 15px;">
+                        <i class="fas fa-history"></i>
+                        View History
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- History Section -->
+        <div class="analysis-card history-section" id="historySection" style="display: none;">
+            <div class="card-header">
+                <h3>Analysis History</h3>
+                <p>Your recent eye disease analysis results</p>
+            </div>
+            <div class="card-content" id="historyContent">
+                <!-- History items will be populated here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const previewContainer = document.getElementById('previewContainer');
+        const previewImage = document.getElementById('previewImage');
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const resultsSection = document.getElementById('resultsSection');
+        const errorMessage = document.getElementById('errorMessage');
+        const successMessage = document.getElementById('successMessage');
+
+        // File upload handling
+        fileInput.addEventListener('change', handleFileSelect);
+        
+        // Drag and drop functionality
+        uploadArea.addEventListener('dragover', handleDragOver);
+        uploadArea.addEventListener('drop', handleDrop);
+        uploadArea.addEventListener('dragleave', handleDragLeave);
+
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (file) {
+                validateAndPreviewFile(file);
+            }
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                validateAndPreviewFile(files[0]);
+            }
+        }
+
+        function handleDragLeave(e) {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+        }
+
+        function validateAndPreviewFile(file) {
+            // Reset messages
+            hideMessages();
+
+            // Validate file type
+            const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg'];
+            if (!allowedTypes.includes(file.type)) {
+                showError('Please upload a valid image file (PNG, JPG, JPEG)');
+                return;
+            }
+
+            // Validate file size (5MB limit)
+            if (file.size > 5 * 1024 * 1024) {
+                showError('File size must be less than 5MB');
+                return;
+            }
+
+            // Preview image
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                previewImage.src = e.target.result;
+                previewContainer.style.display = 'block';
+                resultsSection.style.display = 'none';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function analyzeImage() {
+            const file = fileInput.files[0];
+            if (!file) {
+                showError('Please select an image file first');
+                return;
+            }
+
+            // Show loading state
+            analyzeBtn.disabled = true;
+            analyzeBtn.innerHTML = '<div class="loading-spinner"></div> Analyzing...';
+            hideMessages();
+
+            // Prepare form data
+            const formData = new FormData();
+            formData.append('eye_image', file);
+
+            // Send request to backend
+            fetch('/analyze-eye-image', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                analyzeBtn.disabled = false;
+                analyzeBtn.innerHTML = '<i class="fas fa-search"></i> Analyze Image';
+
+                if (data.success) {
+                    displayResults(data);
+                    showSuccess('Image analysis completed successfully!');
+                } else {
+                    showError(data.error || 'Analysis failed. Please try again.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                analyzeBtn.disabled = false;
+                analyzeBtn.innerHTML = '<i class="fas fa-search"></i> Analyze Image';
+                showError('Network error. Please check your connection and try again.');
+            });
+        }
+
+        function displayResults(data) {
+            const resultIcon = document.getElementById('resultIcon');
+            const resultTitle = document.getElementById('resultTitle');
+            const resultConfidence = document.getElementById('resultConfidence');
+            const confidenceFill = document.getElementById('confidenceFill');
+            const urgencyIndicator = document.getElementById('urgencyIndicator');
+            const recommendationList = document.getElementById('recommendationList');
+
+            // Update result display
+            const isDryEyes = data.analysis.has_dry_eyes;
+            
+            if (isDryEyes) {
+                resultIcon.className = 'result-icon dry-eyes';
+                resultIcon.innerHTML = '<i class="fas fa-exclamation-triangle"></i>';
+                resultTitle.textContent = 'Dry Eyes Detected';
+            } else {
+                resultIcon.className = 'result-icon healthy';
+                resultIcon.innerHTML = '<i class="fas fa-check-circle"></i>';
+                resultTitle.textContent = 'Eyes Appear Healthy';
+            }
+
+            resultConfidence.textContent = `${data.confidence}% Confidence (${data.analysis.confidence_level})`;
+
+            // Update confidence bar
+            confidenceFill.style.width = `${data.confidence}%`;
+            confidenceFill.className = `confidence-fill ${data.analysis.confidence_level.toLowerCase()}`;
+
+            // Update urgency indicator
+            const urgency = data.analysis.recommendation.urgency;
+            urgencyIndicator.className = `urgency-indicator urgency-${urgency}`;
+            urgencyIndicator.innerHTML = `
+                <i class="fas fa-${urgency === 'high' ? 'exclamation-circle' : urgency === 'medium' ? 'exclamation-triangle' : 'info-circle'}"></i>
+                ${urgency.charAt(0).toUpperCase() + urgency.slice(1)} Priority
+            `;
+
+            // Update recommendations
+            recommendationList.innerHTML = '';
+            data.analysis.recommendation.recommendations.forEach((rec, index) => {
+                const li = document.createElement('li');
+                li.className = 'recommendation-item';
+                li.innerHTML = `
+                    <div class="recommendation-icon">
+                        <i class="fas fa-${index === 0 ? 'user-md' : index === 1 ? 'eye-dropper' : index === 2 ? 'desktop' : 'lightbulb'}"></i>
+                    </div>
+                    <div>${rec}</div>
+                `;
+                recommendationList.appendChild(li);
+            });
+
+            // Show results section
+            resultsSection.style.display = 'block';
+            resultsSection.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function showHistory() {
+            const historySection = document.getElementById('historySection');
+            const historyContent = document.getElementById('historyContent');
+
+            // Toggle history section
+            if (historySection.style.display === 'none') {
+                historySection.style.display = 'block';
+                loadHistory();
+            } else {
+                historySection.style.display = 'none';
+            }
+        }
+
+        function loadHistory() {
+            const historyContent = document.getElementById('historyContent');
+            historyContent.innerHTML = '<div style="text-align: center; padding: 20px;"><div class="loading-spinner" style="margin: 0 auto;"></div><p>Loading history...</p></div>';
+
+            fetch('/eye-analysis-history')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.history.length > 0) {
+                    historyContent.innerHTML = '';
+                    data.history.forEach(item => {
+                        const historyItem = document.createElement('div');
+                        historyItem.className = 'history-item';
+                        historyItem.innerHTML = `
+                            <div class="history-header">
+                                <strong>${item.prediction}</strong>
+                                <span class="history-date">${new Date(item.date).toLocaleString()}</span>
+                            </div>
+                            <div>Confidence: ${item.confidence}%</div>
+                        `;
+                        historyContent.appendChild(historyItem);
+                    });
+                } else {
+                    historyContent.innerHTML = '<p style="text-align: center; color: #666;">No analysis history found.</p>';
+                }
+            })
+            .catch(error => {
+                console.error('Error loading history:', error);
+                historyContent.innerHTML = '<p style="text-align: center; color: #dc2626;">Failed to load history.</p>';
+            });
+        }
+
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+            successMessage.style.display = 'none';
+        }
+
+        function showSuccess(message) {
+            successMessage.textContent = message;
+            successMessage.style.display = 'block';
+            errorMessage.style.display = 'none';
+        }
+
+        function hideMessages() {
+            errorMessage.style.display = 'none';
+            successMessage.style.display = 'none';
+        }
+    </script>
+</body>
+</html>

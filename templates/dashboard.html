@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - BlinkWell</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="static/css/style-dashboard.css">
+</head>
+<body>
+    <!-- Mobile Menu Button -->
+    <button class="mobile-menu-btn" onclick="toggleSidebar()">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <a href="#" class="sidebar-logo">
+                <i class="fas fa-eye"></i>
+                <span>BlinkWell</span>
+            </a>
+            <button class="sidebar-toggle" onclick="toggleSidebar()">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+        </div>
+        
+        <ul class="sidebar-nav">
+            <li><a href="#" class="active"><i class="fas fa-home"></i><span>Dashboard</span></a></li>
+            <li><a href="{{ url_for('main.risk_assessment') }}"><i class="fas fa-chart-line"></i><span>Risk Assessment</span></a></li>
+            <li><a href="{{ url_for('main.eye_analysis') }}"><i class="fas fa-chart-line"></i><span>Eye Analysis</span></a></li>
+            <li><a href="#"><i class="fas fa-camera"></i><span>Fundus Analysis</span></a></li>
+            <li><a href="#"><i class="fas fa-calendar-check"></i><span>Habits</span></a></li>
+            <li><a href="#"><i class="fas fa-trophy"></i><span>Progress</span></a></li>
+            <li><a href="#"><i class="fas fa-robot"></i><span>AI Assistant</span></a></li>
+            <li><a href="#"><i class="fas fa-cog"></i><span>Settings</span></a></li>
+            <li><a href="{{ url_for('auth.logout') }}"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a></li>
+        </ul>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content" id="main-content">
+        <!-- Header -->
+        <div class="dashboard-header fade-in-up">
+            <div class="welcome-section">
+                <h1>Welcome back, {{ user.username }}!</h1>
+                <p>Here's your eye health overview for today</p>
+            </div>
+            <div class="user-profile">
+                <div class="user-avatar">
+                    {{ user.username[0].upper() }}
+                </div>
+                <div class="user-info">
+                    <h3>{{ user.username }}</h3>
+                    <p>{{ user.email }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="stats-grid fade-in-up">
+            <div class="stat-card">
+                <div class="stat-header">
+                    <span class="stat-title">Current Risk Score</span>
+                    <div class="stat-icon health">
+                        <i class="fas fa-heartbeat"></i>
+                    </div>
+                </div>
+                <div class="stat-value">7.2</div>
+                <div class="stat-change positive">
+                    <i class="fas fa-arrow-down"></i>
+                    <span>0.5 points lower</span>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-header">
+                    <span class="stat-title">Habits Completed</span>
+                    <div class="stat-icon progress">
+                        <i class="fas fa-tasks"></i>
+                    </div>
+                </div>
+                <div class="stat-value">85%</div>
+                <div class="stat-change positive">
+                    <i class="fas fa-arrow-up"></i>
+                    <span>5% increase</span>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-header">
+                    <span class="stat-title">Streak Days</span>
+                    <div class="stat-icon habits">
+                        <i class="fas fa-fire"></i>
+                    </div>
+                </div>
+                <div class="stat-value">12</div>
+                <div class="stat-change positive">
+                    <i class="fas fa-arrow-up"></i>
+                    <span>3 days added</span>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-header">
+                    <span class="stat-title">Risk Reduction</span>
+                    <div class="stat-icon risk">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                </div>
+                <div class="stat-value">23%</div>
+                <div class="stat-change positive">
+                    <i class="fas fa-arrow-up"></i>
+                    <span>2% improvement</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Progress Section -->
+        <div class="progress-section fade-in-up">
+            <div class="progress-card">
+                <div class="progress-header">
+                    <h3 class="progress-title">Weekly Progress</h3>
+                    <span style="color: #667eea; font-weight: 600;">This Week</span>
+                </div>
+                
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 85%"></div>
+                </div>
+                <div class="progress-text">
+                    <span>Weekly Goal</span>
+                    <span>85% Complete</span>
+                </div>
+
+                <div style="margin-top: 2rem;">
+                    <h4 style="margin-bottom: 1rem; color: #333;">Today's Habits</h4>
+                    <div style="display: flex; flex-direction: column; gap: 1rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span>💧 Water Intake (8 glasses)</span>
+                            <div style="display: flex; gap: 0.3rem;">
+                                <div style="width: 20px; height: 20px; background: #10b981; border-radius: 50%;"></div>
+                                <div style="width: 20px; height: 20px; background: #10b981; border-radius: 50%;"></div>
+                                <div style="width: 20px; height: 20px; background: #10b981; border-radius: 50%;"></div>
+                                <div style="width: 20px; height: 20px; background: #10b981; border-radius: 50%;"></div>
+                                <div style="width: 20px; height: 20px; background: #10b981; border-radius: 50%;"></div>
+                                <div style="width: 20px; height: 20px; background: #f3f4f6; border-radius: 50%;"></div>
+                                <div style="width: 20px; height: 20px; background: #f3f4f6; border-radius: 50%;"></div>
+                                <div style="width: 20px; height: 20px; background: #f3f4f6; border-radius: 50%;"></div>
+                            </div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span>👁️ Eye Exercises</span>
+                            <span style="color: #10b981; font-weight: 600;">✓ Complete</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span>📱 Screen Break</span>
+                            <span style="color: #ef4444; font-weight: 600;">⏰ Pending</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="progress-card">
+                <div class="progress-header">
+                    <h3 class="progress-title">Risk Trends</h3>
+                </div>
+                <div style="text-align: center;">
+                    <div style="font-size: 3rem; margin-bottom: 1rem;">📈</div>
+                    <h4 style="color: #10b981; margin-bottom: 0.5rem;">Improving</h4>
+                    <p style="color: #666; font-size: 0.9rem;">Your risk score has decreased by 2.1 points this month</p>
+                </div>
+                <div style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid #f3f4f6;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 1rem;">
+                        <span style="color: #666;">Last Month</span>
+                        <span style="font-weight: 600;">9.3</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="color: #666;">This Month</span>
+                        <span style="font-weight: 600; color: #10b981;">7.2</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Habits Grid -->
+        <div class="habits-grid fade-in-up">
+            <div class="habit-card">
+                <div class="habit-header">
+                    <h3 class="habit-title">Water Intake</h3>
+                    <div class="habit-streak">5 day streak</div>
+                </div>
+                <div class="habit-progress">
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 63%"></div>
+                    </div>
+                    <div class="progress-text">
+                        <span>5/8 glasses today</span>
+                        <span>63%</span>
+                    </div>
+                </div>
+                <div class="habit-days">
+                    <div class="habit-day completed">M</div>
+                    <div class="habit-day completed">T</div>
+                    <div class="habit-day completed">W</div>
+                    <div class="habit-day completed">T</div>
+                    <div class="habit-day completed">F</div>
+                    <div class="habit-day today">S</div>
+                    <div class="habit-day upcoming">S</div>
+                </div>
+            </div>
+
+            <div class="habit-card">
+                <div class="habit-header">
+                    <h3 class="habit-title">Eye Exercises</h3>
+                    <div class="habit-streak">12 day streak</div>
+                </div>
+                <div class="habit-progress">
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 100%"></div>
+                    </div>
+                    <div class="progress-text">
+                        <span>3/3 sessions today</span>
+                        <span>100%</span>
+                    </div>
+                </div>
+                <div class="habit-days">
+                    <div class="habit-day completed">M</div>
+                    <div class="habit-day completed">T</div>
+                    <div class="habit-day completed">W</div>
+                    <div class="habit-day completed">T</div>
+                    <div class="habit-day completed">F</div>
+                    <div class="habit-day completed">S</div>
+                    <div class="habit-day upcoming">S</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="quick-actions fade-in-up">
+            <h3>Quick Actions</h3>
+            <div class="action-buttons">
+                <a href="#" class="action-btn">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Take Risk Assessment</span>
+                </a>
+                <a href="#" class="action-btn">
+                    <i class="fas fa-camera"></i>
+                    <span>Upload Fundus Photo</span>
+                </a>
+                <a href="#" class="action-btn">
+                    <i class="fas fa-robot"></i>
+                    <span>Ask AI Assistant</span>
+                </a>
+                <a href="#" class="action-btn">
+                    <i class="fas fa-calendar-plus"></i>
+                    <span>Schedule Check-up</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script src="static/js/js-dashboard.js"></script>
+</body>
+</html>

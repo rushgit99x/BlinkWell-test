@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>About Us - BlinkWell | AI-Powered Eye Health Platform</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="static/css/style-about.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav id="navbar">
+        <div class="nav-container">
+            <a href="#" class="logo">
+                <i class="fas fa-eye"></i>
+                BlinkWell
+            </a>
+            <div class="nav-links">
+                <a href="{{ url_for('main.index') }}">Home</a>
+                <a href="{{ url_for('main.index') }}#features">Features</a>
+                <a href="{{ url_for('main.about') }}" class="active">About</a>
+                <a href="{{ url_for('main.contact') }}">Contact</a>
+                <div class="cta-buttons">
+                    <a href="{{ url_for('auth.login') }}" class="btn btn-primary">Get Started</a>
+                </div>
+            </div>
+            <div class="mobile-menu">
+                <i class="fas fa-bars"></i>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-content animate-on-scroll">
+            <br><br><br><h1>Revolutionizing Eye Health with AI</h1>
+            <p>We're on a mission to prevent vision loss through personalized, AI-powered recommendations and early risk detection.</p>
+        </div>
+    </section>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container">
+            <!-- Our Story Section -->
+            <section class="story-section animate-on-scroll">
+                <div class="story-content">
+                    <h2>Our Story</h2>
+                    <p>BlinkWell was born from a simple yet powerful observation: most eye diseases are preventable with the right lifestyle choices and early intervention. Our founders, a team of ophthalmologists, data scientists, and health technology experts, recognized that traditional eye care was reactive rather than proactive.</p>
+                    <p>We saw millions of people developing dry eye disease, macular degeneration, and other vision problems that could have been prevented or significantly delayed with personalized lifestyle modifications. This realization sparked our mission to democratize access to preventive eye care through cutting-edge AI technology.</p>
+                    <p>Today, BlinkWell combines advanced machine learning algorithms with comprehensive lifestyle analysis to provide personalized recommendations that can genuinely improve eye health outcomes. We're not just predicting risk – we're empowering action.</p>
+                </div>
+                <div class="story-image">
+                    <i class="fas fa-lightbulb"></i>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <span class="stat-number">2.2B</span>
+                            <span class="stat-label">People with Vision Impairment</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-number">80%</span>
+                            <span class="stat-label">Cases Are Preventable</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-number">95%</span>
+                            <span class="stat-label">Accuracy Rate</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-number">50K+</span>
+                            <span class="stat-label">Users Helped</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Mission Section -->
+    <section class="mission-section">
+        <div class="mission-content animate-on-scroll">
+            <h2>Our Mission & Values</h2>
+            <p>We envision a world where vision loss is largely preventable through accessible, personalized, and scientifically-backed health recommendations. Our platform democratizes expert-level eye care insights, making them available to everyone, everywhere.</p>
+            <div class="values-grid">
+                <div class="value-card">
+                    <i class="fas fa-shield-alt"></i>
+                    <h3>Prevention First</h3>
+                    <p>We believe in stopping problems before they start, focusing on lifestyle modifications that prevent vision loss rather than just treating existing conditions.</p>
+                </div>
+                <div class="value-card">
+                    <i class="fas fa-user-friends"></i>
+                    <h3>Accessibility</h3>
+                    <p>Quality eye health insights shouldn't be limited by geography or socioeconomic status. We make expert-level care accessible to everyone.</p>
+                </div>
+                <div class="value-card">
+                    <i class="fas fa-microscope"></i>
+                    <h3>Scientific Rigor</h3>
+                    <p>Every recommendation is backed by peer-reviewed research and validated through continuous analysis of real-world outcomes.</p>
+                </div>
+                <div class="value-card">
+                    <i class="fas fa-heart"></i>
+                    <h3>Empathy-Driven</h3>
+                    <p>We understand that health is personal. Our approach is compassionate, non-judgmental, and focused on sustainable habit changes.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Team Section -->
+    <section class="team-section">
+        <div class="container">
+            <h2 class="animate-on-scroll">Meet Our Expert Team</h2>
+            <div class="team-grid">
+                <div class="team-card animate-on-scroll">
+                    <div class="team-avatar">
+                        <i class="fas fa-user-md"></i>
+                    </div>
+                    <div class="team-info">
+                        <h3>Dr. Sarah Chen</h3>
+                        <div class="team-role">Chief Medical Officer & Co-Founder</div>
+                        <p class="team-bio">Ophthalmologist with 15+ years of experience in preventive eye care. Published researcher in dry eye disease and macular degeneration prevention.</p>
+                        <div class="team-social">
+                            <a href="#"><i class="fab fa-linkedin-in"></i></a>
+                            <a href="#"><i class="fab fa-twitter"></i></a>
+                            <a href="#"><i class="fas fa-envelope"></i></a>
+                        </div>
+                    </div>
+                </div>
+                <div class="team-card animate-on-scroll">
+                    <div class="team-avatar">
+                        <i class="fas fa-brain"></i>
+                    </div>
+                    <div class="team-info">
+                        <h3>Dr. Michael Rodriguez</h3>
+                        <div class="team-role">Chief Technology Officer & Co-Founder</div>
+                        <p class="team-bio">AI researcher and former Google Health engineer. Expert in medical imaging analysis and predictive health algorithms with 12+ years of experience.</p>
+                        <div class="team-social">
+                            <a href="#"><i class="fab fa-linkedin-in"></i></a>
+                            <a href="#"><i class="fab fa-github"></i></a>
+                            <a href="#"><i class="fas fa-envelope"></i></a>
+                        </div>
+                    </div>
+                </div>
+                <div class="team-card animate-on-scroll">
+                    <div class="team-avatar">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div class="team-info">
+                        <h3>Emily Thompson</h3>
+                        <div class="team-role">Head of Data Science</div>
+                        <p class="team-bio">Former Stanford researcher with PhD in Biostatistics. Specializes in lifestyle-based health prediction models and behavioral change analytics.</p>
+                        <div class="team-social">
+                            <a href="#"><i class="fab fa-linkedin-in"></i></a>
+                            <a href="#"><i class="fab fa-twitter"></i></a>
+                            <a href="#"><i class="fas fa-envelope"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Technology Section -->
+    <section class="tech-section">
+        <div class="tech-content animate-on-scroll">
+            <h2>Cutting-Edge Technology</h2>
+            <p>Our platform combines multiple advanced technologies to deliver personalized eye health insights with unprecedented accuracy and actionability.</p>
+            <div class="tech-grid">
+                <div class="team-card animate-on-scroll">
+                    <div class="team-avatar">
+                        <i class="fas fa-brain"></i>
+                    </div>
+                    <div class="team-info">
+                        <h3>AI-Powered Risk Assessment</h3>
+                        <p class="team-bio">Our machine learning models analyze lifestyle, genetic, and environmental factors to predict eye disease risks with high precision.</p>
+                    </div>
+                </div>
+                <div class="team-card animate-on-scroll">
+                    <div class="team-avatar">
+                        <i class="fas fa-chart-bar"></i>
+                    </div>
+                    <div class="team-info">
+                        <h3>Data-Driven Insights</h3>
+                        <p class="team-bio">Advanced analytics process vast datasets to deliver personalized recommendations based on real-world evidence.</p>
+                    </div>
+                </div>
+                <div class="team-card animate-on-scroll">
+                    <div class="team-avatar">
+                        <i class="fas fa-eye"></i>
+                    </div>
+                    <div class="team-info">
+                        <h3>Computer Vision</h3>
+                        <p class="team-bio">Our platform uses cutting-edge computer vision to analyze eye images for early signs of disease, enabling timely interventions.</p>
+                    </div>
+                </div>
+                <div class="team-card animate-on-scroll">
+                    <div class="team-avatar">
+                        <i class="fas fa-cloud"></i>
+                    </div>
+                    <div class="team-info">
+                        <h3>Cloud Integration</h3>
+                        <p class="team-bio">Secure cloud-based systems ensure seamless access to your eye health data and recommendations anytime, anywhere.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-section">
+        <div class="cta-content animate-on-scroll">
+            <h2>Join the Vision Revolution</h2>
+            <p>Start your journey to better eye health today. Get personalized insights and take proactive steps to protect your vision.</p>
+            <div class="cta-buttons">
+                <a href="{{ url_for('auth.register') }}" class="btn-white">Get Started</a>
+                <a href="{{ url_for('main.index') }}#features" class="btn-outline-white">Learn More</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-content animate-on-scroll">
+                <div class="footer-section">
+                    <div class="footer-logo">
+                        <i class="fas fa-eye"></i>
+                        <span>BlinkWell</span>
+                    </div>
+                    <p class="footer-description">
+                        Empowering people to protect their vision through AI-powered personalized eye health recommendations and risk prediction.
+                    </p>
+                    <div class="social-links">
+                        <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+                        <a href="#" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+                        <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                    </div>
+                </div>
+                <div class="footer-section">
+                    <h4>Platform</h4>
+                    <ul>
+                        <li><a href="#features">Features</a></li>
+                        <li><a href="{{ url_for('auth.register') }}">Get Started</a></li>
+                        <li><a href="#">Risk Assessment</a></li>
+                        <li><a href="#">Progress Tracking</a></li>
+                        <li><a href="#">AI Chatbot</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Resources</h4>
+                    <ul>
+                        <li><a href="#">Eye Health Guide</a></li>
+                        <li><a href="#">Research & Studies</a></li>
+                        <li><a href="#">FAQ</a></li>
+                        <li><a href="#">Blog</a></li>
+                        <li><a href="#">Help Center</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Company</h4>
+                    <ul>
+                        <li><a href="{{ url_for('main.about') }}">About Us</a></li>
+                        <li><a href="#">Privacy Policy</a></li>
+                        <li><a href="#">Terms of Service</a></li>
+                        <li><a href="{{ url_for('main.contact') }}">Contact</a></li>
+                        <li><a href="#">Careers</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Contact Info</h4>
+                    <div class="contact-info">
+                        <div class="contact-item">
+                            <i class="fas fa-envelope"></i>
+                            <span>support@blinkwell.com</span>
+                        </div>
+                        <div class="contact-item">
+                            <i class="fas fa-phone"></i>
+                            <span>+1 (555) 123-4567</span>
+                        </div>
+                        <div class="contact-item">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span>123 Health St, Medical District<br>City, State 12345</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <div class="footer-bottom-content">
+                    <p>© 2025 BlinkWell. All rights reserved.</p>
+                    <div class="footer-bottom-links">
+                        <a href="#">Privacy</a>
+                        <a href="#">Terms</a>
+                        <a href="#">Security</a>
+                        <a href="#">Accessibility</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="static/js/js-about.js"></script>
+</body>
+</html>

@@ -1,0 +1,6 @@
+Flask
+Flask-MySQLdb
+Flask-Login
+Werkzeug
+PyMySQL
+python-dotenv

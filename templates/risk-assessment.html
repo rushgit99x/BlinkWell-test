@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Risk Assessment - BlinkWell</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .assessment-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            margin-bottom: 30px;
+        }
+
+        .progress-header {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            padding: 30px;
+            text-align: center;
+            color: white;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: white;
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        .form-container {
+            padding: 40px;
+        }
+
+        .section {
+            margin-bottom: 40px;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #555;
+        }
+
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .checkbox-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .checkbox-item:hover {
+            background: #e9ecef;
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            accent-color: #667eea;
+        }
+
+        .radio-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .radio-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 20px;
+            background: #f8f9fa;
+            border: 2px solid #e1e5e9;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .radio-item:hover {
+            background: #e9ecef;
+        }
+
+        .radio-item input[type="radio"]:checked + .radio-label {
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .radio-item:has(input[type="radio"]:checked) {
+            background: rgba(102, 126, 234, 0.1);
+            border-color: #667eea;
+        }
+
+        .slider-container {
+            margin-top: 15px;
+        }
+
+        .slider {
+            width: 100%;
+            height: 8px;
+            border-radius: 4px;
+            background: #e1e5e9;
+            outline: none;
+            appearance: none;
+            -webkit-appearance: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+        }
+
+        .slider::-moz-range-thumb {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+            border: none;
+        }
+
+        .slider-value {
+            text-align: center;
+            font-weight: 600;
+            color: #667eea;
+            margin-top: 10px;
+        }
+
+        .button-group {
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+            margin-top: 40px;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-secondary {
+            background: #f8f9fa;
+            color: #666;
+            border: 2px solid #e1e5e9;
+        }
+
+        .btn-secondary:hover {
+            background: #e9ecef;
+        }
+
+        .results-container {
+            display: none;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .risk-score {
+            font-size: 4rem;
+            font-weight: 700;
+            margin: 20px 0;
+        }
+
+        .risk-low { color: #28a745; }
+        .risk-moderate { color: #ffc107; }
+        .risk-high { color: #dc3545; }
+
+        .risk-factors {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .risk-factor {
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            border-left: 5px solid #667eea;
+        }
+
+        .recommendations {
+            text-align: left;
+            margin-top: 30px;
+        }
+
+        .recommendation-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+            padding: 15px;
+            background: rgba(102, 126, 234, 0.05);
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+
+        .recommendation-icon {
+            width: 30px;
+            height: 30px;
+            background: #667eea;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .error-message {
+            color: #dc3545;
+            text-align: center;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .success-message {
+            color: #28a745;
+            text-align: center;
+            margin-top: 20px;
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .form-container {
+                padding: 25px;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            .checkbox-group {
+                grid-template-columns: 1fr;
+            }
+
+            .radio-group {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-eye"></i> BlinkWell Risk Assessment</h1>
+            <p>Complete this comprehensive assessment to understand your eye health risk factors</p>
+        </div>
+
+        <div class="assessment-card">
+            <div class="progress-header">
+                <h3>Assessment Progress</h3>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+                </div>
+                <span id="progressText">0% Complete</span>
+            </div>
+
+            <div class="form-container" id="formContainer">
+                <form id="riskAssessmentForm">
+                    <!-- Section 1: Personal Information -->
+                    <div class="section" id="section1">
+                        <div class="section-title">
+                            <div class="section-icon">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            Personal Information
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Gender</label>
+                            <div class="radio-group">
+                                <label class="radio-item">
+                                    <input type="radio" name="gender" value="F" required>
+                                    <span class="radio-label">Female</span>
+                                </label>
+                                <label class="radio-item">
+                                    <input type="radio" name="gender" value="M" required>
+                                    <span class="radio-label">Male</span>
+                                </label>
+                                <label class="radio-item">
+                                    <input type="radio" name="gender" value="Other" required>
+                                    <span class="radio-label">Other</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Age</label>
+                            <input type="number" class="form-input" name="age" min="1" max="120" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Height (cm)</label>
+                            <input type="number" class="form-input" name="height" min="100" max="250" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Weight (kg)</label>
+                            <input type="number" class="form-input" name="weight" min="30" max="300" required>
+                        </div>
+                    </div>
+
+                    <!-- Section 2: Health Metrics -->
+                    <div class="section" id="section2" style="display: none;">
+                        <div class="section-title">
+                            <div class="section-icon">
+                                <i class="fas fa-heartbeat"></i>
+                            </div>
+                            Health Metrics
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Blood Pressure (e.g., 120/80)</label>
+                            <input type="text" class="form-input" name="blood_pressure" pattern="\d{2,3}/\d{2,3}" placeholder="120/80" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Heart Rate (beats per minute)</label>
+                            <input type="number" class="form-input" name="heart_rate" min="40" max="200" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Daily Steps</label>
+                            <input type="number" class="form-input" name="daily_steps" min="0" max="50000" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Physical Activity (minutes per day)</label>
+                            <input type="number" class="form-input" name="physical_activity" min="0" max="300" required>
+                        </div>
+                    </div>
+
+                    <!-- Section 3: Sleep Habits -->
+                    <div class="section" id="section3" style="display: none;">
+                        <div class="section-title">
+                            <div class="section-icon">
+                                <i class="fas fa-bed"></i>
+                            </div>
+                            Sleep Habits
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Sleep Duration (hours per night)</label>
+                            <div class="slider-container">
+                                <input type="range" class="slider" name="sleep_duration" min="0" max="12" step="0.5" value="7" oninput="updateSliderValue('sleep_duration', this.value + ' hours')">
+                                <div class="slider-value" id="sleep_durationValue">7 hours</div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Sleep Quality (1-5, 1=poor, 5=excellent)</label>
+                            <div class="slider-container">
+                                <input type="range" class="slider" name="sleep_quality" min="1" max="5" step="1" value="3" oninput="updateSliderValue('sleep_quality', this.value)">
+                                <div class="slider-value" id="sleep_qualityValue">3</div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Do you have a sleep disorder?</label>
+                            <div class="radio-group">
+                                <label class="radio-item">
+                                    <input type="radio" name="sleep_disorder" value="Y" required>
+                                    <span class="radio-label">Yes</span>
+                                </label>
+                                <label class="radio-item">
+                                    <input type="radio" name="sleep_disorder" value="N" required>
+                                    <span class="radio-label">No</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Do you wake up during the night?</label>
+                            <div class="radio-group">
+                                <label class="radio-item">
+                                    <input type="radio" name="wake_up_during_night" value="Y" required>
+                                    <span class="radio-label">Yes</span>
+                                </label>
+                                <label class="radio-item">
+                                    <input type="radio" name="wake_up_during_night" value="N" required>
+                                    <span class="radio-label">No</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Do you feel sleepy during the day?</label>
+                            <div class="radio-group">
+                                <label class="radio-item">
+                                    <input type="radio" name="feel_sleepy_during_day" value="Y" required>
+                                    <span class="radio-label">Yes</span>
+                                </label>
+                                <label class="radio-item">
+                                    <input type="radio" name="feel_sleepy_during_day" value="N" required>
+                                    <span class="radio-label">No</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section 4: Lifestyle Factors -->
+                    <div class="section" id="section4" style="display: none;">
+                        <div class="section-title">
+                            <div class="section-icon">
+                                <i class="fas fa-coffee"></i>
+                            </div>
+                            Lifestyle Factors
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Stress Level (1-5, 1=low, 5=high)</label>
+                            <div class="slider-container">
+                                <input type="range" class="slider" name="stress_level" min="1" max="5" step="1" value="3" oninput="updateSliderValue('stress_level', this.value)">
+                                <div class="slider-value" id="stress_levelValue">3</div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Caffeine Consumption</label>
+                            <div class="radio-group">
+                                <label class="radio-item">
+                                    <input type="radio" name="caffeine_consumption" value="Y" required>
+                                    <span class="radio-label">Yes</span>
+                                </label>
+                                <label class="radio-item">
+                                    <input type="radio" name="caffeine_consumption" value="N" required>
+                                    <span class="radio-label">No</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Alcohol Consumption</label>
+                            <div class="radio-group">
+                                <label class="radio-item">
+                                    <input type="radio" name="alcohol_consumption" value="Y" required>
+                                    <span class="radio-label">Yes</span>
+                                </label>
+                                <label class="radio-item">
+                                    <input type="radio" name="alcohol_consumption" value="N" required>
+                                    <span class="radio-label">No</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Smoking</label>
+                            <div class="radio-group">
+                                <label class="radio-item">
+                                    <input type="radio" name="smoking" value="Y" required>
+                                    <span class="radio-label">Yes</span>
+                                </label>
+                                <label class="radio-item">
+                                    <input type="radio" name="smoking" value="N" required>
+                                    <span class="radio-label">No</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section 5: Screen Usage -->
+                    <div class="section" id="section5" style="display: none;">
+                        <div class="section-title">
+                            <div class="section-icon">
+                                <i class="fas fa-desktop"></i>
+                            </div>
+                            Screen Usage
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Average Screen Time (hours per day)</label>
+                            <div class="slider-container">
+                                <input type="range" class="slider" name="average_screen_time" min="0" max="16" step="0.5" value="8" oninput="updateSliderValue('average_screen_time', this.value + ' hours')">
+                                <div class="slider-value" id="average_screen_timeValue">8 hours</div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Use Smart Device Before Bed</label>
+                            <div class="radio-group">
+                                <label class="radio-item">
+                                    <input type="radio" name="smart_device_before_bed" value="Y" required>
+                                    <span class="radio-label">Yes</span>
+                                </label>
+                                <label class="radio-item">
+                                    <input type="radio" name="smart_device_before_bed" value="N" required>
+                                    <span class="radio-label">No</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Use Blue-Light Filter</label>
+                            <div class="radio-group">
+                                <label class="radio-item">
+                                    <input type="radio" name="blue_light_filter" value="Y" required>
+                                    <span class="radio-label">Yes</span>
+                                </label>
+                                <label class="radio-item">
+                                    <input type="radio" name="blue_light_filter" value="N" required>
+                                    <span class="radio-label">No</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section 6: Medical and Eye Health -->
+                    <div class="section" id="section6" style="display: none;">
+                        <div class="section-title">
+                            <div class="section-icon">
+                                <i class="fas fa-eye-dropper"></i>
+                            </div>
+                            Medical and Eye Health
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Do you have any medical issues?</label>
+                            <div class="radio-group">
+                                <label class="radio-item">
+                                    <input type="radio" name="medical_issue" value="Y" required>
+                                    <span class="radio-label">Yes</span>
+                                </label>
+                                <label class="radio-item">
+                                    <input type="radio" name="medical_issue" value="N" required>
+                                    <span class="radio-label">No</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Are you on ongoing medication?</label>
+                            <div class="radio-group">
+                                <label class="radio-item">
+                                    <input type="radio" name="ongoing_medication" value="Y" required>
+                                    <span class="radio-label">Yes</span>
+                                </label>
+                                <label class="radio-item">
+                                    <input type="radio" name="ongoing_medication" value="N" required>
+                                    <span class="radio-label">No</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Eye Symptoms (select all that apply)</label>
+                            <div class="checkbox-group">
+                                <label class="checkbox-item">
+                                    <input type="checkbox" name="eye_symptoms" value="discomfort_eye_strain">
+                                    <span>Discomfort/Eye Strain</span>
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" name="eye_symptoms" value="redness_in_eye">
+                                    <span>Redness in Eye</span>
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" name="eye_symptoms" value="itchiness_irritation_in_eye">
+                                    <span>Itchiness/Irritation in Eye</span>
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" name="eye_symptoms" value="dry_eye_disease">
+                                    <span>Dry Eye Disease</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Upload Eye Image (optional)</label>
+                            <input type="file" class="form-input" name="eye_image" accept="image/*">
+                        </div>
+                    </div>
+
+                    <div class="button-group">
+                        <button type="button" class="btn btn-secondary" id="prevBtn" onclick="changeSection(-1)" style="display: none;">
+                            <i class="fas fa-arrow-left"></i> Previous
+                        </button>
+                        <button type="button" class="btn btn-primary" id="nextBtn" onclick="changeSection(1)">
+                            Next <i class="fas fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Results Section -->
+            <div class="results-container" id="resultsContainer">
+                <h2>Your Risk Assessment Results</h2>
+                <div class="risk-score" id="riskScore">0</div>
+                <h3 id="riskLevel">Calculating...</h3>
+                <p>Based on your lifestyle and health data, here's your personalized eye health assessment:</p>
+
+                <div class="risk-factors">
+                    <div class="risk-factor">
+                        <h4><i class="fas fa-desktop"></i> Screen Time Impact</h4>
+                        <p id="screenTimeImpact">Calculating...</p>
+                    </div>
+                    <div class="risk-factor">
+                        <h4><i class="fas fa-tint"></i> Lifestyle Impact</h4>
+                        <p id="lifestyleImpact">Calculating...</p>
+                    </div>
+                    <div class="risk-factor">
+                        <h4><i class="fas fa-eye"></i> Eye Health Symptoms</h4>
+                        <p id="eyeHealthImpact">Calculating...</p>
+                    </div>
+                </div>
+
+                <div class="recommendations">
+                    <h3>Personalized Recommendations</h3>
+                    <div class="recommendation-item" id="rec1">
+                        <div class="recommendation-icon"><i class="fas fa-tint"></i></div>
+                        <div>
+                            <h4>Manage Hydration and Lifestyle</h4>
+                            <p id="rec1Text">Ensure adequate hydration and maintain a balanced lifestyle to support eye health.</p>
+                        </div>
+                    </div>
+                    <div class="recommendation-item" id="rec2">
+                        <div class="recommendation-icon"><i class="fas fa-desktop"></i></div>
+                        <div>
+                            <h4>Reduce Screen Time</h4>
+                            <p id="rec2Text">Follow the 20-20-20 rule to minimize eye strain from prolonged screen use.</p>
+                        </div>
+                    </div>
+                    <div class="recommendation-item" id="rec3">
+                        <div class="recommendation-icon"><i class="fas fa-eye"></i></div>
+                        <div>
+                            <h4>Monitor Eye Symptoms</h4>
+                            <p id="rec3Text">Consult an eye care professional if you experience persistent eye symptoms.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="success-message" id="successMessage">Results saved successfully!</div>
+                <div class="error-message" id="errorMessage">Failed to save results. Please try again.</div>
+
+                <div class="button-group">
+                    <a href="#" class="btn btn-secondary" onclick="restartAssessment()">
+                        <i class="fas fa-redo"></i> Restart Assessment
+                    </a>
+                    <a href="#" class="btn btn-primary" id="saveResults" onclick="saveAssessmentResults()">
+                        <i class="fas fa-save"></i> Save Results
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentSection = 1;
+        const totalSections = 6;
+        const form = document.getElementById('riskAssessmentForm');
+        const progressFill = document.getElementById('progressFill');
+        const progressText = document.getElementById('progressText');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const formContainer = document.getElementById('formContainer');
+        const resultsContainer = document.getElementById('resultsContainer');
+        const successMessage = document.getElementById('successMessage');
+        const errorMessage = document.getElementById('errorMessage');
+
+        // Update slider value display
+        function updateSliderValue(id, value) {
+            document.getElementById(`${id}Value`).textContent = value;
+        }
+
+        // Change section and update progress
+        function changeSection(direction) {
+            // Validate current section before moving forward
+            if (direction === 1 && !validateSection(currentSection)) {
+                alert('Please fill out all required fields in this section.');
+                return;
+            }
+
+            // Hide current section
+            document.getElementById(`section${currentSection}`).style.display = 'none';
+
+            // Update current section
+            currentSection += direction;
+
+            // Show/hide buttons and sections
+            if (currentSection === 1) {
+                prevBtn.style.display = 'none';
+                nextBtn.style.display = 'inline-flex';
+                formContainer.style.display = 'block';
+                resultsContainer.style.display = 'none';
+            } else if (currentSection > totalSections) {
+                // Calculate and show results
+                calculateRiskScore();
+                formContainer.style.display = 'none';
+                resultsContainer.style.display = 'block';
+                prevBtn.style.display = 'none';
+                nextBtn.style.display = 'none';
+            } else {
+                prevBtn.style.display = 'inline-flex';
+                nextBtn.style.display = 'inline-flex';
+                document.getElementById(`section${currentSection}`).style.display = 'block';
+            }
+
+            // Update progress bar
+            const progress = ((currentSection - 1) / totalSections) * 100;
+            progressFill.style.width = `${progress}%`;
+            progressText.textContent = `${Math.round(progress)}% Complete`;
+        }
+
+        // Validate section inputs
+        function validateSection(section) {
+            const sectionElement = document.getElementById(`section${section}`);
+            const inputs = sectionElement.querySelectorAll('input[required], select[required]');
+            for (let input of inputs) {
+                if (!input.value || (input.type === 'radio' && !sectionElement.querySelector(`input[name="${input.name}"]:checked`))) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        // Mock risk score calculation
+        function calculateRiskScore() {
+            const formData = new FormData(form);
+            let score = 0;
+            let riskFactors = {
+                screenTime: 0,
+                lifestyle: 0,
+                eyeHealth: 0
+            };
+
+            // Sample scoring logic based on dataset fields
+            const screenTime = parseFloat(formData.get('average_screen_time'));
+            if (screenTime > 8) riskFactors.screenTime += 30;
+            else if (screenTime > 4) riskFactors.screenTime += 15;
+            if (formData.get('smart_device_before_bed') === 'Y') riskFactors.screenTime += 10;
+            if (formData.get('blue_light_filter') === 'N') riskFactors.screenTime += 10;
+
+            const stressLevel = parseInt(formData.get('stress_level'));
+            const sleepQuality = parseInt(formData.get('sleep_quality'));
+            if (stressLevel > 3) riskFactors.lifestyle += 15;
+            if (sleepQuality < 3) riskFactors.lifestyle += 15;
+            if (formData.get('caffeine_consumption') === 'Y') riskFactors.lifestyle += 5;
+            if (formData.get('alcohol_consumption') === 'Y') riskFactors.lifestyle += 5;
+            if (formData.get('smoking') === 'Y') riskFactors.lifestyle += 10;
+
+            const eyeSymptoms = formData.getAll('eye_symptoms');
+            if (eyeSymptoms.includes('discomfort_eye_strain')) riskFactors.eyeHealth += 10;
+            if (eyeSymptoms.includes('redness_in_eye')) riskFactors.eyeHealth += 10;
+            if (eyeSymptoms.includes('itchiness_irritation_in_eye')) riskFactors.eyeHealth += 10;
+            if (eyeSymptoms.includes('dry_eye_disease')) riskFactors.eyeHealth += 15;
+            if (formData.get('medical_issue') === 'Y') riskFactors.eyeHealth += 5;
+            if (formData.get('ongoing_medication') === 'Y') riskFactors.eyeHealth += 5;
+
+            score = (riskFactors.screenTime + riskFactors.lifestyle + riskFactors.eyeHealth) / 3;
+
+            // Update results
+            document.getElementById('riskScore').textContent = score.toFixed(1);
+            document.getElementById('riskLevel').textContent = score < 10 ? 'Low Risk' : score < 20 ? 'Moderate Risk' : 'High Risk';
+            document.getElementById('riskLevel').className = score < 10 ? 'risk-low' : score < 20 ? 'risk-moderate' : 'risk-high';
+            document.getElementById('screenTimeImpact').textContent = `Screen usage contributes to ${riskFactors.screenTime}% of your risk score`;
+            document.getElementById('lifestyleImpact').textContent = `Lifestyle factors contribute to ${riskFactors.lifestyle}% of your risk score`;
+            document.getElementById('eyeHealthImpact').textContent = `Eye health symptoms contribute to ${riskFactors.eyeHealth}% of your risk score`;
+
+            // Update recommendations based on risk factors
+            if (riskFactors.screenTime > 20) {
+                document.getElementById('rec2Text').textContent = 'Reduce screen time and use blue-light filters to minimize eye strain.';
+            }
+            if (riskFactors.lifestyle > 20) {
+                document.getElementById('rec1Text').textContent = 'Manage stress and improve sleep quality to support eye health.';
+            }
+            if (riskFactors.eyeHealth > 20) {
+                document.getElementById('rec3Text').textContent = 'Consult an eye care specialist for a comprehensive eye exam to address symptoms.';
+            }
+
+            // Store risk score and factors for saving
+            window.riskAssessmentScore = score;
+            window.riskAssessmentFactors = riskFactors;
+        }
+
+        // Save assessment results to the database
+        function saveAssessmentResults() {
+            const formData = new FormData(form);
+            const eyeSymptoms = formData.getAll('eye_symptoms');
+
+            // Prepare JSON data for non-file fields
+            const assessmentData = {
+                gender: formData.get('gender'),
+                age: parseInt(formData.get('age')),
+                sleep_duration: parseFloat(formData.get('sleep_duration')),
+                sleep_quality: parseInt(formData.get('sleep_quality')),
+                stress_level: parseInt(formData.get('stress_level')),
+                blood_pressure: formData.get('blood_pressure'),
+                heart_rate: parseInt(formData.get('heart_rate')),
+                daily_steps: parseInt(formData.get('daily_steps')),
+                physical_activity: parseInt(formData.get('physical_activity')),
+                height: parseInt(formData.get('height')),
+                weight: parseInt(formData.get('weight')),
+                sleep_disorder: formData.get('sleep_disorder'),
+                wake_up_during_night: formData.get('wake_up_during_night'),
+                feel_sleepy_during_day: formData.get('feel_sleepy_during_day'),
+                caffeine_consumption: formData.get('caffeine_consumption'),
+                alcohol_consumption: formData.get('alcohol_consumption'),
+                smoking: formData.get('smoking'),
+                medical_issue: formData.get('medical_issue'),
+                ongoing_medication: formData.get('ongoing_medication'),
+                smart_device_before_bed: formData.get('smart_device_before_bed'),
+                average_screen_time: parseFloat(formData.get('average_screen_time')),
+                blue_light_filter: formData.get('blue_light_filter'),
+                discomfort_eye_strain: eyeSymptoms.includes('discomfort_eye_strain') ? 'Y' : 'N',
+                redness_in_eye: eyeSymptoms.includes('redness_in_eye') ? 'Y' : 'N',
+                itchiness_irritation_in_eye: eyeSymptoms.includes('itchiness_irritation_in_eye') ? 'Y' : 'N',
+                dry_eye_disease: eyeSymptoms.includes('dry_eye_disease') ? 'Y' : 'N',
+                risk_score: window.riskAssessmentScore || 0,
+                risk_factors: JSON.stringify(window.riskAssessmentFactors || {})
+            };
+
+            // Append JSON data and file to FormData
+            formData.append('assessment_data', JSON.stringify(assessmentData));
+            if (document.querySelector('input[name="eye_image"]').files[0]) {
+                formData.append('eye_image', document.querySelector('input[name="eye_image"]').files[0]);
+            }
+
+            // Send data to backend via AJAX
+            fetch('/save-assessment', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    successMessage.style.display = 'block';
+                    errorMessage.style.display = 'none';
+                } else {
+                    successMessage.style.display = 'none';
+                    errorMessage.textContent = data.message || 'Failed to save results. Please try again.';
+                    errorMessage.style.display = 'block';
+                }
+            })
+            .catch(error => {
+                console.error('Error saving assessment:', error);
+                successMessage.style.display = 'none';
+                errorMessage.textContent = 'An error occurred while saving results. Please try again.';
+                errorMessage.style.display = 'block';
+            });
+        }
+
+        // Restart assessment
+        function restartAssessment() {
+            form.reset();
+            currentSection = 1;
+            document.getElementById('section1').style.display = 'block';
+            for (let i = 2; i <= totalSections; i++) {
+                document.getElementById(`section${i}`).style.display = 'none';
+            }
+            formContainer.style.display = 'block';
+            resultsContainer.style.display = 'none';
+            prevBtn.style.display = 'none';
+            nextBtn.style.display = 'inline-flex';
+            progressFill.style.width = '0%';
+            progressText.textContent = '0% Complete';
+            successMessage.style.display = 'none';
+            errorMessage.style.display = 'none';
+
+            // Reset slider values
+            document.getElementById('sleep_durationValue').textContent = '7 hours';
+            document.getElementById('sleep_qualityValue').textContent = '3';
+            document.getElementById('stress_levelValue').textContent = '3';
+            document.getElementById('average_screen_timeValue').textContent = '8 hours';
+        }
+
+        // Initialize
+        document.getElementById('section1').style.display = 'block';
+    </script>
+</body>
+</html>
