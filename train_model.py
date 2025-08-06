@@ -93,7 +93,7 @@ def main():
         # Validate dataset structure
         dry_count, healthy_count = validate_dataset_structure(args.dataset_path)
         
-        # Create models directory if it doesn't exist
+        # Create models directory if it doesn\'t exist
         model_dir = os.path.dirname(args.model_save_path)
         if model_dir and not os.path.exists(model_dir):
             os.makedirs(model_dir)
@@ -134,3 +134,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

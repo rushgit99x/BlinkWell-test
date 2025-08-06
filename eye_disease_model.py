@@ -109,12 +109,13 @@ class DryEyeClassifier(nn.Module):
     def __init__(self, num_classes=2):
         super(DryEyeClassifier, self).__init__()
         
-        # Use pre-trained ResNet18 as backbone
-        self.backbone = models.resnet18(pretrained=True)
+        # Use pre-trained ResNet50 as backbone
+        self.backbone = models.resnet50(pretrained=True)
         
-        # Freeze early layers
-        for param in list(self.backbone.parameters())[:-10]:
-            param.requires_grad = False
+        # Freeze early layers (unfreeze last 3 blocks)
+        for name, param in self.backbone.named_parameters():
+            if "layer4" not in name and "layer3" not in name and "fc" not in name:
+                param.requires_grad = False
         
         # Replace final layer
         num_features = self.backbone.fc.in_features
@@ -160,6 +161,9 @@ class EyeDiseasePredictor:
             transforms.RandomHorizontalFlip(p=0.5),
             transforms.RandomRotation(degrees=15),
             transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.1),
+            transforms.RandomGrayscale(p=0.1),
+            transforms.RandomPerspective(distortion_scale=0.2, p=0.1),
+            transforms.RandomAffine(degrees=0, translate=(0.1, 0.1), scale=(0.9, 1.1), shear=10),
             transforms.ToTensor(),
             transforms.Normalize(mean=[0.485, 0.456, 0.406], 
                                std=[0.229, 0.224, 0.225])
@@ -183,12 +187,14 @@ class EyeDiseasePredictor:
         # Loss and optimizer
         criterion = nn.CrossEntropyLoss()
         optimizer = optim.Adam(self.model.parameters(), lr=learning_rate)
-        scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1)
+        scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', factor=0.1, patience=5)
         
         # Training loop
         train_losses = []
         val_accuracies = []
         best_val_acc = 0.0
+        epochs_no_improve = 0
+        n_epochs_stop = 10
         
         for epoch in range(epochs):
             # Training phase
@@ -234,8 +240,15 @@ class EyeDiseasePredictor:
             if val_acc > best_val_acc:
                 best_val_acc = val_acc
                 self.save_model('best_eye_model.pth')
+                epochs_no_improve = 0
+            else:
+                epochs_no_improve += 1
             
-            scheduler.step()
+            scheduler.step(val_acc)
+
+            if epochs_no_improve == n_epochs_stop:
+                print(f"Early stopping triggered after {epoch+1} epochs. No improvement for {n_epochs_stop} epochs.")
+                break
         
         print(f'Training completed. Best validation accuracy: {best_val_acc:.2f}%')
         return train_losses, val_accuracies
@@ -309,3 +322,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
