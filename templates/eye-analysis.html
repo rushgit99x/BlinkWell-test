@@ -1010,7 +1010,7 @@
     <script>
         // Global variables
         let currentStep = 1;
-        let imageAnalysisData = {};
+        let imageAnalysisData = null;
         let questionnaireData = {};
 
         // Initialize page
@@ -1120,15 +1120,24 @@
                 analyzeBtn.innerHTML = '<i class="fas fa-search"></i> Analyze Image';
 
                 if (data.success) {
-                    imageAnalysisData = data;
+                    // Store the complete image analysis data
+                    imageAnalysisData = {
+                        prediction: data.prediction,
+                        confidence: data.confidence / 100, // Convert percentage to decimal
+                        dry_eye_probability: data.prediction === 'Dry Eyes' ? 1.0 : 0.0,
+                        is_valid_eye: data.is_valid_eye || true
+                    };
+                    
                     displayImageResult(data);
                     showMessage('success', 'Image analysis completed successfully!', 'imageMessage');
                 } else {
+                    imageAnalysisData = null;
                     showMessage('error', data.error || 'Analysis failed. Please try again.', 'imageMessage');
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
+                imageAnalysisData = null;
                 hideLoading();
                 analyzeBtn.disabled = false;
                 analyzeBtn.innerHTML = '<i class="fas fa-search"></i> Analyze Image';
@@ -1170,10 +1179,11 @@
             }
 
             // Add image analysis data if available
-            if (imageAnalysisData.success) {
+            if (imageAnalysisData && imageAnalysisData.is_valid_eye) {
                 questionnaireData.image_analysis = {
-                    dry_eye_probability: imageAnalysisData.prediction === 'Dry Eyes' ? 1.0 : 0.0,
-                    confidence: imageAnalysisData.confidence / 100
+                    dry_eye_probability: imageAnalysisData.dry_eye_probability,
+                    confidence: imageAnalysisData.confidence,
+                    prediction: imageAnalysisData.prediction
                 };
             }
 
@@ -1213,6 +1223,8 @@
         }
 
         function displayComprehensiveResults(data) {
+            console.log('Displaying results:', data); // Debug log
+
             // Update risk level and description
             const riskLevel = document.getElementById('riskLevel');
             const riskDescription = document.getElementById('riskDescription');
@@ -1229,8 +1241,13 @@
                 const imageProb = data.individual_predictions.image_analysis.probability * 100;
                 document.getElementById('imageProbability').textContent = `${imageProb.toFixed(1)}%`;
                 updateProgressBar('imageBar', imageProb, imageProb);
+                
+                // Show that image was analyzed
+                console.log('Image analysis available:', data.individual_predictions.image_analysis);
             } else {
-                document.getElementById('imageProbability').textContent = 'Not analyzed';
+                document.getElementById('imageProbability').textContent = 'Questionnaire only';
+                updateProgressBar('imageBar', 0, 0);
+                console.log('No image analysis data available');
             }
 
             const textProb = data.individual_predictions.text_analysis.probability * 100;
