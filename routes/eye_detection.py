@@ -1,3 +1,5 @@
+# Fixed version of your eye_detection.py with proper recommendation management
+
 from flask import Blueprint, request, jsonify, current_app
 from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
@@ -196,11 +198,94 @@ def simple_combine_predictions(image_prob, text_prob, image_weight, text_weight)
     """Simple combination function if the original is not available"""
     return (image_prob * image_weight) + (text_prob * text_weight)
 
+def clear_all_user_data(user_id):
+    """COMPREHENSIVE clearing of all user data - both recommendations and health data"""
+    try:
+        conn = current_app.config['get_db_connection']()
+        cursor = conn.cursor()
+        
+        # Start transaction
+        conn.begin()
+        
+        # 1. Clear all recommendations
+        cursor.execute("""
+            DELETE FROM user_recommendations 
+            WHERE user_id = %s
+        """, (user_id,))
+        recommendations_deleted = cursor.rowcount
+        
+        # 2. Clear health data 
+        cursor.execute("""
+            DELETE FROM user_eye_health_data 
+            WHERE user_id = %s
+        """, (user_id,))
+        health_data_deleted = cursor.rowcount
+        
+        # Commit transaction
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        print(f"✓ COMPLETE DATA CLEAR for user {user_id}:")
+        print(f"  - Recommendations deleted: {recommendations_deleted}")
+        print(f"  - Health data records deleted: {health_data_deleted}")
+        
+        return True
+        
+    except Exception as e:
+        print(f"Error clearing user data: {e}")
+        traceback.print_exc()
+        try:
+            conn.rollback()
+            cursor.close()
+            conn.close()
+        except:
+            pass
+        return False
+
+@eye_detection_bp.route('/start-new-analysis', methods=['POST'])
+@login_required
+def start_new_analysis():
+    """Clear ALL old data and start a completely fresh analysis session"""
+    try:
+        print(f"Starting COMPLETE new analysis for user {current_user.id}")
+        
+        # Clear ALL data comprehensively
+        success = clear_all_user_data(current_user.id)
+        
+        if success:
+            return jsonify({
+                'success': True,
+                'message': 'All previous data cleared. Ready for completely new analysis.',
+                'cleared_data': {
+                    'recommendations': True,
+                    'health_data': True
+                },
+                'next_step': 'image_upload'
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': 'Failed to clear previous data completely'
+            }), 500
+            
+    except Exception as e:
+        print(f"Error starting new analysis: {e}")
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'error': 'An error occurred while starting new analysis'
+        }), 500
+
 @eye_detection_bp.route('/analyze-eye-image', methods=['POST'])
 @login_required
 def analyze_eye_image():
     """Analyze uploaded eye image for dry eye disease (Step 1)"""
     try:
+        # ALWAYS clear data at the start of any new analysis
+        print(f"Image analysis started - clearing old data for user {current_user.id}")
+        clear_all_user_data(current_user.id)
+        
         if image_predictor is None:
             return jsonify({
                 'success': False,
@@ -269,7 +354,8 @@ def analyze_eye_image():
                 'prediction': prediction,
                 'confidence': round(confidence * 100, 2),
                 'message': 'Image analysis completed. Please fill out the questionnaire for comprehensive analysis.',
-                'next_step': 'questionnaire'
+                'next_step': 'questionnaire',
+                'data_cleared': True  # Confirmation that data was cleared
             }
             
             return jsonify(result)
@@ -294,6 +380,11 @@ def analyze_eye_image():
 def submit_questionnaire():
     """Process questionnaire and provide combined analysis (Step 2)"""
     try:
+        print(f"Processing questionnaire for user {current_user.id}")
+        
+        # Double-check data is clear before saving new analysis
+        verify_data_cleared(current_user.id)
+        
         # Use main predictor or fallback
         active_text_predictor = text_predictor
         active_combine_function = combine_predictions
@@ -374,11 +465,15 @@ def submit_questionnaire():
                 }
             },
             'risk_factors': risk_factors,
-            'recommendations': recommendations
+            'recommendations': recommendations,
+            'fresh_analysis': True  # Flag to indicate this is completely new data
         }
         
-        # Save comprehensive analysis to database
-        save_comprehensive_analysis(current_user.id, questionnaire_data, result)
+        # Save comprehensive analysis to database (including recommendations)
+        analysis_id = save_comprehensive_analysis(current_user.id, questionnaire_data, result, recommendations)
+        result['analysis_id'] = analysis_id
+        
+        print(f"✓ New analysis saved successfully with ID: {analysis_id}")
         
         return jsonify(result)
     
@@ -388,6 +483,214 @@ def submit_questionnaire():
         return jsonify({
             'success': False,
             'error': 'An error occurred during analysis. Please try again.'
+        }), 500
+
+def verify_data_cleared(user_id):
+    """Verify that user data is actually cleared before proceeding"""
+    try:
+        conn = current_app.config['get_db_connection']()
+        cursor = conn.cursor()
+        
+        # Check recommendations
+        cursor.execute("SELECT COUNT(*) FROM user_recommendations WHERE user_id = %s", (user_id,))
+        rec_count = cursor.fetchone()[0]
+        
+        # Check health data
+        cursor.execute("SELECT COUNT(*) FROM user_eye_health_data WHERE user_id = %s", (user_id,))
+        health_count = cursor.fetchone()[0]
+        
+        cursor.close()
+        conn.close()
+        
+        print(f"Data verification for user {user_id}: Recommendations={rec_count}, Health data={health_count}")
+        
+        # If data still exists, clear it again
+        if rec_count > 0 or health_count > 0:
+            print("⚠️ Data still exists! Clearing again...")
+            clear_all_user_data(user_id)
+        
+    except Exception as e:
+        print(f"Error verifying data cleared: {e}")
+
+@eye_detection_bp.route('/my-recommendations')
+@login_required
+def get_user_recommendations():
+    """Get user's current recommendations with enhanced debugging"""
+    try:
+        print(f"Fetching recommendations for user {current_user.id}")
+        
+        conn = current_app.config['get_db_connection']()
+        cursor = conn.cursor()
+        
+        # Get latest recommendations grouped by category with enhanced query
+        cursor.execute("""
+            SELECT r.id, r.category, r.recommendation_text, r.priority, r.status, 
+                   r.created_at, r.updated_at, r.completed_at,
+                   h.dry_eye_disease, h.risk_score, h.created_at as health_created
+            FROM user_recommendations r
+            LEFT JOIN user_eye_health_data h ON r.user_id = h.user_id
+            WHERE r.user_id = %s 
+            ORDER BY r.created_at DESC, r.id DESC
+        """, (current_user.id,))
+        
+        results = cursor.fetchall()
+        print(f"Found {len(results)} recommendation records for user {current_user.id}")
+        
+        cursor.close()
+        conn.close()
+        
+        if not results:
+            print("No recommendations found - returning empty state")
+            return jsonify({
+                'success': False,
+                'message': 'No recommendations found',
+                'recommendations': {
+                    'immediate_actions': [],
+                    'medical_advice': [],
+                    'lifestyle_changes': [],
+                    'monitoring': []
+                },
+                'stats': {
+                    'total_recommendations': 0,
+                    'completed_count': 0,
+                    'pending_count': 0,
+                    'in_progress_count': 0,
+                    'has_dry_eyes': False,
+                    'risk_score': 0
+                }
+            })
+        
+        # Group recommendations by category
+        recommendations_by_category = {
+            'immediate_actions': [],
+            'medical_advice': [],
+            'lifestyle_changes': [],
+            'monitoring': []
+        }
+        
+        user_stats = {
+            'total_recommendations': len(results),
+            'completed_count': 0,
+            'pending_count': 0,
+            'in_progress_count': 0,
+            'has_dry_eyes': False,
+            'risk_score': 0
+        }
+        
+        for result in results:
+            rec = {
+                'id': result[0],
+                'category': result[1],
+                'text': result[2],
+                'priority': result[3],
+                'status': result[4],
+                'created_at': result[5].strftime('%Y-%m-%d %H:%M:%S') if result[5] else '',
+                'updated_at': result[6].strftime('%Y-%m-%d %H:%M:%S') if result[6] else '',
+                'completed_at': result[7].strftime('%Y-%m-%d %H:%M:%S') if result[7] else None
+            }
+            
+            recommendations_by_category[result[1]].append(rec)
+            
+            # Update stats
+            if result[4] == 'completed':
+                user_stats['completed_count'] += 1
+            elif result[4] == 'in_progress':
+                user_stats['in_progress_count'] += 1
+            else:
+                user_stats['pending_count'] += 1
+            
+            # Get user health info from the first record
+            if result[8] is not None:
+                user_stats['has_dry_eyes'] = result[8] == 'Y'
+            if result[9] is not None:
+                user_stats['risk_score'] = float(result[9])
+        
+        print(f"Returning recommendations: {user_stats['total_recommendations']} total")
+        
+        return jsonify({
+            'success': True,
+            'recommendations': recommendations_by_category,
+            'stats': user_stats
+        })
+    
+    except Exception as e:
+        print(f"Error fetching recommendations: {e}")
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'error': 'Failed to fetch recommendations'
+        }), 500
+
+@eye_detection_bp.route('/update-recommendation-status', methods=['POST'])
+@login_required
+def update_recommendation_status():
+    """Update the status of a specific recommendation"""
+    try:
+        data = request.get_json()
+        recommendation_id = data.get('recommendation_id')
+        new_status = data.get('status')
+        
+        if not recommendation_id or not new_status:
+            return jsonify({
+                'success': False,
+                'error': 'Missing recommendation_id or status'
+            }), 400
+        
+        if new_status not in ['pending', 'in_progress', 'completed', 'dismissed']:
+            return jsonify({
+                'success': False,
+                'error': 'Invalid status value'
+            }), 400
+        
+        conn = current_app.config['get_db_connection']()
+        cursor = conn.cursor()
+        
+        # Verify the recommendation belongs to the current user
+        cursor.execute("""
+            SELECT id FROM user_recommendations 
+            WHERE id = %s AND user_id = %s
+        """, (recommendation_id, current_user.id))
+        
+        if not cursor.fetchone():
+            cursor.close()
+            conn.close()
+            return jsonify({
+                'success': False,
+                'error': 'Recommendation not found or access denied'
+            }), 404
+        
+        # Update the status
+        update_query = """
+            UPDATE user_recommendations 
+            SET status = %s, updated_at = CURRENT_TIMESTAMP
+        """
+        params = [new_status]
+        
+        # Set completed_at if status is completed
+        if new_status == 'completed':
+            update_query += ", completed_at = CURRENT_TIMESTAMP"
+        elif new_status in ['pending', 'in_progress']:
+            update_query += ", completed_at = NULL"
+        
+        update_query += " WHERE id = %s AND user_id = %s"
+        params.extend([recommendation_id, current_user.id])
+        
+        cursor.execute(update_query, params)
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Recommendation status updated successfully'
+        })
+    
+    except Exception as e:
+        print(f"Error updating recommendation status: {e}")
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'error': 'Failed to update recommendation status'
         }), 500
 
 # Route to check model status
@@ -512,11 +815,88 @@ def get_comprehensive_recommendations(probability, risk_factors, questionnaire_d
     
     return recommendations
 
-def save_comprehensive_analysis(user_id, questionnaire_data, analysis_result):
-    """Save comprehensive analysis results to database"""
+def save_recommendations_to_db(user_id, recommendations, analysis_id=None):
+    """Save individual recommendations to the database with enhanced transaction handling"""
     try:
         conn = current_app.config['get_db_connection']()
         cursor = conn.cursor()
+        
+        # Start transaction
+        conn.begin()
+        
+        # Verify no old recommendations exist (extra safety check)
+        cursor.execute("SELECT COUNT(*) FROM user_recommendations WHERE user_id = %s", (user_id,))
+        existing_count = cursor.fetchone()[0]
+        
+        if existing_count > 0:
+            print(f"⚠️ Warning: Found {existing_count} existing recommendations. Clearing before saving new ones.")
+            cursor.execute("DELETE FROM user_recommendations WHERE user_id = %s", (user_id,))
+        
+        # Save new recommendations with timestamp to ensure they're fresh
+        saved_count = 0
+        for category, rec_list in recommendations.items():
+            for rec_text in rec_list:
+                # Determine priority based on category and content
+                priority = get_recommendation_priority(category, rec_text)
+                
+                cursor.execute("""
+                    INSERT INTO user_recommendations 
+                    (user_id, analysis_id, category, recommendation_text, priority, status, created_at)
+                    VALUES (%s, %s, %s, %s, %s, %s, NOW())
+                """, (user_id, analysis_id, category, rec_text, priority, 'pending'))
+                saved_count += 1
+        
+        # Commit transaction
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        print(f"✓ Successfully saved {saved_count} new recommendations for user {user_id}")
+        return True
+        
+    except Exception as e:
+        print(f"Error saving recommendations: {e}")
+        traceback.print_exc()
+        try:
+            conn.rollback()
+            cursor.close()
+            conn.close()
+        except:
+            pass
+        return False
+
+def get_recommendation_priority(category, text):
+    """Determine recommendation priority based on category and content"""
+    high_priority_keywords = [
+        'ophthalmologist', 'doctor', 'emergency', 'immediately', 
+        'within', 'urgent', 'severe', 'prescription'
+    ]
+    
+    if category == 'medical_advice':
+        return 'high'
+    elif category == 'immediate_actions':
+        return 'high' if any(keyword in text.lower() for keyword in high_priority_keywords) else 'medium'
+    elif category == 'lifestyle_changes':
+        return 'medium'
+    else:  # monitoring
+        return 'low'
+
+def save_comprehensive_analysis(user_id, questionnaire_data, analysis_result, recommendations):
+    """Save comprehensive analysis results to database with enhanced transaction handling"""
+    try:
+        conn = current_app.config['get_db_connection']()
+        cursor = conn.cursor()
+        
+        # Start transaction
+        conn.begin()
+        
+        # Double-check no old data exists
+        cursor.execute("SELECT COUNT(*) FROM user_eye_health_data WHERE user_id = %s", (user_id,))
+        existing_health = cursor.fetchone()[0]
+        
+        if existing_health > 0:
+            print(f"⚠️ Warning: Found {existing_health} existing health records. Clearing before saving new one.")
+            cursor.execute("DELETE FROM user_eye_health_data WHERE user_id = %s", (user_id,))
         
         # Prepare data for user_eye_health_data table
         health_data = {
@@ -548,10 +928,11 @@ def save_comprehensive_analysis(user_id, questionnaire_data, analysis_result):
             'itchiness_irritation_in_eye': questionnaire_data.get('Itchiness_irritation_in_eye', 'N'),
             'dry_eye_disease': 'Y' if analysis_result['combined_analysis']['has_dry_eyes'] else 'N',
             'risk_score': analysis_result['combined_analysis']['risk_score'],
-            'risk_factors': json.dumps(analysis_result['risk_factors'])
+            'risk_factors': json.dumps(analysis_result['risk_factors']),
+            'recommendations_saved': 1
         }
         
-        # Insert or update user health data
+        # Insert health data with explicit timestamp
         cursor.execute("""
             INSERT INTO user_eye_health_data (
                 user_id, gender, age, sleep_duration, sleep_quality, stress_level,
@@ -559,38 +940,47 @@ def save_comprehensive_analysis(user_id, questionnaire_data, analysis_result):
                 sleep_disorder, wake_up_during_night, feel_sleepy_during_day, caffeine_consumption,
                 alcohol_consumption, smoking, medical_issue, ongoing_medication, smart_device_before_bed,
                 average_screen_time, blue_light_filter, discomfort_eye_strain, redness_in_eye,
-                itchiness_irritation_in_eye, dry_eye_disease, risk_score, risk_factors
+                itchiness_irritation_in_eye, dry_eye_disease, risk_score, risk_factors, 
+                recommendations_saved, created_at, updated_at
             ) VALUES (
                 %(user_id)s, %(gender)s, %(age)s, %(sleep_duration)s, %(sleep_quality)s, %(stress_level)s,
                 %(blood_pressure)s, %(heart_rate)s, %(daily_steps)s, %(physical_activity)s, %(height)s, %(weight)s,
                 %(sleep_disorder)s, %(wake_up_during_night)s, %(feel_sleepy_during_day)s, %(caffeine_consumption)s,
                 %(alcohol_consumption)s, %(smoking)s, %(medical_issue)s, %(ongoing_medication)s, %(smart_device_before_bed)s,
                 %(average_screen_time)s, %(blue_light_filter)s, %(discomfort_eye_strain)s, %(redness_in_eye)s,
-                %(itchiness_irritation_in_eye)s, %(dry_eye_disease)s, %(risk_score)s, %(risk_factors)s
+                %(itchiness_irritation_in_eye)s, %(dry_eye_disease)s, %(risk_score)s, %(risk_factors)s, 
+                %(recommendations_saved)s, NOW(), NOW()
             )
-            ON DUPLICATE KEY UPDATE
-                gender=VALUES(gender), age=VALUES(age), sleep_duration=VALUES(sleep_duration),
-                sleep_quality=VALUES(sleep_quality), stress_level=VALUES(stress_level),
-                blood_pressure=VALUES(blood_pressure), heart_rate=VALUES(heart_rate),
-                daily_steps=VALUES(daily_steps), physical_activity=VALUES(physical_activity),
-                height=VALUES(height), weight=VALUES(weight), sleep_disorder=VALUES(sleep_disorder),
-                wake_up_during_night=VALUES(wake_up_during_night), feel_sleepy_during_day=VALUES(feel_sleepy_during_day),
-                caffeine_consumption=VALUES(caffeine_consumption), alcohol_consumption=VALUES(alcohol_consumption),
-                smoking=VALUES(smoking), medical_issue=VALUES(medical_issue), ongoing_medication=VALUES(ongoing_medication),
-                smart_device_before_bed=VALUES(smart_device_before_bed), average_screen_time=VALUES(average_screen_time),
-                blue_light_filter=VALUES(blue_light_filter), discomfort_eye_strain=VALUES(discomfort_eye_strain),
-                redness_in_eye=VALUES(redness_in_eye), itchiness_irritation_in_eye=VALUES(itchiness_irritation_in_eye),
-                dry_eye_disease=VALUES(dry_eye_disease), risk_score=VALUES(risk_score),
-                risk_factors=VALUES(risk_factors), updated_at=CURRENT_TIMESTAMP
         """, health_data)
         
+        # Get the analysis ID
+        analysis_id = cursor.lastrowid
+        
+        # Save recommendations to separate table (using our enhanced function)
+        # First commit the health data, then save recommendations
         conn.commit()
         cursor.close()
         conn.close()
         
+        # Save recommendations using our enhanced function
+        recommendations_saved = save_recommendations_to_db(user_id, recommendations, analysis_id)
+        
+        if not recommendations_saved:
+            raise Exception("Failed to save recommendations")
+        
+        print(f"✓ Complete analysis saved successfully with ID: {analysis_id}")
+        return analysis_id
+        
     except Exception as e:
         print(f"Error saving comprehensive analysis: {e}")
         traceback.print_exc()
+        try:
+            conn.rollback()
+            cursor.close()
+            conn.close()
+        except:
+            pass
+        return None
 
 @eye_detection_bp.route('/eye-analysis-history')
 @login_required
@@ -604,7 +994,7 @@ def get_eye_analysis_history():
             SELECT risk_score, dry_eye_disease, risk_factors, created_at, updated_at
             FROM user_eye_health_data 
             WHERE user_id = %s 
-            ORDER BY updated_at DESC 
+            ORDER BY created_at DESC 
             LIMIT 10
         """, (current_user.id,))
         
@@ -633,4 +1023,61 @@ def get_eye_analysis_history():
         return jsonify({
             'success': False,
             'error': 'Failed to fetch analysis history'
+        }), 500
+
+# Additional endpoint for debugging user data
+@eye_detection_bp.route('/debug-user-data')
+@login_required
+def debug_user_data():
+    """Debug endpoint to check current user data state"""
+    try:
+        conn = current_app.config['get_db_connection']()
+        cursor = conn.cursor()
+        
+        # Check recommendations
+        cursor.execute("""
+            SELECT COUNT(*) as rec_count, MAX(created_at) as latest_rec 
+            FROM user_recommendations WHERE user_id = %s
+        """, (current_user.id,))
+        rec_data = cursor.fetchone()
+        
+        # Check health data
+        cursor.execute("""
+            SELECT COUNT(*) as health_count, MAX(created_at) as latest_health 
+            FROM user_eye_health_data WHERE user_id = %s
+        """, (current_user.id,))
+        health_data = cursor.fetchone()
+        
+        # Get latest recommendations summary
+        cursor.execute("""
+            SELECT category, COUNT(*) as count 
+            FROM user_recommendations 
+            WHERE user_id = %s 
+            GROUP BY category
+        """, (current_user.id,))
+        category_counts = cursor.fetchall()
+        
+        cursor.close()
+        conn.close()
+        
+        return jsonify({
+            'success': True,
+            'user_id': current_user.id,
+            'recommendations': {
+                'total_count': rec_data[0] if rec_data[0] else 0,
+                'latest_created': rec_data[1].strftime('%Y-%m-%d %H:%M:%S') if rec_data[1] else None,
+                'by_category': {cat[0]: cat[1] for cat in category_counts}
+            },
+            'health_data': {
+                'total_count': health_data[0] if health_data[0] else 0,
+                'latest_created': health_data[1].strftime('%Y-%m-%d %H:%M:%S') if health_data[1] else None
+            }
+        })
+    
+    except Exception as e:
+        print(f"Error in debug endpoint: {e}")
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'error': str(e)
         }), 500

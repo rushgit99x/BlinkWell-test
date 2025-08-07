@@ -37,6 +37,12 @@ def contact():
 def eye_analysis():
     return render_template('eye-analysis.html', user=current_user)
 
+@main_bp.route('/recommendations')
+@login_required
+def recommendations():
+    """Display user's personalized recommendations page"""
+    return render_template('recommendations.html', user=current_user)
+
 @main_bp.route('/uploads/<filename>')
 def uploaded_file(filename):
     return send_from_directory(UPLOAD_FOLDER, filename)
