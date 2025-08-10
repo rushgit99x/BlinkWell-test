@@ -9,6 +9,9 @@ from models.user import load_user
 from oauth import init_oauth
 import os
 
+# Add this to your app.py after the existing imports
+from routes.habits import habits_bp
+
 app = Flask(__name__)
 app.config.from_object(Config)
 app.config['UPLOAD_FOLDER'] = 'Uploads'
@@ -38,6 +41,7 @@ login_manager.user_loader(load_user)
 app.register_blueprint(auth_bp)
 app.register_blueprint(main_bp)
 app.register_blueprint(eye_detection_bp)
+app.register_blueprint(habits_bp)
 
 if __name__ == '__main__':
     app.run(debug=True)

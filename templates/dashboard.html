@@ -29,7 +29,8 @@
             <li><a href="#" class="active"><i class="fas fa-home"></i><span>Dashboard</span></a></li>
             <li><a href="{{ url_for('main.eye_analysis') }}"><i class="fas fa-chart-line"></i><span>Eye Analysis</span></a></li>
             <li><a href="{{ url_for('main.recommendations') }}"><i class="fas fa-clipboard-list"></i><span>My Recommendations</span></a></li>
-            <li><a href="#"><i class="fas fa-calendar-check"></i><span>Habits</span></a></li>
+            <!-- <li><a href="#"><i class="fas fa-calendar-check"></i><span>Habits</span></a></li> -->
+             <li><a href="{{ url_for('main.habits') }}"><i class="fas fa-dumbbell"></i><span>Eye Habits</span></a></li>
             <li><a href="#"><i class="fas fa-trophy"></i><span>Progress</span></a></li>
             <li><a href="#"><i class="fas fa-robot"></i><span>AI Assistant</span></a></li>
             <li><a href="#"><i class="fas fa-cog"></i><span>Settings</span></a></li>
@@ -238,11 +239,11 @@
         <div class="quick-actions fade-in-up">
             <h3>Quick Actions</h3>
             <div class="action-buttons">
-                <a href="#" class="action-btn">
+                <a href="{{ url_for('main.eye_analysis') }}" class="action-btn">
                     <i class="fas fa-chart-line"></i>
                     <span>Take Risk Assessment</span>
                 </a>
-                <a href="#" class="action-btn">
+                <a href="{{ url_for('main.habits') }}" class="action-btn">
                     <i class="fas fa-camera"></i>
                     <span>Upload Fundus Photo</span>
                 </a>
