@@ -1,37 +1,48 @@
-CREATE DATABASE IF NOT EXISTS flask_auth_db;
-USE flask_auth_db;
+-- BlinkWell AI Chatbot Database Schema for WAMP Server
+-- Run this in phpMyAdmin or MySQL command line
 
-CREATE TABLE IF NOT EXISTS users (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    username VARCHAR(50) NOT NULL UNIQUE,
-    email VARCHAR(100) NOT NULL UNIQUE,
-    password_hash VARCHAR(255) NOT NULL
-);
+-- Create database if it doesn't exist
+CREATE DATABASE IF NOT EXISTS `flask_auth_db` 
+CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- Use the database
+USE `flask_auth_db`;
+
+-- Users table (if not already exists)
+CREATE TABLE IF NOT EXISTS `users` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `username` VARCHAR(50) NOT NULL UNIQUE,
+    `email` VARCHAR(100) NOT NULL UNIQUE,
+    `password_hash` VARCHAR(255) NOT NULL,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Knowledge base table for chatbot FAQ
-CREATE TABLE IF NOT EXISTS knowledge_base (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    question TEXT NOT NULL,
-    answer TEXT NOT NULL,
-    category VARCHAR(100) DEFAULT 'General',
-    keywords TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    is_active BOOLEAN DEFAULT TRUE
-);
+CREATE TABLE IF NOT EXISTS `knowledge_base` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `question` TEXT NOT NULL,
+    `answer` TEXT NOT NULL,
+    `category` VARCHAR(100) DEFAULT 'General',
+    `keywords` TEXT,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    `is_active` BOOLEAN DEFAULT TRUE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Chat history table to store user conversations
-CREATE TABLE IF NOT EXISTS chat_history (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT,
-    message TEXT NOT NULL,
-    response TEXT NOT NULL,
-    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
-);
+CREATE TABLE IF NOT EXISTS `chat_history` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `user_id` INT NULL,
+    `message` TEXT NOT NULL,
+    `response` TEXT NOT NULL,
+    `timestamp` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX `idx_user_id` (`user_id`),
+    INDEX `idx_timestamp` (`timestamp`),
+    FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Insert some sample FAQ data
-INSERT INTO knowledge_base (question, answer, category, keywords) VALUES
+-- Insert sample FAQ data
+INSERT INTO `knowledge_base` (`question`, `answer`, `category`, `keywords`) VALUES
 ('What is this web app about?', 'This is a comprehensive web application that includes eye disease detection, habit tracking, and various other features to help users maintain their health and wellness.', 'General', 'web app, features, purpose'),
 ('How do I use the eye disease detection?', 'You can upload an image of an eye through the eye detection feature. The AI model will analyze the image and provide insights about potential eye conditions.', 'Eye Detection', 'eye detection, upload image, AI analysis'),
 ('How do I track my habits?', 'Use the habits feature to log your daily activities, set goals, and monitor your progress over time. You can create custom habits and track their completion.', 'Habits', 'habit tracking, goals, progress'),
@@ -42,3 +53,14 @@ INSERT INTO knowledge_base (question, answer, category, keywords) VALUES
 ('How accurate is the AI detection?', 'Our AI models are trained on extensive datasets and provide high accuracy. However, results should not replace professional medical advice.', 'AI', 'accuracy, AI model, medical advice'),
 ('Can I use the app without an account?', 'Some features may be available for guest users, but creating an account provides access to all features and saves your data.', 'Account', 'guest access, account benefits'),
 ('How do I contact support?', 'For technical support or questions, please use the chat feature or contact us through the support section.', 'Support', 'contact, support, help');
+
+-- Create indexes for better performance
+CREATE INDEX `idx_knowledge_category` ON `knowledge_base` (`category`);
+CREATE INDEX `idx_knowledge_active` ON `knowledge_base` (`is_active`);
+CREATE INDEX `idx_knowledge_keywords` ON `knowledge_base` (`keywords`(255));
+
+-- Show created tables
+SHOW TABLES;
+
+-- Show sample data
+SELECT * FROM `knowledge_base` LIMIT 5;
