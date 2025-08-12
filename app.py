@@ -4,6 +4,8 @@ from config import Config
 from routes.auth import auth_bp
 from routes.main import main_bp
 from routes.eye_detection import eye_detection_bp
+from routes.chatbot import chatbot_bp
+from routes.admin import admin_bp
 from models.database import init_db
 from models.user import load_user
 from oauth import init_oauth
@@ -42,6 +44,8 @@ app.register_blueprint(auth_bp)
 app.register_blueprint(main_bp)
 app.register_blueprint(eye_detection_bp)
 app.register_blueprint(habits_bp)
+app.register_blueprint(chatbot_bp)
+app.register_blueprint(admin_bp)
 
 if __name__ == '__main__':
     app.run(debug=True)

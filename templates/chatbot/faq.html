@@ -1,0 +1,603 @@
+{% extends "base.html" %}
+
+{% block title %}FAQ - Frequently Asked Questions{% endblock %}
+
+{% block content %}
+<div class="faq-container">
+    <div class="faq-header">
+        <div class="faq-header-content">
+            <h1><i class="fas fa-question-circle"></i> Frequently Asked Questions</h1>
+            <p>Find answers to common questions about our application</p>
+        </div>
+        <div class="faq-search">
+            <div class="search-wrapper">
+                <i class="fas fa-search search-icon"></i>
+                <input type="text" id="faqSearch" class="search-input" placeholder="Search questions...">
+                <button class="search-clear" id="searchClear" style="display: none;">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="faq-categories">
+        <div class="category-tabs">
+            <button class="category-tab active" data-category="all">
+                <i class="fas fa-th-large"></i> All
+            </button>
+            <button class="category-tab" data-category="General">
+                <i class="fas fa-info-circle"></i> General
+            </button>
+            <button class="category-tab" data-category="Eye Detection">
+                <i class="fas fa-eye"></i> Eye Detection
+            </button>
+            <button class="category-tab" data-category="Habits">
+                <i class="fas fa-tasks"></i> Habits
+            </button>
+            <button class="category-tab" data-category="Account">
+                <i class="fas fa-user"></i> Account
+            </button>
+            <button class="category-tab" data-category="Technical">
+                <i class="fas fa-cog"></i> Technical
+            </button>
+            <button class="category-tab" data-category="Security">
+                <i class="fas fa-shield-alt"></i> Security
+            </button>
+            <button class="category-tab" data-category="AI">
+                <i class="fas fa-brain"></i> AI
+            </button>
+            <button class="category-tab" data-category="Support">
+                <i class="fas fa-headset"></i> Support
+            </button>
+        </div>
+    </div>
+
+    <div class="faq-content">
+        <div class="faq-list" id="faqList">
+            <!-- FAQ items will be loaded here -->
+        </div>
+        
+        <div class="faq-loading" id="faqLoading">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p>Loading FAQ...</p>
+        </div>
+        
+        <div class="faq-empty" id="faqEmpty" style="display: none;">
+            <div class="empty-icon">
+                <i class="fas fa-search"></i>
+            </div>
+            <h3>No questions found</h3>
+            <p>Try adjusting your search terms or browse all categories.</p>
+        </div>
+    </div>
+
+    <div class="faq-footer">
+        <div class="faq-actions">
+            <a href="{{ url_for('chatbot.chat_page') }}" class="btn btn-primary">
+                <i class="fas fa-comments"></i> Chat with AI Assistant
+            </a>
+            <button class="btn btn-outline-secondary" onclick="refreshFAQ()">
+                <i class="fas fa-sync-alt"></i> Refresh
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+.faq-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.faq-header {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.faq-header-content h1 {
+    color: #2c3e50;
+    margin-bottom: 10px;
+    font-size: 2.5rem;
+    font-weight: 700;
+}
+
+.faq-header-content h1 i {
+    color: #667eea;
+    margin-right: 15px;
+}
+
+.faq-header-content p {
+    color: #6c757d;
+    font-size: 1.1rem;
+    margin-bottom: 30px;
+}
+
+.faq-search {
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.search-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.search-icon {
+    position: absolute;
+    left: 15px;
+    color: #6c757d;
+    z-index: 2;
+}
+
+.search-input {
+    width: 100%;
+    padding: 15px 45px 15px 45px;
+    border: 2px solid #e9ecef;
+    border-radius: 25px;
+    font-size: 1rem;
+    outline: none;
+    transition: all 0.3s ease;
+    background: white;
+}
+
+.search-input:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+.search-clear {
+    position: absolute;
+    right: 15px;
+    background: none;
+    border: none;
+    color: #6c757d;
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+    z-index: 2;
+}
+
+.search-clear:hover {
+    background: #e9ecef;
+    color: #495057;
+}
+
+.faq-categories {
+    margin-bottom: 30px;
+}
+
+.category-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+}
+
+.category-tab {
+    padding: 10px 20px;
+    border: 2px solid #e9ecef;
+    background: white;
+    color: #6c757d;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.category-tab:hover {
+    border-color: #667eea;
+    color: #667eea;
+    transform: translateY(-2px);
+}
+
+.category-tab.active {
+    background: #667eea;
+    border-color: #667eea;
+    color: white;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.faq-content {
+    min-height: 400px;
+}
+
+.faq-list {
+    display: none;
+}
+
+.faq-item {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    margin-bottom: 20px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    border: 1px solid #e9ecef;
+}
+
+.faq-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+}
+
+.faq-question {
+    padding: 20px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+    transition: background-color 0.2s ease;
+}
+
+.faq-question:hover {
+    background: #e9ecef;
+}
+
+.faq-question-text {
+    font-weight: 600;
+    color: #2c3e50;
+    font-size: 1.1rem;
+    margin: 0;
+    flex: 1;
+}
+
+.faq-toggle {
+    background: none;
+    border: none;
+    color: #6c757d;
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.faq-toggle:hover {
+    background: #dee2e6;
+    color: #495057;
+}
+
+.faq-toggle i {
+    transition: transform 0.3s ease;
+}
+
+.faq-toggle.active i {
+    transform: rotate(180deg);
+}
+
+.faq-answer {
+    padding: 0 20px;
+    max-height: 0;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    background: white;
+}
+
+.faq-answer.active {
+    padding: 20px;
+    max-height: 500px;
+}
+
+.faq-answer-text {
+    color: #495057;
+    line-height: 1.6;
+    margin: 0;
+}
+
+.faq-category-badge {
+    display: inline-block;
+    background: #667eea;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 15px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    margin-top: 10px;
+}
+
+.faq-loading {
+    text-align: center;
+    padding: 60px 20px;
+    color: #6c757d;
+}
+
+.faq-loading .spinner-border {
+    width: 3rem;
+    height: 3rem;
+    margin-bottom: 20px;
+}
+
+.faq-empty {
+    text-align: center;
+    padding: 60px 20px;
+    color: #6c757d;
+}
+
+.empty-icon {
+    font-size: 4rem;
+    color: #dee2e6;
+    margin-bottom: 20px;
+}
+
+.faq-footer {
+    margin-top: 40px;
+    text-align: center;
+    padding-top: 30px;
+    border-top: 1px solid #e9ecef;
+}
+
+.faq-actions {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .faq-container {
+        padding: 15px;
+    }
+    
+    .faq-header-content h1 {
+        font-size: 2rem;
+    }
+    
+    .category-tabs {
+        gap: 8px;
+    }
+    
+    .category-tab {
+        padding: 8px 16px;
+        font-size: 0.8rem;
+    }
+    
+    .faq-actions {
+        flex-direction: column;
+        align-items: center;
+    }
+}
+
+/* Animation for FAQ items */
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.faq-item {
+    animation: slideDown 0.3s ease-out;
+}
+
+/* Highlight search results */
+.highlight {
+    background: #fff3cd;
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-weight: 600;
+}
+</style>
+
+<script>
+let currentCategory = 'all';
+let allFAQs = [];
+let filteredFAQs = [];
+
+// Load FAQ data
+document.addEventListener('DOMContentLoaded', function() {
+    loadFAQ();
+    setupEventListeners();
+});
+
+function setupEventListeners() {
+    // Search functionality
+    const searchInput = document.getElementById('faqSearch');
+    const searchClear = document.getElementById('searchClear');
+    
+    searchInput.addEventListener('input', function() {
+        const query = this.value.trim();
+        if (query) {
+            searchClear.style.display = 'block';
+            filterFAQs(query);
+        } else {
+            searchClear.style.display = 'none';
+            showFAQsByCategory(currentCategory);
+        }
+    });
+    
+    searchClear.addEventListener('click', function() {
+        searchInput.value = '';
+        this.style.display = 'none';
+        showFAQsByCategory(currentCategory);
+    });
+    
+    // Category tabs
+    document.querySelectorAll('.category-tab').forEach(tab => {
+        tab.addEventListener('click', function() {
+            const category = this.dataset.category;
+            setActiveCategory(category);
+            showFAQsByCategory(category);
+        });
+    });
+}
+
+function loadFAQ() {
+    fetch('/chat/api/faq')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                allFAQs = data.faqs;
+                filteredFAQs = [...allFAQs];
+                showFAQsByCategory(currentCategory);
+            } else {
+                showError('Failed to load FAQ data');
+            }
+        })
+        .catch(error => {
+            console.error('Error loading FAQ:', error);
+            showError('Failed to load FAQ data');
+        });
+}
+
+function setActiveCategory(category) {
+    currentCategory = category;
+    
+    // Update active tab
+    document.querySelectorAll('.category-tab').forEach(tab => {
+        tab.classList.remove('active');
+        if (tab.dataset.category === category) {
+            tab.classList.add('active');
+        }
+    });
+}
+
+function showFAQsByCategory(category) {
+    if (category === 'all') {
+        filteredFAQs = [...allFAQs];
+    } else {
+        filteredFAQs = allFAQs.filter(faq => faq.category === category);
+    }
+    
+    renderFAQs(filteredFAQs);
+}
+
+function filterFAQs(query) {
+    const searchTerm = query.toLowerCase();
+    filteredFAQs = allFAQs.filter(faq => {
+        return faq.question.toLowerCase().includes(searchTerm) ||
+               faq.answer.toLowerCase().includes(searchTerm) ||
+               faq.category.toLowerCase().includes(searchTerm);
+    });
+    
+    renderFAQs(filteredFAQs);
+}
+
+function renderFAQs(faqs) {
+    const faqList = document.getElementById('faqList');
+    const faqLoading = document.getElementById('faqLoading');
+    const faqEmpty = document.getElementById('faqEmpty');
+    
+    // Hide loading
+    faqLoading.style.display = 'none';
+    
+    if (faqs.length === 0) {
+        faqList.style.display = 'none';
+        faqEmpty.style.display = 'block';
+        return;
+    }
+    
+    faqEmpty.style.display = 'none';
+    faqList.style.display = 'block';
+    
+    // Render FAQ items
+    faqList.innerHTML = faqs.map((faq, index) => `
+        <div class="faq-item" data-category="${faq.category}">
+            <div class="faq-question" onclick="toggleFAQ(${index})">
+                <p class="faq-question-text">${faq.question}</p>
+                <button class="faq-toggle" id="toggle-${index}">
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+            </div>
+            <div class="faq-answer" id="answer-${index}">
+                <p class="faq-answer-text">${faq.answer}</p>
+                <span class="faq-category-badge">${faq.category}</span>
+            </div>
+        </div>
+    `).join('');
+}
+
+function toggleFAQ(index) {
+    const answer = document.getElementById(`answer-${index}`);
+    const toggle = document.getElementById(`toggle-${index}`);
+    
+    if (answer.classList.contains('active')) {
+        answer.classList.remove('active');
+        toggle.classList.remove('active');
+    } else {
+        // Close all other open FAQs
+        document.querySelectorAll('.faq-answer.active').forEach(openAnswer => {
+            openAnswer.classList.remove('active');
+        });
+        document.querySelectorAll('.faq-toggle.active').forEach(openToggle => {
+            openToggle.classList.remove('active');
+        });
+        
+        // Open current FAQ
+        answer.classList.add('active');
+        toggle.classList.add('active');
+    }
+}
+
+function refreshFAQ() {
+    const refreshBtn = event.target.closest('button');
+    const originalText = refreshBtn.innerHTML;
+    
+    refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Refreshing...';
+    refreshBtn.disabled = true;
+    
+    // Show loading
+    document.getElementById('faqList').style.display = 'none';
+    document.getElementById('faqEmpty').style.display = 'none';
+    document.getElementById('faqLoading').style.display = 'block';
+    
+    // Reload FAQ data
+    loadFAQ();
+    
+    // Reset search
+    document.getElementById('faqSearch').value = '';
+    document.getElementById('searchClear').style.display = 'none';
+    
+    setTimeout(() => {
+        refreshBtn.innerHTML = originalText;
+        refreshBtn.disabled = false;
+    }, 1000);
+}
+
+function showError(message) {
+    // Create error notification
+    const notification = document.createElement('div');
+    notification.className = 'alert alert-danger alert-dismissible fade show';
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        min-width: 300px;
+    `;
+    
+    notification.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.remove();
+        }
+    }, 5000);
+}
+</script>
+{% endblock %}
