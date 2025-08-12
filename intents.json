@@ -1,0 +1,740 @@
+{
+  "intents": [
+    {
+      "tag": "greeting",
+      "patterns": [
+        "Hi",
+        "Hello",
+        "Hey",
+        "Good morning",
+        "Good afternoon",
+        "Good evening",
+        "What's up",
+        "How are you",
+        "Is anyone there",
+        "Yo",
+        "Hi there",
+        "Heya",
+        "Howdy",
+        "Greetings",
+        "Good day",
+        "Morning",
+        "Afternoon",
+        "Evening",
+        "Sup",
+        "What's happening"
+      ],
+      "responses": [
+        "Hello! I'm your BlinkWell AI assistant, here to guide you on eye health. What's on your mind today?",
+        "Hi! Welcome to BlinkWell. Got any questions about dry eyes, vision care, or eye health?",
+        "Hey there! I'm ready to help with all your eye health queries. What would you like to explore?",
+        "Good to see you! BlinkWell is here to provide personalized eye health advice. How can I assist?",
+        "Welcome to BlinkWell! I'm here to help you maintain healthy vision and prevent dry eyes. What can I help you with today?"
+      ]
+    },
+    {
+      "tag": "goodbye",
+      "patterns": [
+        "Bye",
+        "See you later",
+        "Goodbye",
+        "Thanks, bye",
+        "Talk to you later",
+        "See ya",
+        "Catch you later",
+        "Take care",
+        "Later",
+        "Farewell",
+        "Until next time",
+        "Signing off",
+        "Gotta go",
+        "Peace out",
+        "See you around",
+        "Have a good day",
+        "Take it easy"
+      ],
+      "responses": [
+        "Goodbye! Keep those eyes healthy and blink often!",
+        "See you soon! Follow the 20-20-20 rule to give your eyes a break.",
+        "Bye for now! Come back anytime for more eye health tips.",
+        "Take care! Stay mindful of your eye health.",
+        "Farewell! Remember to give your eyes regular breaks from screens.",
+        "Until next time! Keep up with your eye health routine."
+      ]
+    },
+    {
+      "tag": "thanks",
+      "patterns": [
+        "Thanks",
+        "Thank you",
+        "That's helpful",
+        "Thanks a lot",
+        "Much appreciated",
+        "Thanks for the help",
+        "Great, thanks",
+        "Appreciate it",
+        "Thank you so much",
+        "Thanks a ton",
+        "Grateful",
+        "That's great",
+        "Perfect, thanks",
+        "Thanks for the info",
+        "Really helpful",
+        "Appreciate the help"
+      ],
+      "responses": [
+        "You're very welcome! Glad I could assist with your eye health needs.",
+        "Happy to help! Prioritize your eye care, and I'm here anytime.",
+        "No problem! Keep up with good eye health habits!",
+        "You're welcome! Stay proactive about your vision health.",
+        "My pleasure! Taking care of your eyes is so important.",
+        "Glad I could help! Remember to blink regularly and take screen breaks."
+      ]
+    },
+    {
+      "tag": "dry_eyes_symptoms",
+      "patterns": [
+        "What are dry eye symptoms",
+        "Signs of dry eyes",
+        "How do I know if I have dry eyes",
+        "Dry eye symptoms",
+        "What does dry eye feel like",
+        "Symptoms of dry eye disease",
+        "How to tell if eyes are dry",
+        "Why do my eyes feel gritty",
+        "Eyes burning sensation",
+        "Eye irritation symptoms",
+        "Dry eye signs",
+        "What are the symptoms of dry eyes",
+        "How to recognize dry eyes",
+        "Eye discomfort symptoms",
+        "Dry eye indicators",
+        "Eye strain symptoms",
+        "Vision problems with dry eyes"
+      ],
+      "responses": [
+        "Dry eye symptoms include burning, stinging, a gritty or scratchy sensation, excessive tearing, blurred vision, light sensitivity, or feeling like something's in your eye. Persistent symptoms warrant a visit to an eye doctor.",
+        "Common signs of dry eyes are redness, irritation, watery eyes, blurred vision, and discomfort, especially with contact lenses or prolonged screen time. BlinkWell can help evaluate your symptoms.",
+        "You may have dry eyes if you feel burning, itching, or a sandy sensation, experience blurred vision, or notice increased sensitivity to light. These often worsen in dry or windy conditions.",
+        "Typical dry eye symptoms include eye fatigue, difficulty wearing contact lenses, stringy mucus around the eyes, and increased eye irritation in windy or air-conditioned environments.",
+        "Watch for symptoms like eye redness, a feeling of heaviness in the eyelids, difficulty driving at night, and increased sensitivity to smoke or air pollution."
+      ]
+    },
+    {
+      "tag": "dry_eyes_causes",
+      "patterns": [
+        "What causes dry eyes",
+        "Why do I have dry eyes",
+        "Dry eye causes",
+        "What leads to dry eyes",
+        "Risk factors for dry eyes",
+        "Why are my eyes dry",
+        "What makes eyes dry",
+        "Reasons for dry eyes",
+        "Dry eye triggers",
+        "What causes dry eye syndrome",
+        "Why do my eyes get dry",
+        "Dry eye risk factors",
+        "Causes of dry eye disease",
+        "What leads to dry eye symptoms",
+        "Environmental causes of dry eyes",
+        "Lifestyle factors for dry eyes"
+      ],
+      "responses": [
+        "Dry eyes can stem from aging, hormonal changes, medications (e.g., antihistamines), environmental factors (dry air, wind), excessive screen time, contact lenses, or conditions like diabetes or arthritis. BlinkWell can assess your risk.",
+        "Causes include reduced tear production, poor tear quality, medications (e.g., antidepressants), medical conditions, or lifestyle factors like low humidity or prolonged device use.",
+        "Dry eyes may result from insufficient tears, fast tear evaporation, or inflammation. Risk factors include age, female gender, certain medications, screen exposure, and environmental conditions.",
+        "Common triggers include air conditioning, heating systems, wind, smoke, high altitudes, and certain medications like birth control pills, antidepressants, and blood pressure medications.",
+        "Lifestyle factors like prolonged computer use, reading, driving, and wearing contact lenses can all contribute to dry eye development."
+      ]
+    },
+    {
+      "tag": "prevention_tips",
+      "patterns": [
+        "How to prevent dry eyes",
+        "Dry eye prevention",
+        "How to avoid dry eyes",
+        "Preventing dry eyes",
+        "Tips for healthy eyes",
+        "Eye health tips",
+        "How to keep eyes moist",
+        "Ways to protect eyes",
+        "Healthy vision tips",
+        "Prevent dry eye syndrome",
+        "Eye care tips",
+        "How to maintain eye health",
+        "Prevention strategies for dry eyes",
+        "Eye health maintenance",
+        "Protecting your vision",
+        "Daily eye care routine"
+      ],
+      "responses": [
+        "Prevent dry eyes by following the 20-20-20 rule, blinking frequently, using a humidifier, staying hydrated, wearing wraparound sunglasses outdoors, and limiting screen time.",
+        "Eye health tips: drink 8-10 glasses of water daily, use artificial tears, avoid direct air from fans or AC, eat omega-3-rich foods (fish, flaxseeds), and practice good eyelid hygiene.",
+        "Keep eyes moist by consciously blinking during screen time, maintaining indoor humidity (40-60%), using proper lighting, and eating a diet rich in vitamins A, C, E, and omega-3s.",
+        "Establish a daily eye care routine: warm compresses in the morning, regular blinking exercises, proper lighting setup, and taking breaks from close-up work every hour.",
+        "Protect your eyes by avoiding smoke, using air purifiers, maintaining proper posture during screen time, and ensuring adequate sleep for optimal eye recovery."
+      ]
+    },
+    {
+      "tag": "screen_time",
+      "patterns": [
+        "Screen time and dry eyes",
+        "Computer eye strain",
+        "Digital eye strain",
+        "Eyes hurt from screen",
+        "Too much screen time",
+        "Computer vision syndrome",
+        "Eye strain from phone",
+        "Screen and eye health",
+        "Device use and eyes",
+        "Phone and dry eyes",
+        "Computer use and eye health",
+        "Digital devices and vision",
+        "Screen time effects on eyes",
+        "Technology and eye strain",
+        "Device usage and dry eyes",
+        "Computer work and eye health"
+      ],
+      "responses": [
+        "Excessive screen time lowers blink rate, leading to dry eyes and strain. Use the 20-20-20 rule, adjust screen brightness, enable blue light filters, and keep screens 20-26 inches away.",
+        "Digital eye strain from screens causes dry eyes, headaches, and blurred vision. Take breaks every 20 minutes, blink consciously, optimize screen settings, and ensure ergonomic positioning.",
+        "Screens reduce blinking, worsening dry eyes. Use preservative-free artificial tears, take regular breaks, adjust display contrast, and maintain proper distance to minimize strain.",
+        "Limit screen time by setting timers, using apps that remind you to take breaks, and implementing screen-free hours before bedtime to improve overall eye health.",
+        "Optimize your workspace: position screens at eye level, reduce glare, use proper lighting, and take micro-breaks every 30 minutes to prevent digital eye strain."
+      ]
+    },
+    {
+      "tag": "treatment_options",
+      "patterns": [
+        "How to treat dry eyes",
+        "Dry eye treatment",
+        "What helps dry eyes",
+        "Dry eye remedies",
+        "Treatment for dry eyes",
+        "How to fix dry eyes",
+        "Relief for dry eyes",
+        "Dry eye solutions",
+        "Cure for dry eyes",
+        "Dry eye medication",
+        "Home remedies for dry eyes",
+        "Medical treatment for dry eyes",
+        "Dry eye therapy",
+        "How to relieve dry eyes",
+        "Dry eye management",
+        "Treatment options for dry eyes"
+      ],
+      "responses": [
+        "Treat dry eyes with preservative-free artificial tears, warm compresses, eyelid hygiene, omega-3 supplements, or prescription drops like Restasis. Severe cases may need punctal plugs or procedures.",
+        "Start with over-the-counter artificial tears and warm compresses. Persistent symptoms may require prescription medications (e.g., Xiidra) or professional treatments. BlinkWell can track your progress.",
+        "Relieve dry eyes with artificial tears, humidifiers, and lifestyle changes like reduced screen time. Consult an eye doctor for advanced treatments like intense pulsed light therapy if needed.",
+        "Home treatments include warm compresses, gentle eyelid massage, omega-3 supplements, and using a humidifier. For persistent symptoms, consult an eye care professional.",
+        "Advanced treatments may include prescription eye drops, punctal plugs to conserve tears, or procedures like LipiFlow for meibomian gland dysfunction."
+      ]
+    },
+    {
+      "tag": "when_see_doctor",
+      "patterns": [
+        "When to see eye doctor",
+        "Should I see an eye doctor",
+        "When to get help for dry eyes",
+        "See doctor for dry eyes",
+        "Eye doctor appointment",
+        "Medical help for eyes",
+        "When to visit eye specialist",
+        "Eye doctor for dry eyes",
+        "When to seek medical attention",
+        "Emergency eye care",
+        "Urgent eye problems",
+        "When to call eye doctor",
+        "Eye doctor consultation",
+        "Medical evaluation for eyes",
+        "Professional eye care",
+        "When to get eye exam"
+      ],
+      "responses": [
+        "Visit an eye doctor if dry eye symptoms persist beyond a few days, cause severe pain, affect vision, or don't improve with over-the-counter treatments after 2-3 weeks.",
+        "Seek professional help for chronic eye discomfort, vision changes, or symptoms impacting daily life. Early intervention can prevent complications and improve treatment outcomes.",
+        "If dry eyes are severe, persistent, or disrupt your routine, consult an eye specialist. They can assess underlying causes and recommend advanced treatments tailored to you.",
+        "Emergency signs requiring immediate care: sudden vision loss, severe eye pain, eye injury, or symptoms accompanied by headache or nausea.",
+        "Schedule regular eye exams annually, or more frequently if you have existing eye conditions, diabetes, or are over 60 years old."
+      ]
+    },
+    {
+      "tag": "blinkwell_features",
+      "patterns": [
+        "What is BlinkWell",
+        "BlinkWell features",
+        "How does BlinkWell work",
+        "What can BlinkWell do",
+        "Tell me about BlinkWell",
+        "BlinkWell platform",
+        "BlinkWell app features",
+        "BlinkWell services",
+        "About BlinkWell AI",
+        "BlinkWell capabilities",
+        "How BlinkWell helps",
+        "BlinkWell benefits",
+        "What is BlinkWell app",
+        "BlinkWell technology",
+        "BlinkWell platform features",
+        "BlinkWell AI assistant"
+      ],
+      "responses": [
+        "BlinkWell is an AI-driven platform for eye health, offering personalized dry eye risk assessment, habit tracking, fundus photo analysis, and tailored recommendations to protect your vision.",
+        "BlinkWell features AI-powered risk prediction, daily habit tracking, personalized eye health advice, and an intelligent chatbot to answer your questions about dry eyes and vision care.",
+        "Our platform uses advanced AI to analyze lifestyle data, predict dry eye risks, provide actionable recommendations, and track your eye health progress over time.",
+        "BlinkWell combines cutting-edge AI technology with medical expertise to deliver personalized eye health insights, preventive strategies, and ongoing monitoring for optimal vision care.",
+        "The platform offers comprehensive eye health management including risk assessment, habit tracking, educational content, and AI-powered recommendations tailored to your specific needs."
+      ]
+    },
+    {
+      "tag": "risk_assessment",
+      "patterns": [
+        "Eye risk assessment",
+        "How to check my risk",
+        "Dry eye risk",
+        "Risk prediction",
+        "Check my eye health",
+        "Eye health assessment",
+        "Risk calculator",
+        "Dry eye risk factors",
+        "Eye health evaluation",
+        "Assess my eye risk",
+        "Eye health check",
+        "Risk evaluation",
+        "Eye health screening",
+        "Personalized risk assessment",
+        "Eye health calculator",
+        "Risk analysis for eyes"
+      ],
+      "responses": [
+        "BlinkWell's AI assesses your dry eye risk by analyzing lifestyle, medical history, and environmental factors, delivering a personalized score with actionable prevention tips.",
+        "Our risk calculator evaluates screen time, diet, hydration, and health conditions to provide a tailored dry eye risk score and recommendations for better eye health.",
+        "Complete BlinkWell's lifestyle questionnaire to get a personalized dry eye risk assessment, including a detailed score and suggestions to reduce your risk.",
+        "The assessment considers factors like age, gender, occupation, screen usage, medical conditions, and environmental factors to provide a comprehensive risk profile.",
+        "Get your personalized risk score and receive customized recommendations for lifestyle changes, preventive measures, and monitoring strategies."
+      ]
+    },
+    {
+      "tag": "hydration_eyes",
+      "patterns": [
+        "Water and eye health",
+        "Hydration for eyes",
+        "Drinking water for dry eyes",
+        "Does water help dry eyes",
+        "How much water for eyes",
+        "Dehydration and dry eyes",
+        "Water intake for eyes",
+        "Hydration and vision",
+        "Fluid intake for eye health",
+        "Water consumption and eyes",
+        "Hydration tips for eyes",
+        "Dehydration effects on eyes",
+        "Fluid balance and vision",
+        "Water and tear production",
+        "Hydration for dry eyes",
+        "Daily water intake for eyes"
+      ],
+      "responses": [
+        "Hydration is key for eye health. Drink 8-10 glasses of water daily to support tear production. Dehydration can worsen dry eye symptoms like irritation and grittiness.",
+        "Adequate water intake (about 2 liters daily) maintains tear film health. Include water-rich foods like cucumbers and oranges to boost hydration and eye comfort.",
+        "Dehydration reduces tear production, aggravating dry eyes. Aim for 8-10 glasses of water daily and monitor hydration with BlinkWell for optimal eye health.",
+        "Maintain consistent hydration throughout the day rather than drinking large amounts at once. This helps maintain stable tear production and eye comfort.",
+        "Consider your climate and activity level - you may need more water in dry, hot conditions or during exercise to maintain proper eye hydration."
+      ]
+    },
+    {
+      "tag": "diet_eye_health",
+      "patterns": [
+        "Best foods for eyes",
+        "Eye healthy diet",
+        "Foods for dry eyes",
+        "Nutrition for eyes",
+        "What to eat for eye health",
+        "Vitamins for eyes",
+        "Diet for vision",
+        "Eye health foods",
+        "Nutritional supplements for eyes",
+        "Diet and dry eyes",
+        "Foods that help eyes",
+        "Eye health nutrition",
+        "Vitamins for dry eyes",
+        "Dietary recommendations for eyes",
+        "Eye health supplements",
+        "Nutrition and vision"
+      ],
+      "responses": [
+        "Support eye health with foods like leafy greens (lutein), salmon (omega-3s), citrus fruits (vitamin C), almonds (vitamin E), and carrots (beta-carotene) for better tear quality and vision.",
+        "A diet rich in omega-3s, vitamins A, C, E, and zinc helps prevent dry eyes. Include fish, spinach, berries, and nuts, and limit processed foods for optimal eye health.",
+        "For dry eyes, eat omega-3-rich foods (salmon, chia seeds), vitamin A sources (sweet potatoes), and antioxidant-rich fruits (berries) to improve tear production and reduce inflammation.",
+        "Include colorful fruits and vegetables daily: orange foods (carrots, sweet potatoes), green leafy vegetables (spinach, kale), and berries for their antioxidant properties.",
+        "Consider supplements like omega-3 fish oil, vitamin D, and lutein/zeaxanthin if you're not getting enough from your diet, but consult with a healthcare provider first."
+      ]
+    },
+    {
+      "tag": "sleep_eye_health",
+      "patterns": [
+        "Sleep and eye health",
+        "Does sleep affect eyes",
+        "Sleep for dry eyes",
+        "Eye rest and sleep",
+        "How much sleep for eyes",
+        "Tired eyes",
+        "Sleep impact on eyes",
+        "Eye fatigue and sleep",
+        "Sleep quality and vision",
+        "Rest for eyes",
+        "Sleep deprivation and eyes",
+        "Eye recovery during sleep",
+        "Sleep schedule for eye health",
+        "Eye rest and recovery",
+        "Sleep hygiene for eyes",
+        "Tired eyes and sleep"
+      ],
+      "responses": [
+        "Quality sleep (7-9 hours) allows eyes to rest and replenish tears. Lack of sleep can cause dry eyes, irritation, and fatigue. Avoid screens before bed for better eye health.",
+        "Sleep is vital for eye recovery. Poor sleep reduces tear production, worsening dry eyes. Maintain a consistent sleep schedule and use a humidifier for optimal eye rest.",
+        "Inadequate sleep can lead to dry, tired eyes. Aim for 7-9 hours of quality sleep and limit screen exposure before bed to support healthy tear production.",
+        "Establish a bedtime routine that includes reducing screen time 1-2 hours before sleep, using warm compresses, and ensuring your bedroom has optimal humidity for eye comfort.",
+        "Poor sleep quality can exacerbate dry eye symptoms. Practice good sleep hygiene and consider using a sleep mask to protect your eyes during rest."
+      ]
+    },
+    {
+      "tag": "contact_lenses",
+      "patterns": [
+        "Contact lenses and dry eyes",
+        "Contacts causing dry eyes",
+        "Dry eyes with contacts",
+        "Contact lens problems",
+        "Can I wear contacts with dry eyes",
+        "Contacts and eye irritation",
+        "Dry eyes contact lens solutions",
+        "Contact lens care",
+        "Lens solutions for dry eyes",
+        "Contact lens alternatives",
+        "Dry eyes and lens wear",
+        "Contact lens comfort",
+        "Lens hygiene for dry eyes",
+        "Contact lens types for dry eyes",
+        "Managing dry eyes with contacts",
+        "Contact lens tips"
+      ],
+      "responses": [
+        "Contact lenses can worsen dry eyes by disrupting tear film. Use preservative-free rewetting drops, limit wear time, maintain lens hygiene, or switch to daily disposables.",
+        "Dry eyes with contacts? Try daily lenses, use contact-safe artificial tears, take lens-free breaks, and consult your eye doctor for specialized lenses or treatments.",
+        "Contacts may aggravate dry eyes. Opt for high-moisture lenses, use rewetting drops, clean lenses thoroughly, and avoid extended wear to minimize discomfort.",
+        "Consider silicone hydrogel lenses which allow more oxygen to reach your eyes, or daily disposable lenses to reduce protein buildup that can irritate dry eyes.",
+        "Practice good lens hygiene: clean lenses daily, replace cases regularly, never use tap water, and give your eyes breaks from contacts when possible."
+      ]
+    },
+    {
+      "tag": "blue_light",
+      "patterns": [
+        "Blue light and eyes",
+        "Does blue light hurt eyes",
+        "Blue light glasses",
+        "Blue light and dry eyes",
+        "Screen blue light",
+        "Blue light impact on vision",
+        "Blue light protection",
+        "Blue light filters",
+        "Blue light effects",
+        "Blue light blocking",
+        "Digital eye strain and blue light",
+        "Blue light exposure",
+        "Blue light and sleep",
+        "Blue light glasses benefits",
+        "Screen time and blue light",
+        "Blue light technology"
+      ],
+      "responses": [
+        "Blue light from screens may contribute to eye strain and disrupt sleep, potentially worsening dry eyes. Use blue light filters, wear blue light glasses, and take regular screen breaks.",
+        "Prolonged blue light exposure can cause eye fatigue and reduce blink rate, leading to dry eyes. Blue light glasses or screen filters can help, along with the 20-20-20 rule.",
+        "Blue light may not directly cause dry eyes but can increase strain. Adjust device settings to reduce blue light, use protective glasses, and blink frequently during screen time.",
+        "Consider blue light glasses with amber or orange-tinted lenses for evening use, and enable night mode on your devices to reduce blue light exposure before bedtime.",
+        "While blue light isn't proven to cause permanent eye damage, it can contribute to digital eye strain and sleep disruption, making blue light protection beneficial for overall eye comfort."
+      ]
+    },
+    {
+      "tag": "eye_exercises",
+      "patterns": [
+        "Eye exercises for dry eyes",
+        "Exercises for eye health",
+        "Eye relaxation techniques",
+        "How to relax eyes",
+        "Eye strain exercises",
+        "Eye strengthening exercises",
+        "Eye yoga",
+        "Eye relaxation methods",
+        "Eye exercises routine",
+        "Vision exercises",
+        "Eye muscle exercises",
+        "Eye strain relief exercises",
+        "Eye health exercises",
+        "Eye relaxation exercises",
+        "Eye workout",
+        "Vision training exercises"
+      ],
+      "responses": [
+        "Eye exercises like blinking rapidly for 20 seconds, focusing on distant objects, or palming (covering eyes with hands to relax them) can reduce strain and improve tear distribution.",
+        "To relax eyes, try the 20-20-20 rule, blink intentionally, or do eye-rolling exercises. These help stimulate tear production and relieve dryness from prolonged screen use.",
+        "Simple exercises like looking far and near alternately or closing eyes for a minute can ease strain and promote tear film stability. Practice regularly for best results.",
+        "Try eye yoga: gentle eye movements, focusing exercises, and relaxation techniques. These can improve eye muscle strength and reduce fatigue from digital device use.",
+        "Incorporate eye exercises into your daily routine: morning eye stretches, midday relaxation techniques, and evening decompression exercises for optimal eye health."
+      ]
+    },
+    {
+      "tag": "environmental_factors",
+      "patterns": [
+        "Weather and dry eyes",
+        "Climate and eye health",
+        "Air quality and eyes",
+        "Humidity and dry eyes",
+        "Temperature effects on eyes",
+        "Environmental dry eye triggers",
+        "Weather impact on eyes",
+        "Air conditioning and eyes",
+        "Heating and eye health",
+        "Wind and dry eyes",
+        "Altitude and eye health",
+        "Pollution and eyes",
+        "Seasonal dry eyes",
+        "Indoor air quality and eyes",
+        "Weather changes and vision",
+        "Environmental eye protection"
+      ],
+      "responses": [
+        "Environmental factors like low humidity, wind, air conditioning, and heating can significantly impact dry eye symptoms. Use humidifiers and avoid direct air flow to your eyes.",
+        "Weather changes, especially during winter months with indoor heating, can worsen dry eyes. Maintain indoor humidity between 40-60% and use protective eyewear outdoors.",
+        "Air quality, pollution, and seasonal changes can affect eye comfort. Consider using air purifiers indoors and wearing wraparound sunglasses to protect against wind and debris.",
+        "High altitudes, dry climates, and air conditioning can all contribute to dry eyes. Stay hydrated, use artificial tears, and consider using a humidifier in dry environments.",
+        "Protect your eyes from environmental factors by wearing appropriate eyewear, maintaining good indoor air quality, and adjusting your eye care routine based on your environment."
+      ]
+    },
+    {
+      "tag": "workplace_eye_health",
+      "patterns": [
+        "Office eye health",
+        "Workplace eye care",
+        "Computer work and eyes",
+        "Office ergonomics for eyes",
+        "Work environment and eye health",
+        "Desk job eye care",
+        "Office lighting and eyes",
+        "Workplace dry eyes",
+        "Computer workstation eye health",
+        "Office eye strain",
+        "Work environment vision",
+        "Desk setup for eye health",
+        "Office lighting setup",
+        "Workplace eye exercises",
+        "Office eye breaks",
+        "Work environment eye protection"
+      ],
+      "responses": [
+        "Optimize your workplace for eye health: position screens at eye level, use proper lighting, take regular breaks, and maintain good posture to reduce eye strain and dry eyes.",
+        "Set up your workstation with screens 20-26 inches away, slightly below eye level, and use ambient lighting that doesn't create glare or shadows on your screen.",
+        "Implement workplace eye health practices: the 20-20-20 rule, regular blinking exercises, proper screen positioning, and using artificial tears when needed.",
+        "Consider your office environment: adjust lighting to reduce glare, use anti-glare screens, position your desk away from direct air flow, and maintain comfortable humidity levels.",
+        "Create an eye-friendly workspace by organizing your desk to minimize eye strain, using proper lighting, and taking scheduled breaks for eye exercises and relaxation."
+      ]
+    },
+    {
+      "tag": "aging_and_eyes",
+      "patterns": [
+        "Aging and eye health",
+        "Age-related dry eyes",
+        "Eyes and getting older",
+        "Age and vision changes",
+        "Elderly eye care",
+        "Aging eyes and dry eyes",
+        "Age-related eye problems",
+        "Vision changes with age",
+        "Older adults and eye health",
+        "Aging and dry eye syndrome",
+        "Age-related eye conditions",
+        "Vision aging process",
+        "Elderly dry eyes",
+        "Age and eye care",
+        "Vision changes in older age",
+        "Aging and eye comfort"
+      ],
+      "responses": [
+        "As we age, tear production naturally decreases, making dry eyes more common. Regular eye exams, proper nutrition, and consistent eye care become increasingly important for maintaining vision health.",
+        "Age-related changes can affect tear quality and quantity. Older adults should pay special attention to hydration, nutrition, and regular eye care to manage dry eye symptoms.",
+        "Vision changes are normal with aging, including increased risk of dry eyes. Maintain regular eye exams, follow preventive care recommendations, and adjust your eye care routine as needed.",
+        "Older adults may experience more severe dry eye symptoms due to natural aging processes. Consider using preservative-free artificial tears and consulting with eye care professionals regularly.",
+        "Age-related eye health requires proactive care: regular check-ups, proper nutrition, adequate hydration, and adapting your environment to support changing vision needs."
+      ]
+    },
+    {
+      "tag": "medications_and_eyes",
+      "patterns": [
+        "Medications and dry eyes",
+        "Drugs that cause dry eyes",
+        "Medicine side effects on eyes",
+        "Prescription drugs and eyes",
+        "Medication and eye health",
+        "Drugs affecting tear production",
+        "Medication dry eye side effects",
+        "Prescription medication and eyes",
+        "Drug interactions with eye health",
+        "Medication impact on vision",
+        "Drugs and dry eye syndrome",
+        "Medication effects on tears",
+        "Prescription drugs and dry eyes",
+        "Medicine and eye irritation",
+        "Drug side effects on eyes",
+        "Medication and eye comfort"
+      ],
+      "responses": [
+        "Many medications can cause or worsen dry eyes, including antihistamines, antidepressants, blood pressure medications, and birth control pills. Consult your doctor about alternatives if dry eyes become problematic.",
+        "Common medications that affect tear production include decongestants, pain relievers, and certain heart medications. Be aware of these side effects and discuss them with your healthcare provider.",
+        "If you're experiencing dry eyes after starting new medication, talk to your doctor about timing, dosage adjustments, or alternative treatments that may be less likely to affect your eyes.",
+        "Some medications can reduce tear production or affect tear quality. Monitor your eye comfort when starting new medications and consider using artificial tears if needed.",
+        "Always inform your eye doctor about all medications you're taking, as this information helps them provide better care and identify potential medication-related eye issues."
+      ]
+    },
+    {
+      "tag": "seasonal_eye_care",
+      "patterns": [
+        "Seasonal dry eyes",
+        "Winter eye care",
+        "Summer eye health",
+        "Seasonal eye changes",
+        "Weather changes and eyes",
+        "Seasonal eye care tips",
+        "Winter dry eyes",
+        "Summer eye protection",
+        "Seasonal eye health",
+        "Weather and eye comfort",
+        "Seasonal eye care routine",
+        "Winter eye health",
+        "Summer dry eyes",
+        "Seasonal vision changes",
+        "Weather-related eye care",
+        "Seasonal eye protection"
+      ],
+      "responses": [
+        "Seasonal changes can significantly impact eye health. Winter heating systems often cause dry indoor air, while summer activities may expose eyes to wind, sun, and chlorine. Adjust your eye care routine accordingly.",
+        "Winter eye care focuses on combating dry indoor air with humidifiers, while summer care emphasizes UV protection and managing outdoor activities that may irritate eyes.",
+        "Adapt your eye care routine to the seasons: use humidifiers in winter, wear UV protection in summer, and adjust artificial tear usage based on environmental conditions.",
+        "Seasonal changes require different approaches: winter may need more intensive dry eye management, while summer requires focus on protection from environmental factors and UV radiation.",
+        "Monitor your eye comfort throughout the year and adjust your care routine seasonally. This proactive approach helps maintain consistent eye health regardless of environmental changes."
+      ]
+    },
+    {
+      "tag": "emergency_eye_care",
+      "patterns": [
+        "Eye emergency",
+        "When to seek emergency care",
+        "Urgent eye problems",
+        "Eye injury emergency",
+        "Sudden vision changes",
+        "Emergency eye care",
+        "Eye pain emergency",
+        "Vision loss emergency",
+        "Eye trauma",
+        "Acute eye problems",
+        "Emergency vision care",
+        "Eye injury first aid",
+        "Sudden eye problems",
+        "Emergency eye symptoms",
+        "Eye trauma care",
+        "Vision emergency"
+      ],
+      "responses": [
+        "Seek immediate medical attention for sudden vision loss, severe eye pain, eye injury, or symptoms accompanied by headache or nausea. These could indicate serious conditions requiring urgent care.",
+        "Emergency eye situations include chemical exposure, foreign objects in the eye, sudden vision changes, severe pain, or eye trauma. Don't delay seeking professional help for these symptoms.",
+        "If you experience sudden vision changes, severe eye pain, or eye injury, contact an eye care professional immediately or visit an emergency room. Early intervention is crucial for eye emergencies.",
+        "Common eye emergencies requiring immediate attention: chemical burns, eye trauma, sudden vision loss, severe eye pain, or symptoms with systemic symptoms like headache or nausea.",
+        "For eye injuries, avoid rubbing the eye, don't apply pressure, and seek immediate medical attention. Don't attempt to remove foreign objects yourself."
+      ]
+    },
+    {
+      "tag": "eye_exam_preparation",
+      "patterns": [
+        "How to prepare for eye exam",
+        "Eye exam preparation",
+        "Before eye appointment",
+        "Eye exam checklist",
+        "Preparing for eye doctor",
+        "Eye exam tips",
+        "What to bring to eye exam",
+        "Eye appointment preparation",
+        "Eye exam questions",
+        "Before seeing eye doctor",
+        "Eye exam preparation guide",
+        "Eye appointment checklist",
+        "Preparing for vision test",
+        "Eye exam what to expect",
+        "Eye doctor preparation",
+        "Vision exam preparation"
+      ],
+      "responses": [
+        "Prepare for your eye exam by bringing your current glasses/contacts, a list of medications, your medical history, and questions about your eye health. Avoid wearing eye makeup and bring sunglasses for dilation.",
+        "Before your eye exam, note any vision changes, eye discomfort, or family history of eye conditions. Bring your current eyewear and be prepared to discuss your lifestyle and eye care routine.",
+        "Prepare for your eye exam by gathering information about your family's eye health history, current symptoms, and any recent changes in your vision or eye comfort.",
+        "Make the most of your eye exam by preparing questions about your eye health, bringing relevant medical records, and being ready to discuss your daily activities and eye care concerns.",
+        "Your eye exam preparation should include understanding what tests will be performed, bringing necessary documentation, and being prepared to discuss your eye health goals and concerns."
+      ]
+    },
+    {
+      "tag": "children_eye_health",
+      "patterns": [
+        "Children and eye health",
+        "Kids eye care",
+        "Child vision health",
+        "Children's eye health",
+        "Kids and dry eyes",
+        "Child eye care tips",
+        "Children's vision",
+        "Kids eye health",
+        "Child eye problems",
+        "Children and screen time",
+        "Kids and digital devices",
+        "Child eye strain",
+        "Children's eye care",
+        "Kids vision care",
+        "Child eye health tips",
+        "Children and eye protection"
+      ],
+      "responses": [
+        "Children's eye health is crucial for development. Encourage outdoor play, limit screen time, ensure proper lighting for reading, and schedule regular eye exams starting from infancy.",
+        "Kids need regular eye check-ups to detect vision problems early. Limit digital device use, encourage outdoor activities, and watch for signs of eye strain or vision problems.",
+        "Children's eyes are still developing, making early detection of problems crucial. Regular eye exams, proper nutrition, and balanced screen time help maintain healthy vision development.",
+        "Protect children's eyes by limiting screen time, encouraging outdoor play, ensuring proper lighting, and scheduling regular eye exams. Early intervention can prevent long-term vision problems.",
+        "Children may not recognize vision problems, so regular eye exams are essential. Watch for signs like squinting, headaches, or difficulty reading, and maintain a balanced approach to screen time."
+      ]
+    },
+    {
+      "tag": "technology_eye_health",
+      "patterns": [
+        "Technology and eye health",
+        "Digital devices and eyes",
+        "Tech and vision",
+        "Technology impact on eyes",
+        "Digital eye health",
+        "Tech and dry eyes",
+        "Technology and vision",
+        "Digital devices and vision",
+        "Tech eye strain",
+        "Technology and eye care",
+        "Digital eye care",
+        "Tech and eye health",
+        "Technology and dry eyes",
+        "Digital vision health",
+        "Tech impact on vision",
+        "Technology eye protection"
+      ],
+      "responses": [
+        "Modern technology can impact eye health through increased screen time, blue light exposure, and reduced blinking. Use technology mindfully with regular breaks and proper eye care practices.",
+        "Digital devices have revolutionized our lives but can affect eye health. Balance technology use with eye care practices like the 20-20-20 rule and regular eye exams.",
+        "Technology offers both challenges and solutions for eye health. While screens can cause strain, apps and devices can also help monitor and improve your eye care routine.",
+        "Embrace technology for eye health by using apps that remind you to take breaks, blue light filters, and digital tools that help track your eye care habits and progress.",
+        "Technology and eye health can coexist harmoniously with proper practices. Use digital tools to enhance your eye care routine while maintaining healthy screen time habits."
+      ]
+    }
+  ]
+}
