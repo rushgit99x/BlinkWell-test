@@ -7,6 +7,7 @@ from routes.eye_detection import eye_detection_bp
 from models.database import init_db
 from models.user import load_user
 from oauth import init_oauth
+from routes.chatbot import chatbot_bp, initialize_chatbot
 import os
 
 # Add this to your app.py after the existing imports
@@ -42,6 +43,11 @@ app.register_blueprint(auth_bp)
 app.register_blueprint(main_bp)
 app.register_blueprint(eye_detection_bp)
 app.register_blueprint(habits_bp)
+app.register_blueprint(chatbot_bp)
+
+# @app.before_first_request
+# def init_chatbot():
+#     initialize_chatbot()
 
 if __name__ == '__main__':
     app.run(debug=True)

@@ -1,4 +1,4 @@
-# Fixed version of your eye_detection.py with proper recommendation management
+# Fixed version of eye_detection.py - Key fixes for recommendations display
 
 from flask import Blueprint, request, jsonify, current_app
 from flask_login import login_required, current_user
@@ -12,7 +12,6 @@ import traceback
 # Import your models
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-# Add debugging for imports
 try:
     from eye_disease_model import EyeDiseasePredictor
     print("✓ EyeDiseasePredictor imported successfully")
@@ -512,6 +511,7 @@ def verify_data_cleared(user_id):
     except Exception as e:
         print(f"Error verifying data cleared: {e}")
 
+# FIXED: Main recommendation endpoint with proper error handling
 @eye_detection_bp.route('/my-recommendations')
 @login_required
 def get_user_recommendations():
@@ -522,27 +522,37 @@ def get_user_recommendations():
         conn = current_app.config['get_db_connection']()
         cursor = conn.cursor()
         
-        # Get latest recommendations grouped by category with enhanced query
+        # FIXED: Simplified query to avoid potential JOIN issues
+        # First get recommendations
         cursor.execute("""
-            SELECT r.id, r.category, r.recommendation_text, r.priority, r.status, 
-                   r.created_at, r.updated_at, r.completed_at,
-                   h.dry_eye_disease, h.risk_score, h.created_at as health_created
-            FROM user_recommendations r
-            LEFT JOIN user_eye_health_data h ON r.user_id = h.user_id
-            WHERE r.user_id = %s 
-            ORDER BY r.created_at DESC, r.id DESC
+            SELECT id, category, recommendation_text, priority, status, 
+                   created_at, updated_at, completed_at
+            FROM user_recommendations 
+            WHERE user_id = %s 
+            ORDER BY created_at DESC, id DESC
         """, (current_user.id,))
         
-        results = cursor.fetchall()
-        print(f"Found {len(results)} recommendation records for user {current_user.id}")
+        recommendations_results = cursor.fetchall()
+        print(f"Found {len(recommendations_results)} recommendation records for user {current_user.id}")
+        
+        # Then get health data separately
+        cursor.execute("""
+            SELECT dry_eye_disease, risk_score
+            FROM user_eye_health_data 
+            WHERE user_id = %s 
+            ORDER BY created_at DESC 
+            LIMIT 1
+        """, (current_user.id,))
+        
+        health_result = cursor.fetchone()
         
         cursor.close()
         conn.close()
         
-        if not results:
+        if not recommendations_results:
             print("No recommendations found - returning empty state")
             return jsonify({
-                'success': False,
+                'success': True,
                 'message': 'No recommendations found',
                 'recommendations': {
                     'immediate_actions': [],
@@ -568,8 +578,9 @@ def get_user_recommendations():
             'monitoring': []
         }
         
+        # Stats tracking
         user_stats = {
-            'total_recommendations': len(results),
+            'total_recommendations': len(recommendations_results),
             'completed_count': 0,
             'pending_count': 0,
             'in_progress_count': 0,
@@ -577,7 +588,8 @@ def get_user_recommendations():
             'risk_score': 0
         }
         
-        for result in results:
+        # Process recommendations
+        for result in recommendations_results:
             rec = {
                 'id': result[0],
                 'category': result[1],
@@ -589,7 +601,10 @@ def get_user_recommendations():
                 'completed_at': result[7].strftime('%Y-%m-%d %H:%M:%S') if result[7] else None
             }
             
-            recommendations_by_category[result[1]].append(rec)
+            # Add to appropriate category
+            category = result[1]
+            if category in recommendations_by_category:
+                recommendations_by_category[category].append(rec)
             
             # Update stats
             if result[4] == 'completed':
@@ -598,12 +613,11 @@ def get_user_recommendations():
                 user_stats['in_progress_count'] += 1
             else:
                 user_stats['pending_count'] += 1
-            
-            # Get user health info from the first record
-            if result[8] is not None:
-                user_stats['has_dry_eyes'] = result[8] == 'Y'
-            if result[9] is not None:
-                user_stats['risk_score'] = float(result[9])
+        
+        # Add health data to stats
+        if health_result:
+            user_stats['has_dry_eyes'] = health_result[0] == 'Y'
+            user_stats['risk_score'] = float(health_result[1]) if health_result[1] else 0.0
         
         print(f"Returning recommendations: {user_stats['total_recommendations']} total")
         

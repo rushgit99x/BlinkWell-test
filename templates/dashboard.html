@@ -31,8 +31,8 @@
             <li><a href="{{ url_for('main.recommendations') }}"><i class="fas fa-clipboard-list"></i><span>My Recommendations</span></a></li>
             <!-- <li><a href="#"><i class="fas fa-calendar-check"></i><span>Habits</span></a></li> -->
              <li><a href="{{ url_for('main.habits') }}"><i class="fas fa-dumbbell"></i><span>Eye Habits</span></a></li>
-            <li><a href="#"><i class="fas fa-trophy"></i><span>Progress</span></a></li>
-            <li><a href="#"><i class="fas fa-robot"></i><span>AI Assistant</span></a></li>
+            <!-- <li><a href="#"><i class="fas fa-trophy"></i><span>Progress</span></a></li> -->
+            <li><a href="{{ url_for('chatbot.chatbot_page') }}"><i class="fas fa-robot"></i><span>AI Assistant</span></a></li>
             <li><a href="#"><i class="fas fa-cog"></i><span>Settings</span></a></li>
             <li><a href="{{ url_for('auth.logout') }}"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a></li>
         </ul>
@@ -247,7 +247,7 @@
                     <i class="fas fa-camera"></i>
                     <span>Upload Fundus Photo</span>
                 </a>
-                <a href="#" class="action-btn">
+                <a href="{{ url_for('chatbot.chatbot_page') }}" class="action-btn">
                     <i class="fas fa-robot"></i>
                     <span>Ask AI Assistant</span>
                 </a>

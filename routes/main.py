@@ -53,135 +53,13 @@ def habits():
     """Eye habits tracking and practice page"""
     return render_template('habits.html', user=current_user)
 
+@main_bp.route('/chatbot')
+def chatbot():
+    """AI chatbot interaction page"""
+    return render_template('chatbot.html', user=current_user)
 
-@main_bp.route('/my-recommendations')
-@login_required
-def get_my_recommendations():
-    """API endpoint to get user's recommendations"""
-    try:
-        conn = current_app.config['get_db_connection']()
-        cursor = conn.cursor()
-        
-        # Get user's latest recommendations grouped by category
-        cursor.execute("""
-            SELECT ur.*, ued.risk_score 
-            FROM user_recommendations ur
-            LEFT JOIN user_eye_health_data ued ON ur.user_id = ued.user_id
-            WHERE ur.user_id = %s 
-            ORDER BY ued.created_at DESC, ur.created_at DESC
-        """, (current_user.id,))
-        
-        recommendations_data = cursor.fetchall()
-        
-        if not recommendations_data:
-            cursor.close()
-            conn.close()
-            return jsonify({
-                'success': True,
-                'recommendations': {},
-                'stats': {
-                    'total_recommendations': 0,
-                    'completed_count': 0,
-                    'pending_count': 0,
-                    'in_progress_count': 0,
-                    'risk_score': 0.0
-                }
-            })
-
-        # Group recommendations by category
-        recommendations = {
-            'immediate_actions': [],
-            'medical_advice': [],
-            'lifestyle_changes': [],
-            'monitoring': []
-        }
-        
-        # Stats tracking
-        total_count = len(recommendations_data)
-        completed_count = 0
-        pending_count = 0
-        in_progress_count = 0
-        risk_score = recommendations_data[0].get('risk_score', 0.0) if recommendations_data else 0.0
-        
-        for rec in recommendations_data:
-            rec_dict = {
-                'id': rec['id'],
-                'text': rec['recommendation_text'],
-                'priority': rec['priority'],
-                'status': rec['status'],
-                'created_at': rec['created_at'].isoformat() if rec['created_at'] else None,
-                'completed_at': rec['completed_at'].isoformat() if rec.get('completed_at') else None
-            }
-            
-            # Add to appropriate category
-            category = rec['category']
-            if category in recommendations:
-                recommendations[category].append(rec_dict)
-            
-            # Update stats
-            if rec['status'] == 'completed':
-                completed_count += 1
-            elif rec['status'] == 'pending':
-                pending_count += 1
-            elif rec['status'] == 'in_progress':
-                in_progress_count += 1
-        
-        cursor.close()
-        conn.close()
-        
-        return jsonify({
-            'success': True,
-            'recommendations': recommendations,
-            'stats': {
-                'total_recommendations': total_count,
-                'completed_count': completed_count,
-                'pending_count': pending_count,
-                'in_progress_count': in_progress_count,
-                'risk_score': float(risk_score) if risk_score else 0.0
-            }
-        })
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
-
-@main_bp.route('/update-recommendation-status', methods=['POST'])
-@login_required
-def update_recommendation_status():
-    """Update the status of a recommendation"""
-    try:
-        data = request.get_json()
-        recommendation_id = data.get('recommendation_id')
-        new_status = data.get('status')
-        
-        valid_statuses = ['pending', 'in_progress', 'completed', 'dismissed']
-        if new_status not in valid_statuses:
-            return jsonify({'success': False, 'error': 'Invalid status'})
-        
-        conn = current_app.config['get_db_connection']()
-        cursor = conn.cursor()
-        
-        # Update recommendation status
-        update_query = """
-            UPDATE user_recommendations 
-            SET status = %s, 
-                completed_at = CASE WHEN %s = 'completed' THEN CURRENT_TIMESTAMP ELSE NULL END,
-                updated_at = CURRENT_TIMESTAMP
-            WHERE id = %s AND user_id = %s
-        """
-        
-        cursor.execute(update_query, (new_status, new_status, recommendation_id, current_user.id))
-        
-        if cursor.rowcount == 0:
-            cursor.close()
-            conn.close()
-            return jsonify({'success': False, 'error': 'Recommendation not found or access denied'})
-        
-        conn.commit()
-        cursor.close()
-        conn.close()
-        
-        return jsonify({'success': True, 'message': 'Recommendation status updated successfully'})
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+# REMOVED: Duplicate /my-recommendations route - this is now handled in eye_detection.py
+# REMOVED: Duplicate /update-recommendation-status route - this is now handled in eye_detection.py
 
 @main_bp.route('/start-new-analysis', methods=['POST'])
 @login_required  
@@ -191,25 +69,64 @@ def start_new_analysis():
         conn = current_app.config['get_db_connection']()
         cursor = conn.cursor()
         
+        # Start transaction
+        conn.begin()
+        
         # Clear all user's recommendations
         cursor.execute("DELETE FROM user_recommendations WHERE user_id = %s", (current_user.id,))
+        rec_deleted = cursor.rowcount
         
         # Clear all user's eye health data (keep user account)
         cursor.execute("DELETE FROM user_eye_health_data WHERE user_id = %s", (current_user.id,))
+        health_deleted = cursor.rowcount
         
         # Clear habit tracking data
         cursor.execute("DELETE FROM habit_tracking WHERE user_id = %s", (current_user.id,))
+        habit_track_deleted = cursor.rowcount
+        
         cursor.execute("DELETE FROM user_habits WHERE user_id = %s", (current_user.id,))
+        user_habits_deleted = cursor.rowcount
+        
         cursor.execute("DELETE FROM habit_achievements WHERE user_id = %s", (current_user.id,))
+        achievements_deleted = cursor.rowcount
+        
         cursor.execute("DELETE FROM habit_summaries WHERE user_id = %s", (current_user.id,))
+        summaries_deleted = cursor.rowcount
         
         conn.commit()
         cursor.close()
         conn.close()
         
+        print(f"✓ Data cleared for user {current_user.id}:")
+        print(f"  - Recommendations: {rec_deleted}")
+        print(f"  - Health data: {health_deleted}")
+        print(f"  - Habit tracking: {habit_track_deleted}")
+        print(f"  - User habits: {user_habits_deleted}")
+        print(f"  - Achievements: {achievements_deleted}")
+        print(f"  - Summaries: {summaries_deleted}")
+        
         return jsonify({
             'success': True, 
-            'message': 'All data cleared successfully. Ready for new analysis.'
+            'message': 'All data cleared successfully. Ready for new analysis.',
+            'cleared_counts': {
+                'recommendations': rec_deleted,
+                'health_data': health_deleted,
+                'habit_tracking': habit_track_deleted,
+                'user_habits': user_habits_deleted,
+                'achievements': achievements_deleted,
+                'summaries': summaries_deleted
+            }
         })
+        
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        print(f"Error clearing user data: {e}")
+        try:
+            conn.rollback()
+            cursor.close()
+            conn.close()
+        except:
+            pass
+        return jsonify({
+            'success': False, 
+            'error': str(e)
+        }), 500
