@@ -320,6 +320,13 @@ class AdvancedDryEyeTextPredictor:
         else:
             X = self.scaler.transform(X)
         
+        # Apply the same feature selection during inference to avoid shape mismatch
+        if not is_training and self.feature_selector is not None:
+            try:
+                X = self.feature_selector.transform(X)
+            except Exception:
+                pass
+        
         return X, all_feature_cols
     
     def _parse_blood_pressure(self, bp_str):
@@ -357,7 +364,7 @@ class AdvancedDryEyeTextPredictor:
             raise ValueError("Target column 'Dry_Eye_Disease' not found in dataset")
         
         # Feature selection
-        X_selected, selected_features, self.feature_selector = self.select_features(X, y, k=min(25, X.shape[1]))
+        X_selected, selected_features, self.feature_selector = self.select_features(X, y, k='all')
         print(f"Selected {X_selected.shape[1]} features out of {X.shape[1]}")
         
         # Split data
@@ -412,7 +419,12 @@ class AdvancedDryEyeTextPredictor:
         model.to(self.device)
         
         # Loss and optimizer
-        criterion = nn.CrossEntropyLoss(label_smoothing=0.1)  # Label smoothing for better generalization
+        # Class weights to address class imbalance
+        class_counts = np.bincount(y_train)
+        # Inverse frequency weighting
+        weights = (len(y_train) / (2.0 * class_counts)).astype(np.float32)
+        class_weights = torch.tensor(weights, dtype=torch.float, device=self.device)
+        criterion = nn.CrossEntropyLoss(weight=class_weights, label_smoothing=0.05)
         optimizer = optim.AdamW(model.parameters(), lr=learning_rate, weight_decay=1e-4)
         scheduler = optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, T_0=20, T_mult=2)
         
@@ -481,8 +493,8 @@ class AdvancedDryEyeTextPredictor:
     def _train_random_forest(self, X_train, y_train, X_val, y_val):
         """Train Random Forest classifier"""
         rf = RandomForestClassifier(
-            n_estimators=200,
-            max_depth=15,
+            n_estimators=500,
+            max_depth=20,
             min_samples_split=5,
             min_samples_leaf=2,
             random_state=42,
@@ -499,9 +511,9 @@ class AdvancedDryEyeTextPredictor:
     def _train_gradient_boosting(self, X_train, y_train, X_val, y_val):
         """Train Gradient Boosting classifier"""
         gb = GradientBoostingClassifier(
-            n_estimators=200,
-            learning_rate=0.1,
-            max_depth=6,
+            n_estimators=400,
+            learning_rate=0.05,
+            max_depth=3,
             min_samples_split=5,
             min_samples_leaf=2,
             random_state=42
@@ -539,7 +551,7 @@ class AdvancedDryEyeTextPredictor:
         Returns:
             tuple: (prediction_probability, confidence, risk_factors)
         """
-        if self.model is None:
+        if self.model is None and not self.ensemble_models:
             raise ValueError("Model not loaded. Please load a trained model first.")
         
         try:
@@ -550,20 +562,22 @@ class AdvancedDryEyeTextPredictor:
             X, _ = self.preprocess_data(df, is_training=False)
             
             # Make prediction
-            self.model.eval()
-            with torch.no_grad():
-                X_tensor = torch.FloatTensor(X).to(self.device)
-                outputs = self.model(X_tensor)
-                probabilities = torch.softmax(outputs, dim=1)
-                
-                # Get probability of dry eyes (class 1)
-                dry_eye_prob = probabilities[0, 1].item()
-                
-                # Calculate confidence and risk factors
-                confidence = max(probabilities[0]).item()
-                risk_factors = self._analyze_risk_factors(questionnaire_data, dry_eye_prob)
-                
-                return dry_eye_prob, confidence, risk_factors
+            if self.ensemble_models:
+                ensemble = EnsembleClassifier(self.ensemble_models)
+                proba = ensemble.predict_proba(X)
+                dry_eye_prob = float(proba[0, 1])
+                confidence = float(np.max(proba[0]))
+            else:
+                self.model.eval()
+                with torch.no_grad():
+                    X_tensor = torch.FloatTensor(X).to(self.device)
+                    outputs = self.model(X_tensor)
+                    probabilities = torch.softmax(outputs, dim=1)
+                    dry_eye_prob = probabilities[0, 1].item()
+                    confidence = max(probabilities[0]).item()
+            
+            risk_factors = self._analyze_risk_factors(questionnaire_data, dry_eye_prob)
+            return dry_eye_prob, confidence, risk_factors
         
         except Exception as e:
             print(f"Error in prediction: {e}")
