@@ -356,7 +356,7 @@ class DryEyeTextPredictor:
     
     def load_model(self, path):
         """Load a trained model"""
-        checkpoint = torch.load(path, map_location=self.device)
+        checkpoint = torch.load(path, map_location=self.device, weights_only=False)
         
         # Reconstruct model
         arch = checkpoint['model_architecture']
