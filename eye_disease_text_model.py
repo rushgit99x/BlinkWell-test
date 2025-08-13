@@ -253,6 +253,33 @@ class AdvancedDryEyeTextPredictor:
     def preprocess_data(self, df, is_training=True):
         """Enhanced preprocessing with feature engineering"""
         df = df.copy()
+
+        # Normalize incoming CSV column names to expected underscore format
+        column_rename_map = {
+            'Sleep duration': 'Sleep_duration',
+            'Sleep quality': 'Sleep_quality',
+            'Stress level': 'Stress_level',
+            'Blood pressure': 'Blood_pressure',
+            'Heart rate': 'Heart_rate',
+            'Daily steps': 'Daily_steps',
+            'Physical activity': 'Physical_activity',
+            'Sleep disorder': 'Sleep_disorder',
+            'Wake up during night': 'Wake_up_during_night',
+            'Feel sleepy during day': 'Feel_sleepy_during_day',
+            'Caffeine consumption': 'Caffeine_consumption',
+            'Alcohol consumption': 'Alcohol_consumption',
+            'Medical issue': 'Medical_issue',
+            'Ongoing medication': 'Ongoing_medication',
+            'Smart device before bed': 'Smart_device_before_bed',
+            'Average screen time': 'Average_screen_time',
+            'Blue-light filter': 'Blue_light_filter',
+            'Discomfort Eye-strain': 'Discomfort_eye_strain',
+            'Redness in eye': 'Redness_in_eye',
+            'Itchiness/Irritation in eye': 'Itchiness_irritation_in_eye'
+        }
+        # Strip whitespace from column names and then rename
+        df.columns = [c.strip() for c in df.columns]
+        df = df.rename(columns=column_rename_map)
         
         # Create engineered features
         df = self.create_engineered_features(df)
