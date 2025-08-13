@@ -8,7 +8,7 @@ from sklearn.model_selection import train_test_split, StratifiedKFold
 from sklearn.preprocessing import StandardScaler, LabelEncoder, RobustScaler
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix, roc_auc_score
 from sklearn.feature_selection import SelectKBest, f_classif, mutual_info_classif
-from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier, ExtraTreesClassifier
 import joblib
 import os
 import warnings
@@ -147,8 +147,9 @@ class AdvancedDryEyeTextClassifier(nn.Module):
 
 class EnsembleClassifier:
     """Ensemble of multiple models for better performance"""
-    def __init__(self, models, weights=None):
+    def __init__(self, models, weights=None, device=None):
         self.models = models
+        self.device = device or (torch.device('cuda' if torch.cuda.is_available() else 'cpu'))
         self.weights = weights if weights else [1/len(models)] * len(models)
     
     def predict_proba(self, X):
@@ -160,7 +161,7 @@ class EnsembleClassifier:
                 # For neural networks
                 model.eval()
                 with torch.no_grad():
-                    X_tensor = torch.FloatTensor(X)
+                    X_tensor = torch.FloatTensor(X).to(self.device)
                     outputs = model(X_tensor)
                     pred = torch.softmax(outputs, dim=1).numpy()
             predictions.append(pred)
@@ -395,9 +396,18 @@ class AdvancedDryEyeTextPredictor:
         gb_model = self._train_gradient_boosting(X_train, y_train, X_val, y_val)
         models.append(('Gradient Boosting', gb_model))
         self.gb_model = gb_model
+
+        # 4. Extra Trees
+        print("\nTraining Extra Trees...")
+        et_model = self._train_extra_trees(X_train, y_train, X_val, y_val)
+        models.append(('Extra Trees', et_model))
+        self.et_model = et_model
         
         # Create ensemble
         self.ensemble_models = [model for _, model in models]
+        
+        # Optimize ensemble weights on validation set
+        self.ensemble_weights = self._optimize_ensemble_weights(self.ensemble_models, X_val, y_val)
         
         # Evaluate ensemble
         ensemble_accuracy = self._evaluate_ensemble(X_val, y_val)
@@ -525,13 +535,56 @@ class AdvancedDryEyeTextPredictor:
         print(f'Gradient Boosting validation accuracy: {val_acc:.4f}')
         
         return gb
+
+    def _train_extra_trees(self, X_train, y_train, X_val, y_val):
+        """Train Extra Trees classifier"""
+        et = ExtraTreesClassifier(
+            n_estimators=500,
+            max_depth=None,
+            min_samples_split=2,
+            min_samples_leaf=1,
+            random_state=42,
+            n_jobs=-1
+        )
+        et.fit(X_train, y_train)
+        val_pred = et.predict(X_val)
+        val_acc = accuracy_score(y_val, val_pred)
+        print(f'Extra Trees validation accuracy: {val_acc:.4f}')
+        return et
+
+    def _optimize_ensemble_weights(self, models, X_val, y_val):
+        """Simple weight search to maximize validation accuracy"""
+        if not models:
+            return None
+        # Try a small grid of weights (NN given higher prior)
+        candidate_weights = []
+        for w_nn in [0.2, 0.3, 0.4, 0.5]:
+            for w_rf in [0.1, 0.2, 0.3]:
+                for w_gb in [0.1, 0.2, 0.3]:
+                    for w_et in [0.1, 0.2, 0.3]:
+                        weights = np.array([w_nn, w_rf, w_gb, w_et])
+                        weights = weights / weights.sum()
+                        candidate_weights.append(weights)
+        
+        best_acc = -1
+        best_weights = None
+        for weights in candidate_weights:
+            ensemble = EnsembleClassifier(models, weights=weights.tolist(), device=self.device)
+            pred = ensemble.predict(X_val)
+            acc = accuracy_score(y_val, pred)
+            if acc > best_acc:
+                best_acc = acc
+                best_weights = weights.tolist()
+        
+        print(f"Optimized ensemble weights: {best_weights} (val acc: {best_acc:.4f})")
+        self.ensemble_weights = best_weights
+        return best_weights
     
     def _evaluate_ensemble(self, X_val, y_val):
         """Evaluate ensemble performance"""
         if not self.ensemble_models:
             return 0.0
-        
-        ensemble = EnsembleClassifier(self.ensemble_models)
+        ensemble = EnsembleClassifier(self.ensemble_models, weights=self.ensemble_weights, device=self.device)
         predictions = ensemble.predict(X_val)
         accuracy = accuracy_score(y_val, predictions)
         
@@ -563,7 +616,7 @@ class AdvancedDryEyeTextPredictor:
             
             # Make prediction
             if self.ensemble_models:
-                ensemble = EnsembleClassifier(self.ensemble_models)
+                ensemble = EnsembleClassifier(self.ensemble_models, weights=getattr(self, 'ensemble_weights', None), device=self.device)
                 proba = ensemble.predict_proba(X)
                 dry_eye_prob = float(proba[0, 1])
                 confidence = float(np.max(proba[0]))
@@ -643,6 +696,7 @@ class AdvancedDryEyeTextPredictor:
             'label_encoders': self.label_encoders,
             'feature_names': self.feature_names,
             'feature_selector': self.feature_selector,
+            'ensemble_weights': getattr(self, 'ensemble_weights', None),
         }
         
         # Save neural network if available
@@ -659,6 +713,8 @@ class AdvancedDryEyeTextPredictor:
             payload['rf_model'] = self.rf_model
         if hasattr(self, 'gb_model') and self.gb_model is not None:
             payload['gb_model'] = self.gb_model
+        if hasattr(self, 'et_model') and self.et_model is not None:
+            payload['et_model'] = self.et_model
         
         torch.save(payload, path)
         print(f"Model saved to {path}")
@@ -683,12 +739,14 @@ class AdvancedDryEyeTextPredictor:
         # Load sklearn models if present
         self.rf_model = checkpoint.get('rf_model', None)
         self.gb_model = checkpoint.get('gb_model', None)
+        self.et_model = checkpoint.get('et_model', None)
         
         # Load preprocessors
         self.scaler = checkpoint.get('scaler', self.scaler)
         self.label_encoders = checkpoint.get('label_encoders', {})
         self.feature_names = checkpoint.get('feature_names', self.feature_names)
         self.feature_selector = checkpoint.get('feature_selector', None)
+        self.ensemble_weights = checkpoint.get('ensemble_weights', None)
         
         # Recompose ensemble if possible
         self.ensemble_models = []
@@ -698,6 +756,8 @@ class AdvancedDryEyeTextPredictor:
             self.ensemble_models.append(self.rf_model)
         if self.gb_model is not None:
             self.ensemble_models.append(self.gb_model)
+        if self.et_model is not None:
+            self.ensemble_models.append(self.et_model)
         
         print(f"Model loaded from {path}")
 
