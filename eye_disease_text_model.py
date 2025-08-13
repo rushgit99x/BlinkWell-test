@@ -375,16 +375,19 @@ class AdvancedDryEyeTextPredictor:
         print("\nTraining Neural Network...")
         nn_model = self._train_neural_network(X_train, y_train, X_val, y_val, epochs, batch_size, learning_rate)
         models.append(('Neural Network', nn_model))
+        self.model = nn_model
         
         # 2. Random Forest
         print("\nTraining Random Forest...")
         rf_model = self._train_random_forest(X_train, y_train, X_val, y_val)
         models.append(('Random Forest', rf_model))
+        self.rf_model = rf_model
         
         # 3. Gradient Boosting
         print("\nTraining Gradient Boosting...")
         gb_model = self._train_gradient_boosting(X_train, y_train, X_val, y_val)
         models.append(('Gradient Boosting', gb_model))
+        self.gb_model = gb_model
         
         # Create ensemble
         self.ensemble_models = [model for _, model in models]
@@ -621,39 +624,66 @@ class AdvancedDryEyeTextPredictor:
         """Save the trained model and preprocessors"""
         os.makedirs(os.path.dirname(path), exist_ok=True)
         
-        torch.save({
-            'model_state_dict': self.model.state_dict(),
-            'model_architecture': {
-                'input_size': self.model.network[0].in_features,
-                'hidden_sizes': [layer.out_features for layer in self.model.network if isinstance(layer, nn.Linear)][:-1],
-                'num_classes': self.model.network[-1].out_features
-            },
+        payload = {
             'scaler': self.scaler,
             'label_encoders': self.label_encoders,
-            'feature_names': self.feature_names
-        }, path)
+            'feature_names': self.feature_names,
+            'feature_selector': self.feature_selector,
+        }
         
+        # Save neural network if available
+        if self.model is not None and isinstance(self.model, nn.Module):
+            payload['nn_state_dict'] = self.model.state_dict()
+            payload['nn_architecture'] = {
+                'input_size': self.model.input_size,
+                'hidden_sizes': [layer.out_features for layer in self.model.network if isinstance(layer, nn.Linear)],
+                'num_classes': self.model.output_layer.out_features
+            }
+        
+        # Save sklearn models if available
+        if hasattr(self, 'rf_model') and self.rf_model is not None:
+            payload['rf_model'] = self.rf_model
+        if hasattr(self, 'gb_model') and self.gb_model is not None:
+            payload['gb_model'] = self.gb_model
+        
+        torch.save(payload, path)
         print(f"Model saved to {path}")
     
     def load_model(self, path):
         """Load a trained model"""
         checkpoint = torch.load(path, map_location=self.device, weights_only=False)
         
-        # Reconstruct model
-        arch = checkpoint['model_architecture']
-        self.model = AdvancedDryEyeTextClassifier(
-            input_size=arch['input_size'],
-            hidden_sizes=arch['hidden_sizes'],
-            num_classes=arch['num_classes']
-        )
+        # Reconstruct neural network (optional if present)
+        if 'nn_architecture' in checkpoint and 'nn_state_dict' in checkpoint:
+            arch = checkpoint['nn_architecture']
+            self.model = AdvancedDryEyeTextClassifier(
+                input_size=arch['input_size'],
+                hidden_sizes=arch['hidden_sizes'],
+                num_classes=arch['num_classes']
+            )
+            self.model.load_state_dict(checkpoint['nn_state_dict'])
+            self.model.to(self.device)
+        else:
+            self.model = None
         
-        self.model.load_state_dict(checkpoint['model_state_dict'])
-        self.model.to(self.device)
+        # Load sklearn models if present
+        self.rf_model = checkpoint.get('rf_model', None)
+        self.gb_model = checkpoint.get('gb_model', None)
         
         # Load preprocessors
-        self.scaler = checkpoint['scaler']
-        self.label_encoders = checkpoint['label_encoders']
-        self.feature_names = checkpoint['feature_names']
+        self.scaler = checkpoint.get('scaler', self.scaler)
+        self.label_encoders = checkpoint.get('label_encoders', {})
+        self.feature_names = checkpoint.get('feature_names', self.feature_names)
+        self.feature_selector = checkpoint.get('feature_selector', None)
+        
+        # Recompose ensemble if possible
+        self.ensemble_models = []
+        if self.model is not None:
+            self.ensemble_models.append(self.model)
+        if self.rf_model is not None:
+            self.ensemble_models.append(self.rf_model)
+        if self.gb_model is not None:
+            self.ensemble_models.append(self.gb_model)
         
         print(f"Model loaded from {path}")
 
