@@ -4,59 +4,188 @@ import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader, TensorDataset
 import pandas as pd
 import numpy as np
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler, LabelEncoder
-from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+from sklearn.model_selection import train_test_split, StratifiedKFold
+from sklearn.preprocessing import StandardScaler, LabelEncoder, RobustScaler
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix, roc_auc_score
+from sklearn.feature_selection import SelectKBest, f_classif, mutual_info_classif
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 import joblib
 import os
+import warnings
+warnings.filterwarnings('ignore')
 
-class DryEyeTextDataset(Dataset):
-    """Dataset class for text-based features"""
-    def __init__(self, features, labels=None):
+class AdvancedDryEyeTextDataset(Dataset):
+    """Enhanced dataset class with data augmentation"""
+    def __init__(self, features, labels=None, augment=True):
         self.features = torch.FloatTensor(features)
         self.labels = torch.LongTensor(labels) if labels is not None else None
+        self.augment = augment
     
     def __len__(self):
         return len(self.features)
     
     def __getitem__(self, idx):
-        if self.labels is not None:
-            return self.features[idx], self.labels[idx]
-        return self.features[idx]
-
-class DryEyeTextClassifier(nn.Module):
-    """Neural network for text-based dry eye prediction"""
-    def __init__(self, input_size=25, hidden_sizes=[128, 64, 32], num_classes=2, dropout_rate=0.3):
-        super(DryEyeTextClassifier, self).__init__()
+        features = self.features[idx]
         
+        # Data augmentation during training
+        if self.augment and self.labels is not None and torch.rand(1).item() < 0.3:
+            features = self._augment_features(features)
+        
+        if self.labels is not None:
+            return features, self.labels[idx]
+        return features
+    
+    def _augment_features(self, features):
+        """Apply data augmentation to features"""
+        # Add small random noise
+        noise = torch.randn_like(features) * 0.01
+        features = features + noise
+        
+        # Random feature scaling (0.95 to 1.05)
+        scale = torch.rand(features.shape) * 0.1 + 0.95
+        features = features * scale
+        
+        return features
+
+class ResidualBlock(nn.Module):
+    """Residual block for better gradient flow"""
+    def __init__(self, input_size, hidden_size, dropout_rate=0.3):
+        super(ResidualBlock, self).__init__()
+        self.block = nn.Sequential(
+            nn.Linear(input_size, hidden_size),
+            nn.BatchNorm1d(hidden_size),
+            nn.ReLU(),
+            nn.Dropout(dropout_rate),
+            nn.Linear(hidden_size, input_size),
+            nn.BatchNorm1d(input_size)
+        )
+        self.relu = nn.ReLU()
+    
+    def forward(self, x):
+        residual = x
+        out = self.block(x)
+        out += residual
+        return self.relu(out)
+
+class AttentionModule(nn.Module):
+    """Attention mechanism for feature importance"""
+    def __init__(self, input_size):
+        super(AttentionModule, self).__init__()
+        self.attention = nn.Sequential(
+            nn.Linear(input_size, input_size // 2),
+            nn.ReLU(),
+            nn.Linear(input_size // 2, 1),
+            nn.Sigmoid()
+        )
+    
+    def forward(self, x):
+        attention_weights = self.attention(x)
+        return x * attention_weights
+
+class AdvancedDryEyeTextClassifier(nn.Module):
+    """Enhanced neural network with advanced techniques"""
+    def __init__(self, input_size=25, hidden_sizes=[256, 128, 64, 32], num_classes=2, dropout_rate=0.4):
+        super(AdvancedDryEyeTextClassifier, self).__init__()
+        
+        self.input_size = input_size
+        self.attention = AttentionModule(input_size)
+        
+        # Main network with residual connections
         layers = []
         prev_size = input_size
         
-        for hidden_size in hidden_sizes:
-            layers.extend([
-                nn.Linear(prev_size, hidden_size),
-                nn.BatchNorm1d(hidden_size),
-                nn.ReLU(),
-                nn.Dropout(dropout_rate)
-            ])
+        for i, hidden_size in enumerate(hidden_sizes):
+            if i == 0:
+                # First layer
+                layers.extend([
+                    nn.Linear(prev_size, hidden_size),
+                    nn.BatchNorm1d(hidden_size),
+                    nn.ReLU(),
+                    nn.Dropout(dropout_rate)
+                ])
+            else:
+                # Add residual blocks for deeper layers
+                if prev_size == hidden_size:
+                    layers.append(ResidualBlock(hidden_size, hidden_size // 2, dropout_rate))
+                else:
+                    layers.extend([
+                        nn.Linear(prev_size, hidden_size),
+                        nn.BatchNorm1d(hidden_size),
+                        nn.ReLU(),
+                        nn.Dropout(dropout_rate)
+                    ])
             prev_size = hidden_size
         
-        # Output layer
-        layers.append(nn.Linear(prev_size, num_classes))
+        # Output layer with better initialization
+        self.output_layer = nn.Linear(prev_size, num_classes)
+        
+        # Initialize weights for better training
+        self._initialize_weights()
         
         self.network = nn.Sequential(*layers)
     
+    def _initialize_weights(self):
+        """Initialize weights using Xavier/Glorot initialization"""
+        for m in self.modules():
+            if isinstance(m, nn.Linear):
+                nn.init.xavier_uniform_(m.weight)
+                if m.bias is not None:
+                    nn.init.constant_(m.bias, 0)
+            elif isinstance(m, nn.BatchNorm1d):
+                nn.init.constant_(m.weight, 1)
+                nn.init.constant_(m.bias, 0)
+    
     def forward(self, x):
-        return self.network(x)
+        # Apply attention
+        x = self.attention(x)
+        
+        # Main network
+        x = self.network(x)
+        
+        # Output
+        return self.output_layer(x)
 
-class DryEyeTextPredictor:
-    """Text-based dry eye disease predictor"""
+class EnsembleClassifier:
+    """Ensemble of multiple models for better performance"""
+    def __init__(self, models, weights=None):
+        self.models = models
+        self.weights = weights if weights else [1/len(models)] * len(models)
+    
+    def predict_proba(self, X):
+        predictions = []
+        for model in self.models:
+            if hasattr(model, 'predict_proba'):
+                pred = model.predict_proba(X)
+            else:
+                # For neural networks
+                model.eval()
+                with torch.no_grad():
+                    X_tensor = torch.FloatTensor(X)
+                    outputs = model(X_tensor)
+                    pred = torch.softmax(outputs, dim=1).numpy()
+            predictions.append(pred)
+        
+        # Weighted average
+        final_pred = np.zeros_like(predictions[0])
+        for pred, weight in zip(predictions, self.weights):
+            final_pred += pred * weight
+        
+        return final_pred
+    
+    def predict(self, X):
+        proba = self.predict_proba(X)
+        return np.argmax(proba, axis=1)
+
+class AdvancedDryEyeTextPredictor:
+    """Enhanced text-based dry eye disease predictor"""
     
     def __init__(self, model_path=None):
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.model = None
-        self.scaler = StandardScaler()
+        self.ensemble_models = []
+        self.scaler = RobustScaler()  # More robust to outliers
         self.label_encoders = {}
+        self.feature_selector = None
         self.feature_names = [
             'Gender', 'Age', 'Sleep_duration', 'Sleep_quality', 'Stress_level',
             'Blood_pressure', 'Heart_rate', 'Daily_steps', 'Physical_activity',
@@ -70,9 +199,63 @@ class DryEyeTextPredictor:
         if model_path and os.path.exists(model_path):
             self.load_model(model_path)
     
-    def preprocess_data(self, df, is_training=True):
-        """Preprocess the dataset"""
+    def create_engineered_features(self, df):
+        """Create engineered features for better model performance"""
         df = df.copy()
+        
+        # Age groups
+        df['Age_group'] = pd.cut(df['Age'], bins=[0, 25, 35, 45, 55, 100], labels=[0, 1, 2, 3, 4])
+        df['Age_group'] = df['Age_group'].astype(int)
+        
+        # BMI calculation
+        df['BMI'] = df['Weight'] / ((df['Height'] / 100) ** 2)
+        df['BMI_category'] = pd.cut(df['BMI'], bins=[0, 18.5, 25, 30, 100], labels=[0, 1, 2, 3])
+        df['BMI_category'] = df['BMI_category'].astype(int)
+        
+        # Sleep efficiency
+        df['Sleep_efficiency'] = df['Sleep_quality'] / df['Sleep_duration']
+        
+        # Stress-sleep interaction
+        df['Stress_sleep_interaction'] = df['Stress_level'] * (10 - df['Sleep_quality'])
+        
+        # Screen time risk
+        df['Screen_time_risk'] = df['Average_screen_time'] * (10 - df['Sleep_quality'])
+        
+        # Physical activity ratio
+        df['Activity_ratio'] = df['Physical_activity'] / df['Daily_steps']
+        
+        # Health risk score
+        health_risk_cols = ['Sleep_disorder', 'Medical_issue', 'Ongoing_medication']
+        df['Health_risk_score'] = df[health_risk_cols].apply(lambda x: x.map({'Y': 1, 'N': 0})).sum(axis=1)
+        
+        # Lifestyle risk score
+        lifestyle_risk_cols = ['Smoking', 'Alcohol_consumption', 'Smart_device_before_bed']
+        df['Lifestyle_risk_score'] = df[lifestyle_risk_cols].apply(lambda x: x.map({'Y': 1, 'N': 0})).sum(axis=1)
+        
+        # Symptom severity
+        symptom_cols = ['Discomfort_eye_strain', 'Redness_in_eye', 'Itchiness_irritation_in_eye']
+        df['Symptom_severity'] = df[symptom_cols].apply(lambda x: x.map({'Y': 1, 'N': 0})).sum(axis=1)
+        
+        return df
+    
+    def select_features(self, X, y, method='mutual_info', k=20):
+        """Select most important features"""
+        if method == 'mutual_info':
+            selector = SelectKBest(score_func=mutual_info_classif, k=k)
+        else:
+            selector = SelectKBest(score_func=f_classif, k=k)
+        
+        X_selected = selector.fit_transform(X, y)
+        selected_features = selector.get_support()
+        
+        return X_selected, selected_features, selector
+    
+    def preprocess_data(self, df, is_training=True):
+        """Enhanced preprocessing with feature engineering"""
+        df = df.copy()
+        
+        # Create engineered features
+        df = self.create_engineered_features(df)
         
         # Handle categorical variables
         categorical_cols = ['Gender', 'Sleep_disorder', 'Wake_up_during_night',
@@ -91,19 +274,18 @@ class DryEyeTextPredictor:
                     self.label_encoders[col] = le
                 else:
                     if col in self.label_encoders:
-                        # Handle unseen categories
                         le = self.label_encoders[col]
                         df[col] = df[col].astype(str)
                         df[col] = df[col].apply(lambda x: le.transform([x])[0] 
                                                if x in le.classes_ else 0)
         
-        # Handle blood pressure (convert string to numeric)
+        # Handle blood pressure
         if 'Blood_pressure' in df.columns:
             df['Blood_pressure'] = df['Blood_pressure'].apply(self._parse_blood_pressure)
         
-        # Select features
-        feature_cols = [col for col in self.feature_names if col in df.columns]
-        X = df[feature_cols].values
+        # Select all features including engineered ones
+        all_feature_cols = [col for col in df.columns if col != 'Dry_Eye_Disease']
+        X = df[all_feature_cols].values
         
         # Scale features
         if is_training:
@@ -111,12 +293,12 @@ class DryEyeTextPredictor:
         else:
             X = self.scaler.transform(X)
         
-        return X, feature_cols
+        return X, all_feature_cols
     
     def _parse_blood_pressure(self, bp_str):
         """Parse blood pressure string to numeric value (systolic)"""
         if pd.isna(bp_str):
-            return 120  # default normal value
+            return 120
         
         bp_str = str(bp_str)
         if '/' in bp_str:
@@ -131,9 +313,9 @@ class DryEyeTextPredictor:
         except:
             return 120
     
-    def train_model(self, csv_path, epochs=100, batch_size=32, learning_rate=0.001, test_size=0.2):
-        """Train the text-based dry eye classification model"""
-        print(f"Training on device: {self.device}")
+    def train_ensemble(self, csv_path, epochs=150, batch_size=64, learning_rate=0.001, test_size=0.2):
+        """Train ensemble of models for better performance"""
+        print(f"Training ensemble on device: {self.device}")
         
         # Load and preprocess data
         df = pd.read_csv(csv_path)
@@ -147,38 +329,71 @@ class DryEyeTextPredictor:
         else:
             raise ValueError("Target column 'Dry_Eye_Disease' not found in dataset")
         
+        # Feature selection
+        X_selected, selected_features, self.feature_selector = self.select_features(X, y, k=min(25, X.shape[1]))
+        print(f"Selected {X_selected.shape[1]} features out of {X.shape[1]}")
+        
         # Split data
         X_train, X_val, y_train, y_val = train_test_split(
-            X, y, test_size=test_size, random_state=42, stratify=y
+            X_selected, y, test_size=test_size, random_state=42, stratify=y
         )
         
         print(f"Training samples: {len(X_train)}, Validation samples: {len(X_val)}")
         print(f"Feature dimensions: {X_train.shape[1]}")
         
+        # Train multiple models
+        models = []
+        
+        # 1. Neural Network
+        print("\nTraining Neural Network...")
+        nn_model = self._train_neural_network(X_train, y_train, X_val, y_val, epochs, batch_size, learning_rate)
+        models.append(('Neural Network', nn_model))
+        
+        # 2. Random Forest
+        print("\nTraining Random Forest...")
+        rf_model = self._train_random_forest(X_train, y_train, X_val, y_val)
+        models.append(('Random Forest', rf_model))
+        
+        # 3. Gradient Boosting
+        print("\nTraining Gradient Boosting...")
+        gb_model = self._train_gradient_boosting(X_train, y_train, X_val, y_val)
+        models.append(('Gradient Boosting', gb_model))
+        
+        # Create ensemble
+        self.ensemble_models = [model for _, model in models]
+        
+        # Evaluate ensemble
+        ensemble_accuracy = self._evaluate_ensemble(X_val, y_val)
+        print(f"\nEnsemble Validation Accuracy: {ensemble_accuracy:.4f}")
+        
+        return models
+    
+    def _train_neural_network(self, X_train, y_train, X_val, y_val, epochs, batch_size, learning_rate):
+        """Train the neural network with advanced techniques"""
         # Create datasets and loaders
-        train_dataset = DryEyeTextDataset(X_train, y_train)
-        val_dataset = DryEyeTextDataset(X_val, y_val)
+        train_dataset = AdvancedDryEyeTextDataset(X_train, y_train, augment=True)
+        val_dataset = AdvancedDryEyeTextDataset(X_val, y_val, augment=False)
         
         train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
         val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
         
         # Initialize model
-        self.model = DryEyeTextClassifier(input_size=X_train.shape[1])
-        self.model.to(self.device)
+        model = AdvancedDryEyeTextClassifier(input_size=X_train.shape[1])
+        model.to(self.device)
         
         # Loss and optimizer
-        criterion = nn.CrossEntropyLoss()
-        optimizer = optim.Adam(self.model.parameters(), lr=learning_rate, weight_decay=1e-5)
-        scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', patience=10, factor=0.5)
+        criterion = nn.CrossEntropyLoss(label_smoothing=0.1)  # Label smoothing for better generalization
+        optimizer = optim.AdamW(model.parameters(), lr=learning_rate, weight_decay=1e-4)
+        scheduler = optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, T_0=20, T_mult=2)
         
         # Training loop
-        train_losses = []
-        val_accuracies = []
         best_val_acc = 0.0
+        patience = 20
+        patience_counter = 0
         
         for epoch in range(epochs):
             # Training phase
-            self.model.train()
+            model.train()
             running_loss = 0.0
             
             for batch_features, batch_labels in train_loader:
@@ -186,15 +401,18 @@ class DryEyeTextPredictor:
                 batch_labels = batch_labels.to(self.device)
                 
                 optimizer.zero_grad()
-                outputs = self.model(batch_features)
+                outputs = model(batch_features)
                 loss = criterion(outputs, batch_labels)
                 loss.backward()
-                optimizer.step()
                 
+                # Gradient clipping
+                torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+                
+                optimizer.step()
                 running_loss += loss.item()
             
             # Validation phase
-            self.model.eval()
+            model.eval()
             val_correct = 0
             val_total = 0
             
@@ -203,7 +421,7 @@ class DryEyeTextPredictor:
                     batch_features = batch_features.to(self.device)
                     batch_labels = batch_labels.to(self.device)
                     
-                    outputs = self.model(batch_features)
+                    outputs = model(batch_features)
                     _, predicted = torch.max(outputs.data, 1)
                     val_total += batch_labels.size(0)
                     val_correct += (predicted == batch_labels).sum().item()
@@ -211,39 +429,75 @@ class DryEyeTextPredictor:
             val_acc = 100 * val_correct / val_total
             avg_loss = running_loss / len(train_loader)
             
-            train_losses.append(avg_loss)
-            val_accuracies.append(val_acc)
-            
             if epoch % 10 == 0:
                 print(f'Epoch {epoch+1}/{epochs}: Loss: {avg_loss:.4f}, Val Accuracy: {val_acc:.2f}%')
             
-            # Save best model
+            # Early stopping
             if val_acc > best_val_acc:
                 best_val_acc = val_acc
-                self.save_model('models/best_text_model.pth')
+                patience_counter = 0
+            else:
+                patience_counter += 1
             
-            scheduler.step(val_acc)
+            if patience_counter >= patience:
+                print(f"Early stopping at epoch {epoch+1}")
+                break
+            
+            scheduler.step()
         
-        print(f'Training completed. Best validation accuracy: {best_val_acc:.2f}%')
-        
-        # Final evaluation
-        self._evaluate_model(X_val, y_val)
-        
-        return train_losses, val_accuracies
+        print(f'Neural Network training completed. Best validation accuracy: {best_val_acc:.2f}%')
+        return model
     
-    def _evaluate_model(self, X_val, y_val):
-        """Evaluate model performance"""
-        self.model.eval()
-        with torch.no_grad():
-            X_val_tensor = torch.FloatTensor(X_val).to(self.device)
-            outputs = self.model(X_val_tensor)
-            _, predicted = torch.max(outputs, 1)
-            predicted = predicted.cpu().numpy()
+    def _train_random_forest(self, X_train, y_train, X_val, y_val):
+        """Train Random Forest classifier"""
+        rf = RandomForestClassifier(
+            n_estimators=200,
+            max_depth=15,
+            min_samples_split=5,
+            min_samples_leaf=2,
+            random_state=42,
+            n_jobs=-1
+        )
         
-        accuracy = accuracy_score(y_val, predicted)
-        print(f"\nValidation Accuracy: {accuracy:.4f}")
-        print("\nClassification Report:")
-        print(classification_report(y_val, predicted, target_names=['No Dry Eyes', 'Dry Eyes']))
+        rf.fit(X_train, y_train)
+        val_pred = rf.predict(X_val)
+        val_acc = accuracy_score(y_val, val_pred)
+        print(f'Random Forest validation accuracy: {val_acc:.4f}')
+        
+        return rf
+    
+    def _train_gradient_boosting(self, X_train, y_train, X_val, y_val):
+        """Train Gradient Boosting classifier"""
+        gb = GradientBoostingClassifier(
+            n_estimators=200,
+            learning_rate=0.1,
+            max_depth=6,
+            min_samples_split=5,
+            min_samples_leaf=2,
+            random_state=42
+        )
+        
+        gb.fit(X_train, y_train)
+        val_pred = gb.predict(X_val)
+        val_acc = accuracy_score(y_val, val_pred)
+        print(f'Gradient Boosting validation accuracy: {val_acc:.4f}')
+        
+        return gb
+    
+    def _evaluate_ensemble(self, X_val, y_val):
+        """Evaluate ensemble performance"""
+        if not self.ensemble_models:
+            return 0.0
+        
+        ensemble = EnsembleClassifier(self.ensemble_models)
+        predictions = ensemble.predict(X_val)
+        accuracy = accuracy_score(y_val, predictions)
+        
+        return accuracy
+    
+    def train_model(self, csv_path, epochs=150, batch_size=64, learning_rate=0.001, test_size=0.2):
+        """Main training method - now uses ensemble approach"""
+        return self.train_ensemble(csv_path, epochs, batch_size, learning_rate, test_size)
     
     def predict_from_questionnaire(self, questionnaire_data):
         """
@@ -360,7 +614,7 @@ class DryEyeTextPredictor:
         
         # Reconstruct model
         arch = checkpoint['model_architecture']
-        self.model = DryEyeTextClassifier(
+        self.model = AdvancedDryEyeTextClassifier(
             input_size=arch['input_size'],
             hidden_sizes=arch['hidden_sizes'],
             num_classes=arch['num_classes']
@@ -394,12 +648,12 @@ def combine_predictions(image_prob, text_prob, image_weight=0.2, text_weight=0.8
 # Usage example
 def main():
     # Initialize predictor
-    predictor = DryEyeTextPredictor()
+    predictor = AdvancedDryEyeTextPredictor()
     
     # Train the model (uncomment to train)
     dataset_path = "datasets/eyes/Dry_Eye_Dataset.csv"
     if os.path.exists(dataset_path):
-        train_losses, val_accuracies = predictor.train_model(dataset_path, epochs=100)
+        predictor.train_model(dataset_path, epochs=150)
     
     # Example prediction
     sample_data = {
