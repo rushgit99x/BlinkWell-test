@@ -58,11 +58,7 @@ def chatbot():
     """AI chatbot interaction page"""
     return render_template('chatbot.html', user=current_user)
 
-@main_bp.route('/settings')
-@login_required
-def settings():
-    return render_template('settings.html', user=current_user)
-
+# REMOVED: Settings route - this is now handled by the dedicated settings blueprint
 # REMOVED: Duplicate /my-recommendations route - this is now handled in eye_detection.py
 # REMOVED: Duplicate /update-recommendation-status route - this is now handled in eye_detection.py
 

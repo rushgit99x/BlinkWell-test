@@ -19,7 +19,6 @@ CREATE TABLE IF NOT EXISTS user_notification_preferences (
 CREATE TABLE IF NOT EXISTS user_privacy_settings (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
-    two_factor_auth BOOLEAN DEFAULT FALSE,
     share_data_research BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -29,7 +28,6 @@ CREATE TABLE IF NOT EXISTS user_privacy_settings (
 
 -- Add missing columns to users table if they don't exist
 ALTER TABLE users 
-ADD COLUMN IF NOT EXISTS profile_pic VARCHAR(255) NULL,
 ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP;
 
 -- Insert default notification preferences for existing users
@@ -37,5 +35,5 @@ INSERT IGNORE INTO user_notification_preferences (user_id, eye_exercise_reminder
 SELECT id, TRUE, TRUE, FALSE, TRUE, 'weekly' FROM users;
 
 -- Insert default privacy settings for existing users
-INSERT IGNORE INTO user_privacy_settings (user_id, two_factor_auth, share_data_research)
-SELECT id, FALSE, FALSE FROM users;
+INSERT IGNORE INTO user_privacy_settings (user_id, share_data_research)
+SELECT id, FALSE FROM users;

@@ -1,8 +1,6 @@
 from flask import Blueprint, request, jsonify, render_template, current_app, flash, redirect, url_for
 from flask_login import login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
-from werkzeug.utils import secure_filename
-import os
 import MySQLdb
 import json
 from datetime import datetime
@@ -13,14 +11,6 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 settings_bp = Blueprint('settings', __name__)
-
-# Allowed file extensions for profile pictures
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
-UPLOAD_FOLDER = 'static/uploads/profile_pics'
-
-def allowed_file(filename):
-    """Check if uploaded file has allowed extension"""
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 @settings_bp.route('/settings')
 @login_required
@@ -112,60 +102,6 @@ def update_profile():
     except Exception as e:
         logger.error(f"Error updating profile: {str(e)}")
         return jsonify({'success': False, 'error': 'Failed to update profile. Please try again.'}), 500
-
-@settings_bp.route('/api/settings/profile-picture', methods=['POST'])
-@login_required
-def update_profile_picture():
-    """Update user profile picture"""
-    try:
-        if 'profile_pic' not in request.files:
-            return jsonify({'success': False, 'error': 'No file uploaded'}), 400
-        
-        file = request.files['profile_pic']
-        if file.filename == '':
-            return jsonify({'success': False, 'error': 'No file selected'}), 400
-        
-        if file and allowed_file(file.filename):
-            # Create upload directory if it doesn't exist
-            os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-            
-            # Generate unique filename
-            filename = secure_filename(f"user_{current_user.id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{file.filename.rsplit('.', 1)[1].lower()}")
-            filepath = os.path.join(UPLOAD_FOLDER, filename)
-            
-            # Save file
-            file.save(filepath)
-            
-            # Update database with new profile picture path
-            conn = current_app.config['get_db_connection']()
-            cursor = conn.cursor()
-            
-            cursor.execute("""
-                UPDATE users 
-                SET profile_pic = %s, updated_at = NOW()
-                WHERE id = %s
-            """, (f"uploads/profile_pics/{filename}", current_user.id))
-            
-            conn.commit()
-            cursor.close()
-            conn.close()
-            
-            # Update current_user object
-            current_user.profile_pic = f"uploads/profile_pics/{filename}"
-            
-            logger.info(f"Profile picture updated for user {current_user.id}")
-            
-            return jsonify({
-                'success': True,
-                'message': 'Profile picture updated successfully',
-                'profile_pic': f"uploads/profile_pics/{filename}"
-            })
-        else:
-            return jsonify({'success': False, 'error': 'Invalid file type. Please upload an image file.'}), 400
-            
-    except Exception as e:
-        logger.error(f"Error updating profile picture: {str(e)}")
-        return jsonify({'success': False, 'error': 'Failed to update profile picture. Please try again.'}), 500
 
 @settings_bp.route('/api/settings/password', methods=['PUT'])
 @login_required
@@ -289,7 +225,6 @@ def update_privacy_settings():
     try:
         data = request.get_json()
         
-        two_factor_auth = data.get('two_factor_auth', False)
         share_data_research = data.get('share_data_research', False)
         
         # Update privacy settings in database
@@ -304,16 +239,16 @@ def update_privacy_settings():
             # Update existing settings
             cursor.execute("""
                 UPDATE user_privacy_settings 
-                SET two_factor_auth = %s, share_data_research = %s, updated_at = NOW()
+                SET share_data_research = %s, updated_at = NOW()
                 WHERE user_id = %s
-            """, (two_factor_auth, share_data_research, current_user.id))
+            """, (share_data_research, current_user.id))
         else:
             # Create new settings record
             cursor.execute("""
                 INSERT INTO user_privacy_settings 
-                (user_id, two_factor_auth, share_data_research, created_at)
-                VALUES (%s, %s, %s, NOW())
-            """, (current_user.id, two_factor_auth, share_data_research))
+                (user_id, share_data_research, created_at)
+                VALUES (%s, %s, NOW())
+            """, (current_user.id, share_data_research))
         
         conn.commit()
         cursor.close()
@@ -389,6 +324,7 @@ def export_user_data():
         conn.close()
         
         # Create export directory if it doesn't exist
+        import os
         export_dir = 'static/exports'
         os.makedirs(export_dir, exist_ok=True)
         
@@ -490,7 +426,7 @@ def get_user_settings(user_id):
         cursor = conn.cursor(MySQLdb.cursors.DictCursor)
         
         cursor.execute("""
-            SELECT username, email, profile_pic, created_at, updated_at
+            SELECT username, email, created_at, updated_at
             FROM users WHERE id = %s
         """, (user_id,))
         

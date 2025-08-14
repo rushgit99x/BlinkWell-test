@@ -26,7 +26,6 @@ app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB limit
 os.makedirs('uploads', exist_ok=True)
 os.makedirs('temp_uploads', exist_ok=True)
 os.makedirs('models', exist_ok=True)
-os.makedirs('static/uploads/profile_pics', exist_ok=True)
 os.makedirs('static/exports', exist_ok=True)
 
 # Initialize database

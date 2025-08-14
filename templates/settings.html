@@ -281,6 +281,11 @@
             border: 2px solid #fca5a5;
         }
 
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
         @media (max-width: 768px) {
             .settings-grid {
                 grid-template-columns: 1fr;
@@ -324,17 +329,12 @@
                     <form id="profileForm">
                         <div class="form-group">
                             <label class="form-label">Username</label>
-                            <input type="text" class="form-input" id="username" value="rushbiz99x">
+                            <input type="text" class="form-input" id="username" value="{{ user.username }}" required>
                         </div>
 
                         <div class="form-group">
                             <label class="form-label">Email Address</label>
-                            <input type="email" class="form-input" id="email" value="rushbiz99x@gmail.com">
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">Profile Picture</label>
-                            <input type="file" class="form-input" id="profilePic" accept="image/*">
+                            <input type="email" class="form-input" id="email" value="{{ user.email }}" required>
                         </div>
 
                         <button type="submit" class="btn">Update Profile</button>
@@ -350,50 +350,56 @@
                         <h3 class="card-title">Notifications</h3>
                     </div>
 
-                    <div class="notification-item">
-                        <span class="notification-text">Eye exercise reminders</span>
-                        <label class="toggle-switch">
-                            <input type="checkbox" checked>
-                            <span class="slider"></span>
-                        </label>
-                    </div>
+                    <form id="notificationForm">
+                        <div class="notification-item">
+                            <span class="notification-text">Eye exercise reminders</span>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="eye_exercise_reminders" 
+                                       {% if notification_preferences.eye_exercise_reminders %}checked{% endif %}>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
 
-                    <div class="notification-item">
-                        <span class="notification-text">Daily habit tracking</span>
-                        <label class="toggle-switch">
-                            <input type="checkbox" checked>
-                            <span class="slider"></span>
-                        </label>
-                    </div>
+                        <div class="notification-item">
+                            <span class="notification-text">Daily habit tracking</span>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="daily_habit_tracking"
+                                       {% if notification_preferences.daily_habit_tracking %}checked{% endif %}>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
 
-                    <div class="notification-item">
-                        <span class="notification-text">Weekly progress reports</span>
-                        <label class="toggle-switch">
-                            <input type="checkbox">
-                            <span class="slider"></span>
-                        </label>
-                    </div>
+                        <div class="notification-item">
+                            <span class="notification-text">Weekly progress reports</span>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="weekly_progress_reports"
+                                       {% if notification_preferences.weekly_progress_reports %}checked{% endif %}>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
 
-                    <div class="notification-item">
-                        <span class="notification-text">Risk assessment updates</span>
-                        <label class="toggle-switch">
-                            <input type="checkbox" checked>
-                            <span class="slider"></span>
-                        </label>
-                    </div>
+                        <div class="notification-item">
+                            <span class="notification-text">Risk assessment updates</span>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="risk_assessment_updates"
+                                       {% if notification_preferences.risk_assessment_updates %}checked{% endif %}>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
 
-                    <div class="form-group" style="margin-top: 20px;">
-                        <label class="form-label">Email Frequency</label>
-                        <select class="form-select">
-                            <option value="daily">Daily</option>
-                            <option value="weekly" selected>Weekly</option>
-                            <option value="monthly">Monthly</option>
-                            <option value="never">Never</option>
-                        </select>
-                    </div>
+                        <div class="form-group" style="margin-top: 20px;">
+                            <label class="form-label">Email Frequency</label>
+                            <select class="form-select" id="email_frequency">
+                                <option value="daily" {% if notification_preferences.email_frequency == 'daily' %}selected{% endif %}>Daily</option>
+                                <option value="weekly" {% if notification_preferences.email_frequency == 'weekly' %}selected{% endif %}>Weekly</option>
+                                <option value="monthly" {% if notification_preferences.email_frequency == 'monthly' %}selected{% endif %}>Monthly</option>
+                                <option value="never" {% if notification_preferences.email_frequency == 'never' %}selected{% endif %}>Never</option>
+                            </select>
+                        </div>
+
+                        <button type="submit" class="btn">Update Notifications</button>
+                    </form>
                 </div>
-
-
 
                 <!-- Privacy & Security -->
                 <div class="settings-card">
@@ -404,38 +410,36 @@
                         <h3 class="card-title">Privacy & Security</h3>
                     </div>
 
-                    <div class="form-group">
-                        <label class="form-label">Current Password</label>
-                        <input type="password" class="form-input" placeholder="Enter current password">
-                    </div>
+                    <form id="passwordForm">
+                        <div class="form-group">
+                            <label class="form-label">Current Password</label>
+                            <input type="password" class="form-input" id="current_password" placeholder="Enter current password" required>
+                        </div>
 
-                    <div class="form-group">
-                        <label class="form-label">New Password</label>
-                        <input type="password" class="form-input" placeholder="Enter new password">
-                    </div>
+                        <div class="form-group">
+                            <label class="form-label">New Password</label>
+                            <input type="password" class="form-input" id="new_password" placeholder="Enter new password" required>
+                        </div>
 
-                    <div class="form-group">
-                        <label class="form-label">Confirm New Password</label>
-                        <input type="password" class="form-input" placeholder="Confirm new password">
-                    </div>
+                        <div class="form-group">
+                            <label class="form-label">Confirm New Password</label>
+                            <input type="password" class="form-input" id="confirm_password" placeholder="Confirm new password" required>
+                        </div>
 
-                    <div class="notification-item">
-                        <span class="notification-text">Two-factor authentication</span>
-                        <label class="toggle-switch">
-                            <input type="checkbox">
-                            <span class="slider"></span>
-                        </label>
-                    </div>
+                        <button type="submit" class="btn">Update Password</button>
+                    </form>
 
-                    <div class="notification-item">
-                        <span class="notification-text">Share data for research</span>
-                        <label class="toggle-switch">
-                            <input type="checkbox">
-                            <span class="slider"></span>
-                        </label>
-                    </div>
+                    <form id="privacyForm" style="margin-top: 20px;">
+                        <div class="notification-item">
+                            <span class="notification-text">Share data for research</span>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="share_data_research">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
 
-                    <button type="button" class="btn" style="margin-top: 15px;">Update Password</button>
+                        <button type="submit" class="btn">Update Privacy Settings</button>
+                    </form>
                 </div>
 
                 <!-- Data Management -->
@@ -478,8 +482,6 @@
                         </button>
                     </div>
                 </div>
-
-
             </div>
         </div>
     </div>
@@ -488,8 +490,182 @@
         // Profile form submission
         document.getElementById('profileForm').addEventListener('submit', function(e) {
             e.preventDefault();
-            showMessage('Profile updated successfully!', 'success');
+            updateProfile();
         });
+
+        // Notification form submission
+        document.getElementById('notificationForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            updateNotifications();
+        });
+
+        // Password form submission
+        document.getElementById('passwordForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            updatePassword();
+        });
+
+        // Privacy form submission
+        document.getElementById('privacyForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            updatePrivacy();
+        });
+
+        // Update profile
+        function updateProfile() {
+            const form = document.getElementById('profileForm');
+            const submitBtn = form.querySelector('button[type="submit"]');
+            
+            form.classList.add('loading');
+            submitBtn.disabled = true;
+            
+            const data = {
+                username: document.getElementById('username').value,
+                email: document.getElementById('email').value
+            };
+            
+            fetch('/api/settings/profile', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showMessage(data.message, 'success');
+                } else {
+                    showMessage(data.error, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showMessage('Failed to update profile. Please try again.', 'error');
+            })
+            .finally(() => {
+                form.classList.remove('loading');
+                submitBtn.disabled = false;
+            });
+        }
+
+        // Update notifications
+        function updateNotifications() {
+            const form = document.getElementById('notificationForm');
+            const submitBtn = form.querySelector('button[type="submit"]');
+            
+            form.classList.add('loading');
+            submitBtn.disabled = true;
+            
+            const data = {
+                eye_exercise_reminders: document.getElementById('eye_exercise_reminders').checked,
+                daily_habit_tracking: document.getElementById('daily_habit_tracking').checked,
+                weekly_progress_reports: document.getElementById('weekly_progress_reports').checked,
+                risk_assessment_updates: document.getElementById('risk_assessment_updates').checked,
+                email_frequency: document.getElementById('email_frequency').value
+            };
+            
+            fetch('/api/settings/notifications', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showMessage(data.message, 'success');
+                } else {
+                    showMessage(data.error, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showMessage('Failed to update notifications. Please try again.', 'error');
+            })
+            .finally(() => {
+                form.classList.remove('loading');
+                submitBtn.disabled = false;
+            });
+        }
+
+        // Update password
+        function updatePassword() {
+            const form = document.getElementById('passwordForm');
+            const submitBtn = form.querySelector('button[type="submit"]');
+            
+            form.classList.add('loading');
+            submitBtn.disabled = true;
+            
+            const data = {
+                current_password: document.getElementById('current_password').value,
+                new_password: document.getElementById('new_password').value,
+                confirm_password: document.getElementById('confirm_password').value
+            };
+            
+            fetch('/api/settings/password', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showMessage(data.message, 'success');
+                    form.reset();
+                } else {
+                    showMessage(data.error, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showMessage('Failed to update password. Please try again.', 'error');
+            })
+            .finally(() => {
+                form.classList.remove('loading');
+                submitBtn.disabled = false;
+            });
+        }
+
+        // Update privacy settings
+        function updatePrivacy() {
+            const form = document.getElementById('privacyForm');
+            const submitBtn = form.querySelector('button[type="submit"]');
+            
+            form.classList.add('loading');
+            submitBtn.disabled = true;
+            
+            const data = {
+                share_data_research: document.getElementById('share_data_research').checked
+            };
+            
+            fetch('/api/settings/privacy', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showMessage(data.message, 'success');
+                } else {
+                    showMessage(data.error, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showMessage('Failed to update privacy settings. Please try again.', 'error');
+            })
+            .finally(() => {
+                form.classList.remove('loading');
+                submitBtn.disabled = false;
+            });
+        }
 
         // Show success/error messages
         function showMessage(message, type) {
@@ -509,13 +685,54 @@
 
         // Export data function
         function exportData() {
-            showMessage('Data export started. You will receive an email with the download link shortly.', 'success');
+            fetch('/api/settings/export-data', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showMessage(data.message, 'success');
+                    // Create download link
+                    const link = document.createElement('a');
+                    link.href = data.download_url;
+                    link.download = data.filename;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                } else {
+                    showMessage(data.error, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showMessage('Failed to export data. Please try again.', 'error');
+            });
         }
 
         // Clear cache function
         function clearCache() {
             if (confirm('Are you sure you want to clear the cache? This may slow down the app temporarily.')) {
-                showMessage('Cache cleared successfully!', 'success');
+                fetch('/api/settings/clear-cache', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showMessage(data.message, 'success');
+                    } else {
+                        showMessage(data.error, 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showMessage('Failed to clear cache. Please try again.', 'error');
+                });
             }
         }
 
@@ -548,7 +765,28 @@
         function deleteAccount() {
             const confirmation = prompt('Are you absolutely sure? This will permanently delete your account and all data. Type "DELETE" to confirm:');
             if (confirmation === 'DELETE') {
-                showMessage('Account deletion initiated. You will receive a confirmation email shortly.', 'error');
+                fetch('/api/settings/delete-account', {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ confirmation: 'DELETE' })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showMessage('Account deleted successfully. Redirecting to login page...', 'success');
+                        setTimeout(() => {
+                            window.location.href = '/login';
+                        }, 2000);
+                    } else {
+                        showMessage(data.error, 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showMessage('Failed to delete account. Please try again.', 'error');
+                });
             }
         }
 
