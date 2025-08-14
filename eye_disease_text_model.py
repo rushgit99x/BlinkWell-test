@@ -176,6 +176,35 @@ class EnsembleClassifier:
         proba = self.predict_proba(X)
         return np.argmax(proba, axis=1)
 
+class TrainingMetrics:
+    """Class to track and store training metrics"""
+    def __init__(self):
+        self.train_losses = []
+        self.val_accuracies = []
+        self.val_losses = []
+        self.epochs = []
+        self.learning_rates = []
+    
+    def update(self, epoch, train_loss, val_accuracy, val_loss=None, lr=None):
+        """Update metrics for the current epoch"""
+        self.epochs.append(epoch)
+        self.train_losses.append(train_loss)
+        self.val_accuracies.append(val_accuracy)
+        if val_loss is not None:
+            self.val_losses.append(val_loss)
+        if lr is not None:
+            self.learning_rates.append(lr)
+    
+    def get_metrics(self):
+        """Get all metrics as a dictionary"""
+        return {
+            'epochs': self.epochs,
+            'train_losses': self.train_losses,
+            'val_accuracies': self.val_accuracies,
+            'val_losses': self.val_losses,
+            'learning_rates': self.learning_rates
+        }
+
 class AdvancedDryEyeTextPredictor:
     """Enhanced text-based dry eye disease predictor"""
     
@@ -186,6 +215,7 @@ class AdvancedDryEyeTextPredictor:
         self.scaler = RobustScaler()  # More robust to outliers
         self.label_encoders = {}
         self.feature_selector = None
+        self.training_metrics = TrainingMetrics()  # Track training metrics
         self.feature_names = [
             'Gender', 'Age', 'Sleep_duration', 'Sleep_quality', 'Stress_level',
             'Blood_pressure', 'Heart_rate', 'Daily_steps', 'Physical_activity',
@@ -371,7 +401,7 @@ class AdvancedDryEyeTextPredictor:
         # Train multiple models
         models = []
         
-        # 1. Neural Network
+        # 1. Neural Network (with metric tracking)
         print("\nTraining Neural Network...")
         nn_model = self._train_neural_network(X_train, y_train, X_val, y_val, epochs, batch_size, learning_rate)
         models.append(('Neural Network', nn_model))
@@ -399,7 +429,10 @@ class AdvancedDryEyeTextPredictor:
         return models
     
     def _train_neural_network(self, X_train, y_train, X_val, y_val, epochs, batch_size, learning_rate):
-        """Train the neural network with advanced techniques"""
+        """Train the neural network with advanced techniques and metric tracking"""
+        # Reset metrics for new training
+        self.training_metrics = TrainingMetrics()
+        
         # Create datasets and loaders
         train_dataset = AdvancedDryEyeTextDataset(X_train, y_train, augment=True)
         val_dataset = AdvancedDryEyeTextDataset(X_val, y_val, augment=False)
@@ -412,11 +445,11 @@ class AdvancedDryEyeTextPredictor:
         model.to(self.device)
         
         # Loss and optimizer
-        criterion = nn.CrossEntropyLoss(label_smoothing=0.1)  # Label smoothing for better generalization
+        criterion = nn.CrossEntropyLoss(label_smoothing=0.1)
         optimizer = optim.AdamW(model.parameters(), lr=learning_rate, weight_decay=1e-4)
         scheduler = optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, T_0=20, T_mult=2)
         
-        # Training loop
+        # Training loop with metric tracking
         best_val_acc = 0.0
         patience = 20
         patience_counter = 0
@@ -445,6 +478,7 @@ class AdvancedDryEyeTextPredictor:
             model.eval()
             val_correct = 0
             val_total = 0
+            val_running_loss = 0.0
             
             with torch.no_grad():
                 for batch_features, batch_labels in val_loader:
@@ -452,15 +486,30 @@ class AdvancedDryEyeTextPredictor:
                     batch_labels = batch_labels.to(self.device)
                     
                     outputs = model(batch_features)
+                    val_loss = criterion(outputs, batch_labels)
+                    val_running_loss += val_loss.item()
+                    
                     _, predicted = torch.max(outputs.data, 1)
                     val_total += batch_labels.size(0)
                     val_correct += (predicted == batch_labels).sum().item()
             
+            # Calculate metrics
+            train_loss = running_loss / len(train_loader)
+            val_loss = val_running_loss / len(val_loader)
             val_acc = 100 * val_correct / val_total
-            avg_loss = running_loss / len(train_loader)
+            current_lr = optimizer.param_groups[0]['lr']
+            
+            # Update training metrics
+            self.training_metrics.update(
+                epoch=epoch + 1,
+                train_loss=train_loss,
+                val_accuracy=val_acc,
+                val_loss=val_loss,
+                lr=current_lr
+            )
             
             if epoch % 10 == 0:
-                print(f'Epoch {epoch+1}/{epochs}: Loss: {avg_loss:.4f}, Val Accuracy: {val_acc:.2f}%')
+                print(f'Epoch {epoch+1}/{epochs}: Train Loss: {train_loss:.4f}, Val Loss: {val_loss:.4f}, Val Accuracy: {val_acc:.2f}%, LR: {current_lr:.6f}')
             
             # Early stopping
             if val_acc > best_val_acc:
@@ -524,6 +573,10 @@ class AdvancedDryEyeTextPredictor:
         accuracy = accuracy_score(y_val, predictions)
         
         return accuracy
+    
+    def get_training_metrics(self):
+        """Get training metrics for plotting"""
+        return self.training_metrics.get_metrics()
     
     def train_model(self, csv_path, epochs=150, batch_size=64, learning_rate=0.001, test_size=0.2):
         """Main training method - now uses ensemble approach"""
@@ -629,6 +682,7 @@ class AdvancedDryEyeTextPredictor:
             'label_encoders': self.label_encoders,
             'feature_names': self.feature_names,
             'feature_selector': self.feature_selector,
+            'training_metrics': self.training_metrics.get_metrics(),  # Save training metrics
         }
         
         # Save neural network if available
@@ -675,6 +729,16 @@ class AdvancedDryEyeTextPredictor:
         self.label_encoders = checkpoint.get('label_encoders', {})
         self.feature_names = checkpoint.get('feature_names', self.feature_names)
         self.feature_selector = checkpoint.get('feature_selector', None)
+        
+        # Load training metrics if available
+        if 'training_metrics' in checkpoint:
+            metrics_data = checkpoint['training_metrics']
+            self.training_metrics = TrainingMetrics()
+            self.training_metrics.epochs = metrics_data.get('epochs', [])
+            self.training_metrics.train_losses = metrics_data.get('train_losses', [])
+            self.training_metrics.val_accuracies = metrics_data.get('val_accuracies', [])
+            self.training_metrics.val_losses = metrics_data.get('val_losses', [])
+            self.training_metrics.learning_rates = metrics_data.get('learning_rates', [])
         
         # Recompose ensemble if possible
         self.ensemble_models = []
