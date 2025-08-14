@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session, current_app
 from flask_login import login_user, logout_user, login_required
 from models.user import register_user, authenticate_user, register_google_user, get_user_by_google_id
+from services.email_service import email_service
 import re
 from authlib.common.security import generate_token
 
@@ -28,6 +29,13 @@ def register():
         
         # Register user
         if register_user(username, email, password):
+            # Send welcome email
+            try:
+                email_service.send_welcome_email(email, username)
+            except Exception as e:
+                # Log error but don't fail registration
+                current_app.logger.error(f"Failed to send welcome email to {email}: {str(e)}")
+            
             flash('Registration successful! Please log in.', 'success')
             return redirect(url_for('auth.login'))
         else:
@@ -98,6 +106,13 @@ def google_callback():
                 profile_pic=google_user.get('picture')
             )
             user = get_user_by_google_id(google_user['sub'])
+            
+            # Send welcome email for Google users
+            try:
+                email_service.send_welcome_email(google_user['email'], username)
+            except Exception as e:
+                # Log error but don't fail login
+                current_app.logger.error(f"Failed to send welcome email to {google_user['email']}: {str(e)}")
         
         login_user(user)
         session['google_token'] = token['access_token']
