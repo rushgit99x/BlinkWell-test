@@ -8,6 +8,9 @@ from models.database import init_db
 from models.user import load_user
 from oauth import init_oauth
 from routes.chatbot import chatbot_bp, initialize_chatbot
+from routes.notifications import notifications_bp
+from services.email_service import email_service
+from services.notification_scheduler import notification_scheduler
 import os
 
 # Add this to your app.py after the existing imports
@@ -38,16 +41,21 @@ init_oauth(app)
 # Register user_loader
 login_manager.user_loader(load_user)
 
+# Initialize email service
+email_service.init_app(app)
+
+# Initialize notification scheduler
+notification_scheduler.init_app(app)
+
 # Register blueprints
 app.register_blueprint(auth_bp)
 app.register_blueprint(main_bp)
 app.register_blueprint(eye_detection_bp)
 app.register_blueprint(habits_bp)
 app.register_blueprint(chatbot_bp)
-
-# @app.before_first_request
-# def init_chatbot():
-#     initialize_chatbot()
+app.register_blueprint(notifications_bp)
 
 if __name__ == '__main__':
+    # Start the notification scheduler
+    notification_scheduler.start()
     app.run(debug=True)

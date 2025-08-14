@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Notification Test - BlinkWell</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #667eea;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        .test-section h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        .button {
+            background: #667eea;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px 5px;
+            font-size: 14px;
+        }
+        .button:hover {
+            background: #5a6fd8;
+        }
+        .button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .status {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .status.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .status.info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .config-info {
+            background: #e7f3ff;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .config-info h4 {
+            margin-top: 0;
+            color: #0056b3;
+        }
+        .config-item {
+            margin: 5px 0;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>👁️ BlinkWell Email Notification Test</h1>
+            <p>Test the email notification system for your application</p>
+        </div>
+
+        <div class="config-info">
+            <h4>📧 Email Service Configuration</h4>
+            <div class="config-item">SMTP Server: <span id="smtp-server">Loading...</span></div>
+            <div class="config-item">SMTP Port: <span id="smtp-port">Loading...</span></div>
+            <div class="config-item">Sender Email: <span id="sender-email">Loading...</span></div>
+            <div class="config-item">Scheduler Status: <span id="scheduler-status">Loading...</span></div>
+        </div>
+
+        <div class="test-section">
+            <h3>🧪 Test Email Types</h3>
+            <p>Send test emails to your registered email address:</p>
+            
+            <button class="button" onclick="sendTestEmail('welcome')">Send Welcome Email</button>
+            <button class="button" onclick="sendTestEmail('habit_reminder')">Send Habit Reminder</button>
+            <button class="button" onclick="sendTestEmail('recommendations')">Send Recommendations</button>
+            <button class="button" onclick="sendTestEmail('weekly_progress')">Send Weekly Report</button>
+            
+            <div id="test-email-status"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>🔔 Manual Notifications</h3>
+            <p>Send immediate notifications:</p>
+            
+            <button class="button" onclick="sendImmediateReminder()">Send Habit Reminder</button>
+            <button class="button" onclick="sendRecommendations()">Send Recommendations</button>
+            <button class="button" onclick="sendWeeklyReport()">Send Weekly Report</button>
+            
+            <div id="manual-notification-status"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>⚙️ Scheduler Control</h3>
+            <p>Control the automated notification scheduler:</p>
+            
+            <button class="button" onclick="startScheduler()">Start Scheduler</button>
+            <button class="button" onclick="stopScheduler()">Stop Scheduler</button>
+            <button class="button" onclick="getStatus()">Get Status</button>
+            
+            <div id="scheduler-status-display"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>📋 Notification Preferences</h3>
+            <p>Manage your notification preferences:</p>
+            
+            <button class="button" onclick="getPreferences()">Get Preferences</button>
+            
+            <div id="preferences-display"></div>
+        </div>
+    </div>
+
+    <script>
+        // Load configuration info on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            getStatus();
+        });
+
+        function sendTestEmail(emailType) {
+            const statusDiv = document.getElementById('test-email-status');
+            statusDiv.innerHTML = '<div class="status info">Sending test email...</div>';
+            
+            fetch('/api/notifications/test-email', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email_type: emailType })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    statusDiv.innerHTML = `<div class="status success">${data.message}</div>`;
+                } else {
+                    statusDiv.innerHTML = `<div class="status error">Error: ${data.error}</div>`;
+                }
+            })
+            .catch(error => {
+                statusDiv.innerHTML = `<div class="status error">Network error: ${error.message}</div>`;
+            });
+        }
+
+        function sendImmediateReminder() {
+            const statusDiv = document.getElementById('manual-notification-status');
+            statusDiv.innerHTML = '<div class="status info">Sending reminder...</div>';
+            
+            fetch('/api/notifications/send-reminder', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ 
+                    habit_name: '20-20-20 Rule',
+                    reminder_time: 'Now'
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    statusDiv.innerHTML = `<div class="status success">${data.message}</div>`;
+                } else {
+                    statusDiv.innerHTML = `<div class="status error">Error: ${data.error}</div>`;
+                }
+            })
+            .catch(error => {
+                statusDiv.innerHTML = `<div class="status error">Network error: ${error.message}</div>`;
+            });
+        }
+
+        function sendRecommendations() {
+            const statusDiv = document.getElementById('manual-notification-status');
+            statusDiv.innerHTML = '<div class="status info">Sending recommendations...</div>';
+            
+            fetch('/api/notifications/send-recommendations', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    statusDiv.innerHTML = `<div class="status success">${data.message}</div>`;
+                } else {
+                    statusDiv.innerHTML = `<div class="status error">Error: ${data.error}</div>`;
+                }
+            })
+            .catch(error => {
+                statusDiv.innerHTML = `<div class="status error">Network error: ${error.message}</div>`;
+            });
+        }
+
+        function sendWeeklyReport() {
+            const statusDiv = document.getElementById('manual-notification-status');
+            statusDiv.innerHTML = '<div class="status info">Sending weekly report...</div>';
+            
+            fetch('/api/notifications/send-weekly-report', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    statusDiv.innerHTML = `<div class="status success">${data.message}</div>`;
+                } else {
+                    statusDiv.innerHTML = `<div class="status error">Error: ${data.error}</div>`;
+                }
+            })
+            .catch(error => {
+                statusDiv.innerHTML = `<div class="status error">Network error: ${error.message}</div>`;
+            });
+        }
+
+        function startScheduler() {
+            const statusDiv = document.getElementById('scheduler-status-display');
+            statusDiv.innerHTML = '<div class="status info">Starting scheduler...</div>';
+            
+            fetch('/api/notifications/start-scheduler', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    statusDiv.innerHTML = `<div class="status success">${data.message}</div>`;
+                    setTimeout(getStatus, 1000);
+                } else {
+                    statusDiv.innerHTML = `<div class="status error">Error: ${data.error}</div>`;
+                }
+            })
+            .catch(error => {
+                statusDiv.innerHTML = `<div class="status error">Network error: ${error.message}</div>`;
+            });
+        }
+
+        function stopScheduler() {
+            const statusDiv = document.getElementById('scheduler-status-display');
+            statusDiv.innerHTML = '<div class="status info">Stopping scheduler...</div>';
+            
+            fetch('/api/notifications/stop-scheduler', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    statusDiv.innerHTML = `<div class="status success">${data.message}</div>`;
+                    setTimeout(getStatus, 1000);
+                } else {
+                    statusDiv.innerHTML = `<div class="status error">Error: ${data.error}</div>`;
+                }
+            })
+            .catch(error => {
+                statusDiv.innerHTML = `<div class="status error">Network error: ${error.message}</div>`;
+            });
+        }
+
+        function getStatus() {
+            fetch('/api/notifications/status')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const status = data.status;
+                    
+                    // Update config display
+                    document.getElementById('scheduler-status').textContent = status.scheduler_running ? 'Running' : 'Stopped';
+                    document.getElementById('smtp-server').textContent = 'smtp.gmail.com';
+                    document.getElementById('smtp-port').textContent = '587';
+                    document.getElementById('sender-email').textContent = status.email_service_configured ? 'Configured' : 'Not Configured';
+                    
+                    // Update scheduler status display
+                    const statusDiv = document.getElementById('scheduler-status-display');
+                    if (status.scheduler_running) {
+                        statusDiv.innerHTML = '<div class="status success">Scheduler is running</div>';
+                    } else {
+                        statusDiv.innerHTML = '<div class="status info">Scheduler is stopped</div>';
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error getting status:', error);
+            });
+        }
+
+        function getPreferences() {
+            const statusDiv = document.getElementById('preferences-display');
+            statusDiv.innerHTML = '<div class="status info">Loading preferences...</div>';
+            
+            fetch('/api/notifications/preferences')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    if (data.preferences && data.preferences.length > 0) {
+                        let html = '<div class="status success"><h4>Your Notification Preferences:</h4><ul>';
+                        data.preferences.forEach(pref => {
+                            html += `<li><strong>${pref.habit_name}</strong>: ${pref.reminder_enabled ? 'Enabled' : 'Disabled'} at ${pref.reminder_time || 'Default'}</li>`;
+                        });
+                        html += '</ul></div>';
+                        statusDiv.innerHTML = html;
+                    } else {
+                        statusDiv.innerHTML = '<div class="status info">No notification preferences found</div>';
+                    }
+                } else {
+                    statusDiv.innerHTML = `<div class="status error">Error: ${data.error}</div>`;
+                }
+            })
+            .catch(error => {
+                statusDiv.innerHTML = `<div class="status error">Network error: ${error.message}</div>`;
+            });
+        }
+    </script>
+</body>
+</html>
