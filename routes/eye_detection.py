@@ -20,13 +20,13 @@ except ImportError as e:
     EyeDiseasePredictor = None
 
 try:
-    from eye_disease_text_model import DryEyeTextPredictor, combine_predictions
-    print("✓ DryEyeTextPredictor imported successfully")
+    from eye_disease_text_model import AdvancedDryEyeTextPredictor, combine_predictions
+    print("✓ AdvancedDryEyeTextPredictor imported successfully")
 except ImportError as e:
-    print(f"✗ Error importing DryEyeTextPredictor: {e}")
+    print(f"✗ Error importing AdvancedDryEyeTextPredictor: {e}")
     print("Full traceback:")
     traceback.print_exc()
-    DryEyeTextPredictor = None
+    AdvancedDryEyeTextPredictor = None
     combine_predictions = None
 
 # Create blueprint
@@ -64,8 +64,8 @@ def init_predictors():
     print(f"Text model exists: {os.path.exists(text_model_path)}")
     
     try:
-        if DryEyeTextPredictor:
-            text_predictor = DryEyeTextPredictor(text_model_path if os.path.exists(text_model_path) else None)
+        if AdvancedDryEyeTextPredictor:
+            text_predictor = AdvancedDryEyeTextPredictor(text_model_path if os.path.exists(text_model_path) else None)
             print("✓ Text predictor initialized successfully")
         else:
             print("✗ Text predictor class not available")
@@ -721,7 +721,7 @@ def check_model_status():
             },
             'text_predictor': {
                 'available': text_predictor is not None,
-                'class_imported': DryEyeTextPredictor is not None
+                'class_imported': AdvancedDryEyeTextPredictor is not None
             }
         }
     })

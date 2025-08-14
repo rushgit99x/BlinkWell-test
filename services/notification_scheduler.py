@@ -45,25 +45,40 @@ class NotificationScheduler:
     
     def _run_scheduler(self):
         """Run the scheduler loop"""
-        # Schedule daily habit reminders
-        schedule.every().day.at("09:00").do(self.send_daily_habit_reminders)
-        schedule.every().day.at("14:00").do(self.send_afternoon_reminders)
-        schedule.every().day.at("18:00").do(self.send_evening_reminders)
-        
-        # Schedule weekly progress reports (every Sunday at 10:00 AM)
-        schedule.every().sunday.at("10:00").do(self.send_weekly_progress_reports)
-        
-        # Schedule monthly recommendation emails (first day of month at 9:00 AM)
-        schedule.every().month.at("09:00").do(self.send_monthly_recommendations)
-        
-        logger.info("Scheduled notifications:")
-        logger.info("- Daily habit reminders: 9:00 AM, 2:00 PM, 6:00 PM")
-        logger.info("- Weekly progress reports: Sundays at 10:00 AM")
-        logger.info("- Monthly recommendations: First day of month at 9:00 AM")
-        
-        while self.running:
-            schedule.run_pending()
-            time.sleep(60)  # Check every minute
+        try:
+            # Schedule daily habit reminders
+            schedule.every().day.at("09:00").do(self.send_daily_habit_reminders)
+            schedule.every().day.at("14:00").do(self.send_afternoon_reminders)
+            schedule.every().day.at("18:00").do(self.send_evening_reminders)
+            
+            # Schedule weekly progress reports (every Sunday at 10:00 AM)
+            schedule.every().sunday.at("10:00").do(self.send_weekly_progress_reports)
+            
+            # Schedule daily check for monthly recommendations (first day of month at 9:00 AM)
+            schedule.every().day.at("09:00").do(self.check_and_send_monthly_recommendations)
+            
+            logger.info("Scheduled notifications:")
+            logger.info("- Daily habit reminders: 9:00 AM, 2:00 PM, 6:00 PM")
+            logger.info("- Weekly progress reports: Sundays at 10:00 AM")
+            logger.info("- Monthly recommendations: First day of month at 9:00 AM")
+            
+            while self.running:
+                try:
+                    schedule.run_pending()
+                    time.sleep(60)  # Check every minute
+                except Exception as e:
+                    logger.error(f"Error in scheduler loop: {str(e)}")
+                    time.sleep(60)  # Continue after error
+                    
+        except Exception as e:
+            logger.error(f"Critical error in scheduler initialization: {str(e)}")
+            # Try to continue with basic functionality
+            while self.running:
+                try:
+                    time.sleep(60)
+                except Exception as inner_e:
+                    logger.error(f"Error in fallback scheduler loop: {str(inner_e)}")
+                    time.sleep(60)
     
     def send_daily_habit_reminders(self):
         """Send morning habit reminders to users"""
@@ -283,6 +298,15 @@ class NotificationScheduler:
                 
         except Exception as e:
             logger.error(f"Error sending monthly recommendations: {str(e)}")
+    
+    def check_and_send_monthly_recommendations(self):
+        """Check if it's the first day of the month and send recommendations if so"""
+        today = datetime.now()
+        if today.day == 1:  # First day of the month
+            logger.info("First day of month detected, sending monthly recommendations...")
+            self.send_monthly_recommendations()
+        else:
+            logger.debug(f"Not first day of month (current day: {today.day})")
     
     def _get_user_habit_streak(self, user_id, habit_name):
         """Get user's current streak for a specific habit"""
