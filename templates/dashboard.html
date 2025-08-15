@@ -1,3 +1,4 @@
+<!-- HTML Template File - Dashboard for BlinkWell -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -138,7 +139,7 @@
                 </div>
                 
                 <div class="progress-bar">
-                    <div class="progress-fill" style="width: {{ data.weekly_progress if data and data.weekly_progress else 0 }}%"></div>
+                    <div class="progress-fill" data-width="{% if data and data.weekly_progress %}{{ data.weekly_progress }}{% else %}0{% endif %}"></div>
                 </div>
                 <div class="progress-text">
                     <span>Weekly Goal</span>
@@ -221,7 +222,7 @@
                 </div>
                 <div class="habit-progress">
                     <div class="progress-bar">
-                        <div class="progress-fill" style="width: {{ data.water_percentage if data and data.water_percentage else 0 }}%"></div>
+                        <div class="progress-fill" data-width="{% if data and data.water_percentage %}{{ data.water_percentage }}{% else %}0{% endif %}"></div>
                     </div>
                     <div class="progress-text">
                         <span>{{ data.water_intake if data and data.water_intake else 0 }}/{{ data.water_target if data and data.water_target else 8 }} glasses today</span>
@@ -246,7 +247,7 @@
                 </div>
                 <div class="habit-progress">
                     <div class="progress-bar">
-                        <div class="progress-fill" style="width: {{ data.exercise_percentage if data and data.exercise_percentage else 0 }}%"></div>
+                        <div class="progress-fill" data-width="{% if data and data.exercise_percentage %}{{ data.exercise_percentage }}{% else %}0{% endif %}"></div>
                     </div>
                     <div class="progress-text">
                         <span>{{ data.exercise_sessions if data and data.exercise_sessions else 0 }}/{{ data.exercise_target if data and data.exercise_target else 3 }} sessions today</span>
