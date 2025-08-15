@@ -162,7 +162,23 @@ def dashboard():
     except Exception as e:
         print(f"Error loading dashboard: {e}")
         # Fallback to basic dashboard if there's an error
-        return render_template('dashboard.html', user=current_user, error="Unable to load dashboard data")
+        safe_defaults = {
+            'user': current_user,
+            'current_risk_score': 0.0,
+            'risk_change': 0.0,
+            'risk_change_text': 'No change',
+            'habits_completed': 0,
+            'total_habits': 0,
+            'habits_percentage': 0,
+            'max_streak': 0,
+            'weekly_completion': 0,
+            'today_habits': [],
+            'top_streaks': [],
+            'weekly_progress': [],
+            'has_health_data': False,
+            'error': "Unable to load dashboard data"
+        }
+        return render_template('dashboard.html', **safe_defaults)
 
 @main_bp.route('/about')
 def about():

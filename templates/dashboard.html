@@ -236,7 +236,7 @@
                 </div>
                 <div class="habit-days">
                     {% for i in range(7) %}
-                    <div class="habit-day {{ 'completed' if i < min(streak.streak_days, 7) else 'upcoming' }}">
+                    <div class="habit-day {{ 'completed' if i < streak.streak_days else 'upcoming' }}">
                         {{ ['M', 'T', 'W', 'T', 'F', 'S', 'S'][i] }}
                     </div>
                     {% endfor %}
