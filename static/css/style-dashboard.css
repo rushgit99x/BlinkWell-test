@@ -272,6 +272,10 @@ body {
     color: #ef4444;
 }
 
+.stat-change.neutral {
+    color: #6b7280;
+}
+
 /* Progress Section */
 .progress-section {
     display: grid;

@@ -30,11 +30,20 @@ window.addEventListener('resize', function() {
 window.addEventListener('load', function() {
     const progressBars = document.querySelectorAll('.progress-fill');
     progressBars.forEach(bar => {
-        const width = bar.style.width;
-        bar.style.width = '0%';
-        setTimeout(() => {
-            bar.style.width = width;
-        }, 500);
+        // Handle data-width attribute for dynamic progress bars
+        if (bar.hasAttribute('data-width')) {
+            const width = bar.getAttribute('data-width');
+            bar.style.width = width + '%';
+        }
+        
+        // Animate existing progress bars
+        const currentWidth = bar.style.width;
+        if (currentWidth && currentWidth !== '0%') {
+            bar.style.width = '0%';
+            setTimeout(() => {
+                bar.style.width = currentWidth;
+            }, 500);
+        }
     });
 });
 
