@@ -151,16 +151,24 @@
                         <div style="display: flex; justify-content: space-between; align-items: center;">
                             <span>💧 Water Intake ({{ data.water_target if data and data.water_target else 8 }} glasses)</span>
                             <div style="display: flex; gap: 0.3rem;">
-                                {% for i in range(data.water_target if data and data.water_target else 8) %}
-                                    <div style="width: 20px; height: 20px; background: {% if i < (data.water_intake if data and data.water_intake else 0) %}#10b981{% else %}#f3f4f6{% endif %}; border-radius: 50%;"></div>
+                                {% set water_target = data.water_target if data and data.water_target else 8 %}
+                                {% set water_intake = data.water_intake if data and data.water_intake else 0 %}
+                                {% for i in range(water_target) %}
+                                    {% if i < water_intake %}
+                                        <div style="width: 20px; height: 20px; background: #10b981; border-radius: 50%;"></div>
+                                    {% else %}
+                                        <div style="width: 20px; height: 20px; background: #f3f4f6; border-radius: 50%;"></div>
+                                    {% endif %}
                                 {% endfor %}
                             </div>
                         </div>
                         <div style="display: flex; justify-content: space-between; align-items: center;">
                             <span>👁️ Eye Exercises ({{ data.exercise_target if data and data.exercise_target else 3 }} sessions)</span>
-                            <span style="color: {% if data and data.exercise_percentage >= 100 %}#10b981{% else %}#f59e0b{% endif %}; font-weight: 600;">
-                                {% if data and data.exercise_percentage >= 100 %}✓ Complete{% else %}{{ data.exercise_sessions if data and data.exercise_sessions else 0 }}/{{ data.exercise_target if data and data.exercise_target else 3 }}{% endif %}
-                            </span>
+                            {% if data and data.exercise_percentage >= 100 %}
+                                <span style="color: #10b981; font-weight: 600;">✓ Complete</span>
+                            {% else %}
+                                <span style="color: #f59e0b; font-weight: 600;">{{ data.exercise_sessions if data and data.exercise_sessions else 0 }}/{{ data.exercise_target if data and data.exercise_target else 3 }}</span>
+                            {% endif %}
                         </div>
                         <div style="display: flex; justify-content: space-between; align-items: center;">
                             <span>📱 Screen Break</span>
@@ -176,9 +184,13 @@
                 </div>
                 <div style="text-align: center;">
                     <div style="font-size: 3rem; margin-bottom: 1rem;">📈</div>
-                    <h4 style="color: {% if data and data.risk_change > 0 %}#10b981{% elif data and data.risk_change < 0 %}#ef4444{% else %}#6b7280{% endif %}; margin-bottom: 0.5rem;">
-                        {% if data and data.risk_change > 0 %}Improving{% elif data and data.risk_change < 0 %}Increasing{% else %}Stable{% endif %}
-                    </h4>
+                    {% if data and data.risk_change > 0 %}
+                        <h4 style="color: #10b981; margin-bottom: 0.5rem;">Improving</h4>
+                    {% elif data and data.risk_change < 0 %}
+                        <h4 style="color: #ef4444; margin-bottom: 0.5rem;">Increasing</h4>
+                    {% else %}
+                        <h4 style="color: #6b7280; margin-bottom: 0.5rem;">Stable</h4>
+                    {% endif %}
                     <p style="color: #666; font-size: 0.9rem;">
                         {% if data and data.risk_change != 0 %}
                             Your risk score has {% if data.risk_change > 0 %}decreased{% else %}increased{% endif %} by {{ data.risk_change|abs }} points this month
