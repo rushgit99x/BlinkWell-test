@@ -66,10 +66,18 @@
                         <i class="fas fa-heartbeat"></i>
                     </div>
                 </div>
-                <div class="stat-value">7.2</div>
-                <div class="stat-change positive">
-                    <i class="fas fa-arrow-down"></i>
-                    <span>0.5 points lower</span>
+                <div class="stat-value">{{ data.current_risk_score if data and data.current_risk_score else '0.0' }}</div>
+                <div class="stat-change {% if data and data.risk_change > 0 %}positive{% elif data and data.risk_change < 0 %}negative{% else %}neutral{% endif %}">
+                    {% if data and data.risk_change > 0 %}
+                        <i class="fas fa-arrow-down"></i>
+                        <span>{{ data.risk_change|abs }} points lower</span>
+                    {% elif data and data.risk_change < 0 %}
+                        <i class="fas fa-arrow-up"></i>
+                        <span>{{ data.risk_change|abs }} points higher</span>
+                    {% else %}
+                        <i class="fas fa-minus"></i>
+                        <span>No change</span>
+                    {% endif %}
                 </div>
             </div>
 
@@ -80,10 +88,10 @@
                         <i class="fas fa-tasks"></i>
                     </div>
                 </div>
-                <div class="stat-value">85%</div>
+                <div class="stat-value">{{ data.habits_completed_pct|round(1) if data and data.habits_completed_pct else '0' }}%</div>
                 <div class="stat-change positive">
                     <i class="fas fa-arrow-up"></i>
-                    <span>5% increase</span>
+                    <span>Today's progress</span>
                 </div>
             </div>
 
@@ -94,10 +102,10 @@
                         <i class="fas fa-fire"></i>
                     </div>
                 </div>
-                <div class="stat-value">12</div>
+                <div class="stat-value">{{ data.streak_days if data and data.streak_days else '0' }}</div>
                 <div class="stat-change positive">
-                    <i class="fas fa-arrow-up"></i>
-                    <span>3 days added</span>
+                    <i class="fas fa-fire"></i>
+                    <span>Current streak</span>
                 </div>
             </div>
 
@@ -108,10 +116,15 @@
                         <i class="fas fa-shield-alt"></i>
                     </div>
                 </div>
-                <div class="stat-value">23%</div>
-                <div class="stat-change positive">
-                    <i class="fas fa-arrow-up"></i>
-                    <span>2% improvement</span>
+                <div class="stat-value">{{ data.risk_reduction|round(1) if data and data.risk_reduction else '0' }}%</div>
+                <div class="stat-change {% if data and data.risk_reduction > 0 %}positive{% else %}neutral{% endif %}">
+                    {% if data and data.risk_reduction > 0 %}
+                        <i class="fas fa-arrow-up"></i>
+                        <span>{{ data.risk_reduction|round(1) }}% improvement</span>
+                    {% else %}
+                        <i class="fas fa-minus"></i>
+                        <span>No change</span>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -125,32 +138,29 @@
                 </div>
                 
                 <div class="progress-bar">
-                    <div class="progress-fill" style="width: 85%"></div>
+                    <div class="progress-fill" style="width: {{ data.weekly_progress if data and data.weekly_progress else 0 }}%"></div>
                 </div>
                 <div class="progress-text">
                     <span>Weekly Goal</span>
-                    <span>85% Complete</span>
+                    <span>{{ data.weekly_progress|round(1) if data and data.weekly_progress else 0 }}% Complete</span>
                 </div>
 
                 <div style="margin-top: 2rem;">
                     <h4 style="margin-bottom: 1rem; color: #333;">Today's Habits</h4>
                     <div style="display: flex; flex-direction: column; gap: 1rem;">
                         <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <span>💧 Water Intake (8 glasses)</span>
+                            <span>💧 Water Intake ({{ data.water_target if data and data.water_target else 8 }} glasses)</span>
                             <div style="display: flex; gap: 0.3rem;">
-                                <div style="width: 20px; height: 20px; background: #10b981; border-radius: 50%;"></div>
-                                <div style="width: 20px; height: 20px; background: #10b981; border-radius: 50%;"></div>
-                                <div style="width: 20px; height: 20px; background: #10b981; border-radius: 50%;"></div>
-                                <div style="width: 20px; height: 20px; background: #10b981; border-radius: 50%;"></div>
-                                <div style="width: 20px; height: 20px; background: #10b981; border-radius: 50%;"></div>
-                                <div style="width: 20px; height: 20px; background: #f3f4f6; border-radius: 50%;"></div>
-                                <div style="width: 20px; height: 20px; background: #f3f4f6; border-radius: 50%;"></div>
-                                <div style="width: 20px; height: 20px; background: #f3f4f6; border-radius: 50%;"></div>
+                                {% for i in range(data.water_target if data and data.water_target else 8) %}
+                                    <div style="width: 20px; height: 20px; background: {% if i < (data.water_intake if data and data.water_intake else 0) %}#10b981{% else %}#f3f4f6{% endif %}; border-radius: 50%;"></div>
+                                {% endfor %}
                             </div>
                         </div>
                         <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <span>👁️ Eye Exercises</span>
-                            <span style="color: #10b981; font-weight: 600;">✓ Complete</span>
+                            <span>👁️ Eye Exercises ({{ data.exercise_target if data and data.exercise_target else 3 }} sessions)</span>
+                            <span style="color: {% if data and data.exercise_percentage >= 100 %}#10b981{% else %}#f59e0b{% endif %}; font-weight: 600;">
+                                {% if data and data.exercise_percentage >= 100 %}✓ Complete{% else %}{{ data.exercise_sessions if data and data.exercise_sessions else 0 }}/{{ data.exercise_target if data and data.exercise_target else 3 }}{% endif %}
+                            </span>
                         </div>
                         <div style="display: flex; justify-content: space-between; align-items: center;">
                             <span>📱 Screen Break</span>
@@ -166,17 +176,25 @@
                 </div>
                 <div style="text-align: center;">
                     <div style="font-size: 3rem; margin-bottom: 1rem;">📈</div>
-                    <h4 style="color: #10b981; margin-bottom: 0.5rem;">Improving</h4>
-                    <p style="color: #666; font-size: 0.9rem;">Your risk score has decreased by 2.1 points this month</p>
+                    <h4 style="color: {% if data and data.risk_change > 0 %}#10b981{% elif data and data.risk_change < 0 %}#ef4444{% else %}#6b7280{% endif %}; margin-bottom: 0.5rem;">
+                        {% if data and data.risk_change > 0 %}Improving{% elif data and data.risk_change < 0 %}Increasing{% else %}Stable{% endif %}
+                    </h4>
+                    <p style="color: #666; font-size: 0.9rem;">
+                        {% if data and data.risk_change != 0 %}
+                            Your risk score has {% if data.risk_change > 0 %}decreased{% else %}increased{% endif %} by {{ data.risk_change|abs }} points this month
+                        {% else %}
+                            Your risk score has remained stable this month
+                        {% endif %}
+                    </p>
                 </div>
                 <div style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid #f3f4f6;">
                     <div style="display: flex; justify-content: space-between; margin-bottom: 1rem;">
                         <span style="color: #666;">Last Month</span>
-                        <span style="font-weight: 600;">9.3</span>
+                        <span style="font-weight: 600;">{{ data.previous_risk_score if data and data.previous_risk_score else '0.0' }}</span>
                     </div>
                     <div style="display: flex; justify-content: space-between;">
                         <span style="color: #666;">This Month</span>
-                        <span style="font-weight: 600; color: #10b981;">7.2</span>
+                        <span style="font-weight: 600; color: #10b981;">{{ data.current_risk_score if data and data.current_risk_score else '0.0' }}</span>
                     </div>
                 </div>
             </div>
@@ -187,15 +205,15 @@
             <div class="habit-card">
                 <div class="habit-header">
                     <h3 class="habit-title">Water Intake</h3>
-                    <div class="habit-streak">5 day streak</div>
+                    <div class="habit-streak">{{ data.water_streak if data and data.water_streak else 0 }} day streak</div>
                 </div>
                 <div class="habit-progress">
                     <div class="progress-bar">
-                        <div class="progress-fill" style="width: 63%"></div>
+                        <div class="progress-fill" style="width: {{ data.water_percentage if data and data.water_percentage else 0 }}%"></div>
                     </div>
                     <div class="progress-text">
-                        <span>5/8 glasses today</span>
-                        <span>63%</span>
+                        <span>{{ data.water_intake if data and data.water_intake else 0 }}/{{ data.water_target if data and data.water_target else 8 }} glasses today</span>
+                        <span>{{ data.water_percentage|round(1) if data and data.water_percentage else 0 }}%</span>
                     </div>
                 </div>
                 <div class="habit-days">
@@ -212,15 +230,15 @@
             <div class="habit-card">
                 <div class="habit-header">
                     <h3 class="habit-title">Eye Exercises</h3>
-                    <div class="habit-streak">12 day streak</div>
+                    <div class="habit-streak">{{ data.streak_days if data and data.streak_days else 0 }} day streak</div>
                 </div>
                 <div class="habit-progress">
                     <div class="progress-bar">
-                        <div class="progress-fill" style="width: 100%"></div>
+                        <div class="progress-fill" style="width: {{ data.exercise_percentage if data and data.exercise_percentage else 0 }}%"></div>
                     </div>
                     <div class="progress-text">
-                        <span>3/3 sessions today</span>
-                        <span>100%</span>
+                        <span>{{ data.exercise_sessions if data and data.exercise_sessions else 0 }}/{{ data.exercise_target if data and data.exercise_target else 3 }} sessions today</span>
+                        <span>{{ data.exercise_percentage|round(1) if data and data.exercise_percentage else 0 }}%</span>
                     </div>
                 </div>
                 <div class="habit-days">
@@ -229,7 +247,7 @@
                     <div class="habit-day completed">W</div>
                     <div class="habit-day completed">T</div>
                     <div class="habit-day completed">F</div>
-                    <div class="habit-day completed">S</div>
+                    <div class="habit-day today">S</div>
                     <div class="habit-day upcoming">S</div>
                 </div>
             </div>
