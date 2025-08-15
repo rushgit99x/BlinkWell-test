@@ -534,3 +534,107 @@ body {
         display: block;
     }
 }
+
+/* New Styles for Dynamic Dashboard */
+.stat-change.neutral {
+    color: #6b7280;
+}
+
+.stat-change.neutral i {
+    color: #6b7280;
+}
+
+.error-message {
+    background: linear-gradient(135deg, #fef2f2, #fecaca);
+    border: 1px solid #fca5a5;
+    border-radius: 15px;
+    padding: 1rem 1.5rem;
+    margin-bottom: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: #dc2626;
+    font-weight: 500;
+}
+
+.error-message i {
+    font-size: 1.2rem;
+}
+
+.no-data-message {
+    background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+    border: 2px dashed #cbd5e1;
+    border-radius: 20px;
+    padding: 3rem 2rem;
+    margin-top: 2rem;
+    text-align: center;
+}
+
+.no-data-content h3 {
+    color: #334155;
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+}
+
+.no-data-content p {
+    color: #64748b;
+    margin-bottom: 2rem;
+    font-size: 1.1rem;
+    line-height: 1.6;
+}
+
+.btn-primary {
+    display: inline-block;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    text-decoration: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 10px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+}
+
+/* Enhanced habit cards for streaks */
+.habits-grid h3 {
+    color: #1f2937;
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+}
+
+.habit-card .habit-days {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.habit-day {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: white;
+}
+
+.habit-day.completed {
+    background: linear-gradient(135deg, #10b981, #059669);
+}
+
+.habit-day.upcoming {
+    background: linear-gradient(135deg, #e5e7eb, #d1d5db);
+    color: #6b7280;
+}
+
+.habit-day.today {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+}

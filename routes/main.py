@@ -2,6 +2,8 @@ from flask import Blueprint, current_app, render_template, request, jsonify, fla
 from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
 import os
+from datetime import datetime, date, timedelta
+import MySQLdb
 
 main_bp = Blueprint('main', __name__)
 
@@ -22,7 +24,145 @@ def index():
 @main_bp.route('/dashboard')
 @login_required
 def dashboard():
-    return render_template('dashboard.html', user=current_user)
+    """Dashboard with dynamic data from database"""
+    try:
+        conn = current_app.config['get_db_connection']()
+        cursor = conn.cursor(MySQLdb.cursors.DictCursor)
+        
+        # Get user's latest health data
+        cursor.execute("""
+            SELECT risk_score, dry_eye_disease, risk_factors, created_at
+            FROM user_eye_health_data 
+            WHERE user_id = %s 
+            ORDER BY created_at DESC 
+            LIMIT 1
+        """, (current_user.id,))
+        
+        latest_health = cursor.fetchone()
+        
+        # Get previous health data for comparison
+        cursor.execute("""
+            SELECT risk_score, created_at
+            FROM user_eye_health_data 
+            WHERE user_id = %s 
+            ORDER BY created_at DESC 
+            LIMIT 2
+        """, (current_user.id,))
+        
+        health_history = cursor.fetchall()
+        
+        # Get habit statistics
+        today = date.today()
+        week_start = today - timedelta(days=today.weekday())
+        
+        cursor.execute("""
+            SELECT 
+                COUNT(DISTINCT uh.id) as total_habits,
+                COUNT(DISTINCT CASE WHEN ht.is_completed = 1 THEN uh.id END) as completed_today,
+                AVG(ht.completion_percentage) as avg_completion
+            FROM user_habits uh
+            LEFT JOIN habit_tracking ht ON uh.id = ht.user_habit_id AND ht.date = %s
+            WHERE uh.user_id = %s AND uh.is_active = 1
+        """, (today, current_user.id))
+        
+        habit_stats = cursor.fetchone()
+        
+        # Get weekly habit progress
+        cursor.execute("""
+            SELECT 
+                DATE(ht.date) as date,
+                COUNT(DISTINCT uh.id) as total_habits,
+                COUNT(DISTINCT CASE WHEN ht.is_completed = 1 THEN uh.id END) as completed_habits,
+                AVG(ht.completion_percentage) as avg_completion
+            FROM user_habits uh
+            LEFT JOIN habit_tracking ht ON uh.id = ht.user_habit_id AND ht.date >= %s
+            WHERE uh.user_id = %s AND uh.is_active = 1
+            GROUP BY DATE(ht.date)
+            ORDER BY date
+        """, (week_start, current_user.id))
+        
+        weekly_progress = cursor.fetchall()
+        
+        # Get streak information
+        cursor.execute("""
+            SELECT 
+                uh.id as user_habit_id,
+                h.name as habit_name,
+                COUNT(DISTINCT ht.date) as streak_days
+            FROM user_habits uh
+            JOIN eye_habits h ON uh.habit_id = h.id
+            LEFT JOIN habit_tracking ht ON uh.id = ht.user_habit_id AND ht.is_completed = 1
+            WHERE uh.user_id = %s AND uh.is_active = 1
+            GROUP BY uh.id, h.name
+            ORDER BY streak_days DESC
+            LIMIT 3
+        """, (current_user.id,))
+        
+        top_streaks = cursor.fetchall()
+        
+        # Get today's specific habits
+        cursor.execute("""
+            SELECT 
+                h.name as habit_name,
+                h.icon as habit_icon,
+                COALESCE(ht.completed_count, 0) as completed_count,
+                COALESCE(uh.custom_target_count, h.target_count) as target_count,
+                COALESCE(ht.completion_percentage, 0) as completion_percentage,
+                ht.is_completed,
+                h.target_unit
+            FROM user_habits uh
+            JOIN eye_habits h ON uh.habit_id = h.id
+            LEFT JOIN habit_tracking ht ON uh.id = ht.user_habit_id AND ht.date = %s
+            WHERE uh.user_id = %s AND uh.is_active = 1
+            ORDER BY h.category, h.name
+        """, (today, current_user.id))
+        
+        today_habits = cursor.fetchall()
+        
+        cursor.close()
+        conn.close()
+        
+        # Calculate dynamic values
+        current_risk_score = latest_health['risk_score'] if latest_health else 0.0
+        previous_risk_score = health_history[1]['risk_score'] if len(health_history) > 1 else current_risk_score
+        risk_change = round(current_risk_score - previous_risk_score, 1)
+        risk_change_text = f"{abs(risk_change)} points {'lower' if risk_change < 0 else 'higher'}"
+        
+        habits_completed = habit_stats['completed_today'] if habit_stats else 0
+        total_habits = habit_stats['total_habits'] if habit_stats else 0
+        habits_percentage = round((habits_completed / total_habits * 100) if total_habits > 0 else 0)
+        
+        max_streak = max([streak['streak_days'] for streak in top_streaks]) if top_streaks else 0
+        
+        # Calculate weekly progress percentage
+        weekly_completion = 0
+        if weekly_progress:
+            total_weekly_habits = sum([day['total_habits'] for day in weekly_progress])
+            total_weekly_completed = sum([day['completed_habits'] for day in weekly_progress])
+            weekly_completion = round((total_weekly_completed / total_weekly_habits * 100) if total_weekly_habits > 0 else 0)
+        
+        dashboard_data = {
+            'user': current_user,
+            'current_risk_score': current_risk_score,
+            'risk_change': risk_change,
+            'risk_change_text': risk_change_text,
+            'habits_completed': habits_completed,
+            'total_habits': total_habits,
+            'habits_percentage': habits_percentage,
+            'max_streak': max_streak,
+            'weekly_completion': weekly_completion,
+            'today_habits': today_habits,
+            'top_streaks': top_streaks,
+            'weekly_progress': weekly_progress,
+            'has_health_data': latest_health is not None
+        }
+        
+        return render_template('dashboard.html', **dashboard_data)
+        
+    except Exception as e:
+        print(f"Error loading dashboard: {e}")
+        # Fallback to basic dashboard if there's an error
+        return render_template('dashboard.html', user=current_user, error="Unable to load dashboard data")
 
 @main_bp.route('/about')
 def about():
