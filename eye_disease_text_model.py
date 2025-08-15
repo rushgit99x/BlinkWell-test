@@ -627,32 +627,44 @@ class AdvancedDryEyeTextPredictor:
         risk_factors = []
         
         # Age risk
-        age = data.get('Age', 0)
-        if age > 50:
-            risk_factors.append({"factor": "Advanced age", "impact": "high", "value": f"{age} years"})
-        elif age > 40:
-            risk_factors.append({"factor": "Middle age", "impact": "medium", "value": f"{age} years"})
+        try:
+            age = int(data.get('Age', '0'))
+            if age > 50:
+                risk_factors.append({"factor": "Advanced age", "impact": "high", "value": f"{age} years"})
+            elif age > 40:
+                risk_factors.append({"factor": "Middle age", "impact": "medium", "value": f"{age} years"})
+        except (ValueError, TypeError):
+            print(f"Warning: Could not convert age '{data.get('Age')}' to int")
         
         # Screen time risk
-        screen_time = data.get('Average_screen_time', 0)
-        if screen_time > 8:
-            risk_factors.append({"factor": "Excessive screen time", "impact": "high", "value": f"{screen_time} hours/day"})
-        elif screen_time > 6:
-            risk_factors.append({"factor": "High screen time", "impact": "medium", "value": f"{screen_time} hours/day"})
+        try:
+            screen_time = float(data.get('Average_screen_time', '0'))
+            if screen_time > 8:
+                risk_factors.append({"factor": "Excessive screen time", "impact": "high", "value": f"{screen_time} hours/day"})
+            elif screen_time > 6:
+                risk_factors.append({"factor": "High screen time", "impact": "medium", "value": f"{screen_time} hours/day"})
+        except (ValueError, TypeError):
+            print(f"Warning: Could not convert screen_time '{data.get('Average_screen_time')}' to float")
         
         # Sleep quality risk
-        sleep_quality = data.get('Sleep_quality', 10)
-        if sleep_quality < 4:
-            risk_factors.append({"factor": "Poor sleep quality", "impact": "high", "value": f"Score: {sleep_quality}/10"})
-        elif sleep_quality < 6:
-            risk_factors.append({"factor": "Below average sleep quality", "impact": "medium", "value": f"Score: {sleep_quality}/10"})
+        try:
+            sleep_quality = int(data.get('Sleep_quality', '10'))
+            if sleep_quality < 4:
+                risk_factors.append({"factor": "Poor sleep quality", "impact": "high", "value": f"Score: {sleep_quality}/10"})
+            elif sleep_quality < 6:
+                risk_factors.append({"factor": "Below average sleep quality", "impact": "medium", "value": f"Score: {sleep_quality}/10"})
+        except (ValueError, TypeError):
+            print(f"Warning: Could not convert sleep_quality '{data.get('Sleep_quality')}' to int")
         
         # Stress level risk
-        stress_level = data.get('Stress_level', 0)
-        if stress_level > 7:
-            risk_factors.append({"factor": "High stress levels", "impact": "high", "value": f"Level: {stress_level}/10"})
-        elif stress_level > 5:
-            risk_factors.append({"factor": "Moderate stress levels", "impact": "medium", "value": f"Level: {stress_level}/10"})
+        try:
+            stress_level = int(data.get('Stress_level', '0'))
+            if stress_level > 7:
+                risk_factors.append({"factor": "High stress levels", "impact": "high", "value": f"Level: {stress_level}/10"})
+            elif stress_level > 5:
+                risk_factors.append({"factor": "Moderate stress levels", "impact": "medium", "value": f"Level: {stress_level}/10"})
+        except (ValueError, TypeError):
+            print(f"Warning: Could not convert stress_level '{data.get('Stress_level')}' to int")
         
         # Environmental factors
         if data.get('Blue_light_filter') == 'N':
