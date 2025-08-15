@@ -93,65 +93,77 @@ class FallbackTextPredictor:
             risk_factors = []
             
             # Screen time risk
-            screen_time = float(questionnaire_data.get('Average_screen_time', 0))
-            if screen_time > 8:
-                risk_score += 0.3
-                risk_factors.append({
-                    'factor': 'High Screen Time',
-                    'value': f'{screen_time} hours/day',
-                    'impact': 'high'
-                })
-            elif screen_time > 6:
-                risk_score += 0.2
-                risk_factors.append({
-                    'factor': 'Moderate Screen Time',
-                    'value': f'{screen_time} hours/day',
-                    'impact': 'medium'
-                })
+            try:
+                screen_time = float(questionnaire_data.get('Average_screen_time', '0'))
+                if screen_time > 8:
+                    risk_score += 0.3
+                    risk_factors.append({
+                        'factor': 'High Screen Time',
+                        'value': f'{screen_time} hours/day',
+                        'impact': 'high'
+                    })
+                elif screen_time > 6:
+                    risk_score += 0.2
+                    risk_factors.append({
+                        'factor': 'Moderate Screen Time',
+                        'value': f'{screen_time} hours/day',
+                        'impact': 'medium'
+                    })
+            except (ValueError, TypeError):
+                print(f"Warning: Could not convert screen_time '{questionnaire_data.get('Average_screen_time')}' to float")
             
             # Sleep quality risk
-            sleep_quality = int(questionnaire_data.get('Sleep_quality', 10))
-            if sleep_quality < 5:
-                risk_score += 0.25
-                risk_factors.append({
-                    'factor': 'Poor Sleep Quality',
-                    'value': f'{sleep_quality}/10',
-                    'impact': 'high'
-                })
-            elif sleep_quality < 7:
-                risk_score += 0.15
-                risk_factors.append({
-                    'factor': 'Moderate Sleep Quality',
-                    'value': f'{sleep_quality}/10',
-                    'impact': 'medium'
-                })
+            try:
+                sleep_quality = int(questionnaire_data.get('Sleep_quality', '10'))
+                if sleep_quality < 5:
+                    risk_score += 0.25
+                    risk_factors.append({
+                        'factor': 'Poor Sleep Quality',
+                        'value': f'{sleep_quality}/10',
+                        'impact': 'high'
+                    })
+                elif sleep_quality < 7:
+                    risk_score += 0.15
+                    risk_factors.append({
+                        'factor': 'Moderate Sleep Quality',
+                        'value': f'{sleep_quality}/10',
+                        'impact': 'medium'
+                    })
+            except (ValueError, TypeError):
+                print(f"Warning: Could not convert sleep_quality '{questionnaire_data.get('Sleep_quality')}' to int")
             
             # Stress level risk
-            stress_level = int(questionnaire_data.get('Stress_level', 1))
-            if stress_level > 7:
-                risk_score += 0.2
-                risk_factors.append({
-                    'factor': 'High Stress Level',
-                    'value': f'{stress_level}/10',
-                    'impact': 'high'
-                })
-            elif stress_level > 5:
-                risk_score += 0.1
-                risk_factors.append({
-                    'factor': 'Moderate Stress Level',
-                    'value': f'{stress_level}/10',
-                    'impact': 'medium'
-                })
+            try:
+                stress_level = int(questionnaire_data.get('Stress_level', '1'))
+                if stress_level > 7:
+                    risk_score += 0.2
+                    risk_factors.append({
+                        'factor': 'High Stress Level',
+                        'value': f'{stress_level}/10',
+                        'impact': 'high'
+                    })
+                elif stress_level > 5:
+                    risk_score += 0.1
+                    risk_factors.append({
+                        'factor': 'Moderate Stress Level',
+                        'value': f'{stress_level}/10',
+                        'impact': 'medium'
+                    })
+            except (ValueError, TypeError):
+                print(f"Warning: Could not convert stress_level '{questionnaire_data.get('Stress_level')}' to int")
             
             # Age risk
-            age = int(questionnaire_data.get('Age', 0))
-            if age > 50:
-                risk_score += 0.15
-                risk_factors.append({
-                    'factor': 'Age Factor',
-                    'value': f'{age} years',
-                    'impact': 'medium'
-                })
+            try:
+                age = int(questionnaire_data.get('Age', '0'))
+                if age > 50:
+                    risk_score += 0.15
+                    risk_factors.append({
+                        'factor': 'Age Factor',
+                        'value': f'{age} years',
+                        'impact': 'medium'
+                    })
+            except (ValueError, TypeError):
+                print(f"Warning: Could not convert age '{questionnaire_data.get('Age')}' to int")
             
             # Blue light filter
             if questionnaire_data.get('Blue_light_filter', 'Y') == 'N':
@@ -783,33 +795,45 @@ def get_comprehensive_recommendations(probability, risk_factors, questionnaire_d
         ])
     
     # Lifestyle recommendations based on risk factors
-    screen_time = questionnaire_data.get('Average_screen_time', 0)
-    if float(screen_time) > 8:
-        recommendations['lifestyle_changes'].extend([
-            f"Reduce daily screen time from {screen_time} hours to under 8 hours",
-            "Implement strict screen time limits, especially before bedtime",
-            "Use blue light filtering glasses or software"
-        ])
+    screen_time = questionnaire_data.get('Average_screen_time', '0')
+    try:
+        screen_time_float = float(screen_time)
+        if screen_time_float > 8:
+            recommendations['lifestyle_changes'].extend([
+                f"Reduce daily screen time from {screen_time} hours to under 8 hours",
+                "Implement strict screen time limits, especially before bedtime",
+                "Use blue light filtering glasses or software"
+            ])
+    except (ValueError, TypeError):
+        print(f"Warning: Could not convert screen_time '{screen_time}' to float")
     
     if questionnaire_data.get('Blue_light_filter') == 'N':
         recommendations['lifestyle_changes'].append(
             "Enable blue light filters on all devices"
         )
     
-    stress_level = questionnaire_data.get('Stress_level', 0)
-    if int(stress_level) > 6:
-        recommendations['lifestyle_changes'].extend([
-            "Practice stress reduction techniques (meditation, yoga, deep breathing)",
-            "Consider stress management counseling or resources"
-        ])
+    stress_level = questionnaire_data.get('Stress_level', '0')
+    try:
+        stress_level_int = int(stress_level)
+        if stress_level_int > 6:
+            recommendations['lifestyle_changes'].extend([
+                "Practice stress reduction techniques (meditation, yoga, deep breathing)",
+                "Consider stress management counseling or resources"
+            ])
+    except (ValueError, TypeError):
+        print(f"Warning: Could not convert stress_level '{stress_level}' to int")
     
-    sleep_quality = questionnaire_data.get('Sleep_quality', 10)
-    if int(sleep_quality) < 6:
-        recommendations['lifestyle_changes'].extend([
-            "Improve sleep hygiene practices",
-            "Aim for 7-9 hours of quality sleep per night",
-            "Avoid screens 1 hour before bedtime"
-        ])
+    sleep_quality = questionnaire_data.get('Sleep_quality', '10')
+    try:
+        sleep_quality_int = int(sleep_quality)
+        if sleep_quality_int < 6:
+            recommendations['lifestyle_changes'].extend([
+                "Improve sleep hygiene practices",
+                "Aim for 7-9 hours of quality sleep per night",
+                "Avoid screens 1 hour before bedtime"
+            ])
+    except (ValueError, TypeError):
+        print(f"Warning: Could not convert sleep_quality '{sleep_quality}' to int")
     
     # Monitoring recommendations
     recommendations['monitoring'].extend([
@@ -910,20 +934,80 @@ def save_comprehensive_analysis(user_id, questionnaire_data, analysis_result, re
             print(f"⚠️ Warning: Found {existing_health} existing health records. Clearing before saving new one.")
             cursor.execute("DELETE FROM user_eye_health_data WHERE user_id = %s", (user_id,))
         
-        # Prepare data for user_eye_health_data table
+        # Prepare data for user_eye_health_data table with safe type conversion
+        try:
+            age = int(questionnaire_data.get('Age', '0'))
+        except (ValueError, TypeError):
+            age = 0
+            print(f"Warning: Could not convert age '{questionnaire_data.get('Age')}' to int, using default 0")
+        
+        try:
+            sleep_duration = float(questionnaire_data.get('Sleep_duration', '7.0'))
+        except (ValueError, TypeError):
+            sleep_duration = 7.0
+            print(f"Warning: Could not convert sleep_duration '{questionnaire_data.get('Sleep_duration')}' to float, using default 7.0")
+        
+        try:
+            sleep_quality = int(questionnaire_data.get('Sleep_quality', '5'))
+        except (ValueError, TypeError):
+            sleep_quality = 5
+            print(f"Warning: Could not convert sleep_quality '{questionnaire_data.get('Sleep_quality')}' to int, using default 5")
+        
+        try:
+            stress_level = int(questionnaire_data.get('Stress_level', '5'))
+        except (ValueError, TypeError):
+            stress_level = 5
+            print(f"Warning: Could not convert stress_level '{questionnaire_data.get('Stress_level')}' to int, using default 5")
+        
+        try:
+            heart_rate = int(questionnaire_data.get('Heart_rate', '70'))
+        except (ValueError, TypeError):
+            heart_rate = 70
+            print(f"Warning: Could not convert heart_rate '{questionnaire_data.get('Heart_rate')}' to int, using default 70")
+        
+        try:
+            daily_steps = int(questionnaire_data.get('Daily_steps', '5000'))
+        except (ValueError, TypeError):
+            daily_steps = 5000
+            print(f"Warning: Could not convert daily_steps '{questionnaire_data.get('Daily_steps')}' to int, using default 5000")
+        
+        try:
+            physical_activity = int(questionnaire_data.get('Physical_activity', '3'))
+        except (ValueError, TypeError):
+            physical_activity = 3
+            print(f"Warning: Could not convert physical_activity '{questionnaire_data.get('Physical_activity')}' to int, using default 3")
+        
+        try:
+            height = int(questionnaire_data.get('Height', '170'))
+        except (ValueError, TypeError):
+            height = 170
+            print(f"Warning: Could not convert height '{questionnaire_data.get('Height')}' to int, using default 170")
+        
+        try:
+            weight = int(questionnaire_data.get('Weight', '70'))
+        except (ValueError, TypeError):
+            weight = 70
+            print(f"Warning: Could not convert weight '{questionnaire_data.get('Weight')}' to int, using default 70")
+        
+        try:
+            average_screen_time = float(questionnaire_data.get('Average_screen_time', '6.0'))
+        except (ValueError, TypeError):
+            average_screen_time = 6.0
+            print(f"Warning: Could not convert average_screen_time '{questionnaire_data.get('Average_screen_time')}' to float, using default 6.0")
+        
         health_data = {
             'user_id': user_id,
             'gender': questionnaire_data.get('Gender', 'Other'),
-            'age': questionnaire_data.get('Age', 0),
-            'sleep_duration': questionnaire_data.get('Sleep_duration', 7.0),
-            'sleep_quality': questionnaire_data.get('Sleep_quality', 5),
-            'stress_level': questionnaire_data.get('Stress_level', 5),
+            'age': age,
+            'sleep_duration': sleep_duration,
+            'sleep_quality': sleep_quality,
+            'stress_level': stress_level,
             'blood_pressure': str(questionnaire_data.get('Blood_pressure', '120/80')),
-            'heart_rate': questionnaire_data.get('Heart_rate', 70),
-            'daily_steps': questionnaire_data.get('Daily_steps', 5000),
-            'physical_activity': questionnaire_data.get('Physical_activity', 3),
-            'height': questionnaire_data.get('Height', 170),
-            'weight': questionnaire_data.get('Weight', 70),
+            'heart_rate': heart_rate,
+            'daily_steps': daily_steps,
+            'physical_activity': physical_activity,
+            'height': height,
+            'weight': weight,
             'sleep_disorder': questionnaire_data.get('Sleep_disorder', 'N'),
             'wake_up_during_night': questionnaire_data.get('Wake_up_during_night', 'N'),
             'feel_sleepy_during_day': questionnaire_data.get('Feel_sleepy_during_day', 'N'),
@@ -933,7 +1017,7 @@ def save_comprehensive_analysis(user_id, questionnaire_data, analysis_result, re
             'medical_issue': questionnaire_data.get('Medical_issue', 'N'),
             'ongoing_medication': questionnaire_data.get('Ongoing_medication', 'N'),
             'smart_device_before_bed': questionnaire_data.get('Smart_device_before_bed', 'N'),
-            'average_screen_time': questionnaire_data.get('Average_screen_time', 6.0),
+            'average_screen_time': average_screen_time,
             'blue_light_filter': questionnaire_data.get('Blue_light_filter', 'N'),
             'discomfort_eye_strain': questionnaire_data.get('Discomfort_eye_strain', 'N'),
             'redness_in_eye': questionnaire_data.get('Redness_in_eye', 'N'),
