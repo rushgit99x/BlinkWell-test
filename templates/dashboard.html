@@ -133,28 +133,28 @@
             <div class="progress-card">
                 <div class="progress-header">
                     <h3 class="progress-title">Weekly Progress</h3>
-                    <span style="color: #667eea; font-weight: 600;">This Week</span>
+                    <span class="week-label">This Week</span>
                 </div>
                 
                 <div class="progress-bar">
-                    <div class="progress-fill" style="width: {{ weekly_completion }}%"></div>
+                    <div class="progress-fill" data-width="{{ weekly_completion }}"></div>
                 </div>
                 <div class="progress-text">
                     <span>Weekly Goal</span>
-                    <span>{{ weekly_completion }}% Complete</span>
+                    <span class="completion-text">{{ weekly_completion }}% Complete</span>
                 </div>
 
                 {% if today_habits %}
-                <div style="margin-top: 2rem;">
-                    <h4 style="margin-bottom: 1rem; color: #333;">Today's Habits</h4>
-                    <div style="display: flex; flex-direction: column; gap: 1rem;">
+                <div class="today-habits-section">
+                    <h4 class="habits-title">Today's Habits</h4>
+                    <div class="habits-list">
                         {% for habit in today_habits %}
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <span>{{ habit.habit_icon }} {{ habit.habit_name }}</span>
+                        <div class="habit-item">
+                            <span class="habit-name">{{ habit.habit_icon }} {{ habit.habit_name }}</span>
                             {% if habit.is_completed %}
-                            <span style="color: #10b981; font-weight: 600;">✓ Complete</span>
+                            <span class="habit-status completed">✓ Complete</span>
                             {% else %}
-                            <span style="color: #f59e0b; font-weight: 600;">
+                            <span class="habit-status pending">
                                 {{ habit.completed_count }}/{{ habit.target_count }} {{ habit.target_unit }}
                             </span>
                             {% endif %}
@@ -163,7 +163,7 @@
                     </div>
                 </div>
                 {% else %}
-                <div style="margin-top: 2rem; text-align: center; color: #666;">
+                <div class="no-habits-section">
                     <p>No habits set for today</p>
                     <a href="{{ url_for('main.habits') }}" class="btn-primary">Set Up Habits</a>
                 </div>
@@ -175,14 +175,14 @@
                     <h3 class="progress-title">Risk Trends</h3>
                 </div>
                 {% if has_health_data %}
-                <div style="text-align: center;">
-                    <div style="font-size: 3rem; margin-bottom: 1rem;">
+                <div class="risk-trends-content">
+                    <div class="trend-icon">
                         {% if risk_change < 0 %}📈{% elif risk_change > 0 %}📉{% else %}➡️{% endif %}
                     </div>
-                    <h4 style="color: {{ '#10b981' if risk_change < 0 else '#ef4444' if risk_change > 0 else '#6b7280' }}; margin-bottom: 0.5rem;">
+                    <h4 class="trend-status {{ 'improving' if risk_change < 0 else 'worsening' if risk_change > 0 else 'stable' }}">
                         {{ 'Improving' if risk_change < 0 else 'Worsening' if risk_change > 0 else 'Stable' }}
                     </h4>
-                    <p style="color: #666; font-size: 0.9rem;">
+                    <p class="trend-description">
                         {% if risk_change != 0 %}
                         Your risk score has {{ 'decreased' if risk_change < 0 else 'increased' }} by {{ "%.1f"|format(abs(risk_change)) }} points
                         {% else %}
@@ -191,22 +191,24 @@
                     </p>
                 </div>
                 {% else %}
-                <div style="text-align: center; color: #666;">
-                    <div style="font-size: 3rem; margin-bottom: 1rem;">📊</div>
-                    <h4 style="color: #6b7280; margin-bottom: 0.5rem;">No Data Yet</h4>
-                    <p style="color: #666; font-size: 0.9rem;">Complete your first eye analysis to see trends</p>
+                <div class="no-data-content">
+                    <div class="no-data-icon">📊</div>
+                    <h4 class="no-data-title">No Data Yet</h4>
+                    <p class="no-data-description">Complete your first eye analysis to see trends</p>
                 </div>
                 {% endif %}
                 
                 {% if has_health_data %}
-                <div style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid #f3f4f6;">
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 1rem;">
-                        <span style="color: #666;">Previous</span>
-                        <span style="font-weight: 600;">{{ "%.1f"|format(current_risk_score + risk_change) }}</span>
+                <div class="risk-comparison">
+                    <div class="comparison-item">
+                        <span class="comparison-label">Previous</span>
+                        <span class="comparison-value">{{ "%.1f"|format(current_risk_score + risk_change) }}</span>
                     </div>
-                    <div style="display: flex; justify-content: space-between;">
-                        <span style="color: #666;">Current</span>
-                        <span style="font-weight: 600; color: {{ '#10b981' if risk_change < 0 else '#ef4444' if risk_change > 0 else '#6b7280' }};">{{ "%.1f"|format(current_risk_score) }}</span>
+                    <div class="comparison-item">
+                        <span class="comparison-label">Current</span>
+                        <span class="comparison-value current {{ 'improving' if risk_change < 0 else 'worsening' if risk_change > 0 else 'stable' }}">
+                            {{ "%.1f"|format(current_risk_score) }}
+                        </span>
                     </div>
                 </div>
                 {% endif %}
@@ -216,7 +218,7 @@
         <!-- Top Streaks Section -->
         {% if top_streaks %}
         <div class="habits-grid fade-in-up">
-            <h3 style="grid-column: 1 / -1; margin-bottom: 1rem; color: #333;">Top Streaks</h3>
+            <h3 class="streaks-title">Top Streaks</h3>
             {% for streak in top_streaks %}
             <div class="habit-card">
                 <div class="habit-header">
@@ -225,11 +227,11 @@
                 </div>
                 <div class="habit-progress">
                     <div class="progress-bar">
-                        <div class="progress-fill" style="width: {{ (streak.streak_days / 30) * 100 }}%"></div>
+                        <div class="progress-fill" data-width="{{ (streak.streak_days / 30) * 100 }}"></div>
                     </div>
                     <div class="progress-text">
                         <span>{{ streak.streak_days }} days</span>
-                        <span>{{ "%.0f"|format((streak.streak_days / 30) * 100) }}%</span>
+                        <span class="streak-percentage">{{ "%.0f"|format((streak.streak_days / 30) * 100) }}%</span>
                     </div>
                 </div>
                 <div class="habit-days">
@@ -271,7 +273,7 @@
         {% if not has_health_data %}
         <div class="no-data-message fade-in-up">
             <div class="no-data-content">
-                <i class="fas fa-chart-bar" style="font-size: 4rem; color: #667eea; margin-bottom: 1rem;"></i>
+                <i class="fas fa-chart-bar no-data-icon-large"></i>
                 <h3>Welcome to BlinkWell!</h3>
                 <p>Complete your first eye health assessment to start tracking your progress and see personalized insights.</p>
                 <a href="{{ url_for('main.eye_analysis') }}" class="btn-primary">Start Your First Assessment</a>
