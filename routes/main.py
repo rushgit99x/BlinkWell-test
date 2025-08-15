@@ -1,6 +1,7 @@
 from flask import Blueprint, current_app, render_template, request, jsonify, flash, redirect, url_for, send_from_directory
 from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
+from services.dashboard_service import dashboard_service
 import os
 
 main_bp = Blueprint('main', __name__)
@@ -22,7 +23,20 @@ def index():
 @main_bp.route('/dashboard')
 @login_required
 def dashboard():
-    return render_template('dashboard.html', user=current_user)
+    """Display user dashboard with real-time data"""
+    try:
+        # Get comprehensive dashboard data from the service
+        dashboard_data = dashboard_service.get_dashboard_data(current_user.id)
+        
+        return render_template('dashboard.html', 
+                             user=current_user, 
+                             dashboard_data=dashboard_data)
+    except Exception as e:
+        current_app.logger.error(f"Error loading dashboard for user {current_user.id}: {str(e)}")
+        # Fallback to basic dashboard with default data
+        return render_template('dashboard.html', 
+                             user=current_user, 
+                             dashboard_data=dashboard_service._get_default_dashboard_data())
 
 @main_bp.route('/about')
 def about():

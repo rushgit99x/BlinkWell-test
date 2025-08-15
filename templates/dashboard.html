@@ -66,10 +66,18 @@
                         <i class="fas fa-heartbeat"></i>
                     </div>
                 </div>
-                <div class="stat-value">7.2</div>
-                <div class="stat-change positive">
-                    <i class="fas fa-arrow-down"></i>
-                    <span>0.5 points lower</span>
+                <div class="stat-value">{{ "%.1f"|format(dashboard_data.risk_metrics.current_risk_score) }}</div>
+                <div class="stat-change {% if dashboard_data.risk_metrics.score_change > 0 %}positive{% elif dashboard_data.risk_metrics.score_change < 0 %}negative{% else %}neutral{% endif %}">
+                    {% if dashboard_data.risk_metrics.score_change > 0 %}
+                        <i class="fas fa-arrow-down"></i>
+                        <span>{{ "%.1f"|format(dashboard_data.risk_metrics.score_change) }} points lower</span>
+                    {% elif dashboard_data.risk_metrics.score_change < 0 %}
+                        <i class="fas fa-arrow-up"></i>
+                        <span>{{ "%.1f"|format(dashboard_data.risk_metrics.score_change|abs) }} points higher</span>
+                    {% else %}
+                        <i class="fas fa-minus"></i>
+                        <span>No change</span>
+                    {% endif %}
                 </div>
             </div>
 
@@ -80,10 +88,10 @@
                         <i class="fas fa-tasks"></i>
                     </div>
                 </div>
-                <div class="stat-value">85%</div>
+                <div class="stat-value">{{ "%.0f"|format(dashboard_data.habit_metrics.daily_completion_percentage) }}%</div>
                 <div class="stat-change positive">
                     <i class="fas fa-arrow-up"></i>
-                    <span>5% increase</span>
+                    <span>{{ dashboard_data.habit_metrics.habits_completed_today }}/{{ dashboard_data.habit_metrics.total_active_habits }} today</span>
                 </div>
             </div>
 
@@ -94,10 +102,10 @@
                         <i class="fas fa-fire"></i>
                     </div>
                 </div>
-                <div class="stat-value">12</div>
+                <div class="stat-value">{{ dashboard_data.streak_metrics.current_streak }}</div>
                 <div class="stat-change positive">
-                    <i class="fas fa-arrow-up"></i>
-                    <span>3 days added</span>
+                    <i class="fas fa-fire"></i>
+                    <span>{% if dashboard_data.streak_metrics.streak_status == 'active' %}Active streak{% else %}Start today{% endif %}</span>
                 </div>
             </div>
 
@@ -108,10 +116,15 @@
                         <i class="fas fa-shield-alt"></i>
                     </div>
                 </div>
-                <div class="stat-value">23%</div>
-                <div class="stat-change positive">
-                    <i class="fas fa-arrow-up"></i>
-                    <span>2% improvement</span>
+                <div class="stat-value">{{ "%.0f"|format(dashboard_data.risk_metrics.risk_reduction) }}%</div>
+                <div class="stat-change {% if dashboard_data.risk_metrics.risk_reduction > 0 %}positive{% else %}neutral{% endif %}">
+                    {% if dashboard_data.risk_metrics.risk_reduction > 0 %}
+                        <i class="fas fa-arrow-down"></i>
+                        <span>{{ "%.1f"|format(dashboard_data.risk_metrics.score_change) }} points improved</span>
+                    {% else %}
+                        <i class="fas fa-minus"></i>
+                        <span>No reduction yet</span>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -125,37 +138,49 @@
                 </div>
                 
                 <div class="progress-bar">
-                    <div class="progress-fill" style="width: 85%"></div>
+                    <div class="progress-fill" style="width: {{ dashboard_data.progress_metrics.weekly_completion }}%"></div>
                 </div>
                 <div class="progress-text">
                     <span>Weekly Goal</span>
-                    <span>85% Complete</span>
+                    <span>{{ "%.0f"|format(dashboard_data.progress_metrics.weekly_completion) }}% Complete</span>
                 </div>
 
                 <div style="margin-top: 2rem;">
                     <h4 style="margin-bottom: 1rem; color: #333;">Today's Habits</h4>
                     <div style="display: flex; flex-direction: column; gap: 1rem;">
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <span>💧 Water Intake (8 glasses)</span>
-                            <div style="display: flex; gap: 0.3rem;">
-                                <div style="width: 20px; height: 20px; background: #10b981; border-radius: 50%;"></div>
-                                <div style="width: 20px; height: 20px; background: #10b981; border-radius: 50%;"></div>
-                                <div style="width: 20px; height: 20px; background: #10b981; border-radius: 50%;"></div>
-                                <div style="width: 20px; height: 20px; background: #10b981; border-radius: 50%;"></div>
-                                <div style="width: 20px; height: 20px; background: #10b981; border-radius: 50%;"></div>
-                                <div style="width: 20px; height: 20px; background: #f3f4f6; border-radius: 50%;"></div>
-                                <div style="width: 20px; height: 20px; background: #f3f4f6; border-radius: 50%;"></div>
-                                <div style="width: 20px; height: 20px; background: #f3f4f6; border-radius: 50%;"></div>
+                        {% if dashboard_data.today_habits %}
+                            {% for habit in dashboard_data.today_habits %}
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <span>{{ habit.icon }} {{ habit.name }} ({{ habit.target_count }} {{ habit.target_unit }})</span>
+                                    {% if habit.status == 'completed' %}
+                                        <span style="color: #10b981; font-weight: 600;">✓ Complete</span>
+                                    {% else %}
+                                        <span style="color: #ef4444; font-weight: 600;">⏰ Pending</span>
+                                    {% endif %}
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span>💧 Water Intake (8 glasses)</span>
+                                <div style="display: flex; gap: 0.3rem;">
+                                    {% for i in range(8) %}
+                                        {% if i < dashboard_data.water_intake.completed_glasses %}
+                                            <div style="width: 20px; height: 20px; background: #10b981; border-radius: 50%;"></div>
+                                        {% else %}
+                                            <div style="width: 20px; height: 20px; background: #f3f4f6; border-radius: 50%;"></div>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
                             </div>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <span>👁️ Eye Exercises</span>
-                            <span style="color: #10b981; font-weight: 600;">✓ Complete</span>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <span>📱 Screen Break</span>
-                            <span style="color: #ef4444; font-weight: 600;">⏰ Pending</span>
-                        </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span>👁️ Eye Exercises</span>
+                                {% if dashboard_data.eye_exercises.completed_sessions >= dashboard_data.eye_exercises.target_sessions %}
+                                    <span style="color: #10b981; font-weight: 600;">✓ Complete</span>
+                                {% else %}
+                                    <span style="color: #ef4444; font-weight: 600;">⏰ Pending</span>
+                                {% endif %}
+                            </div>
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -165,18 +190,28 @@
                     <h3 class="progress-title">Risk Trends</h3>
                 </div>
                 <div style="text-align: center;">
-                    <div style="font-size: 3rem; margin-bottom: 1rem;">📈</div>
-                    <h4 style="color: #10b981; margin-bottom: 0.5rem;">Improving</h4>
-                    <p style="color: #666; font-size: 0.9rem;">Your risk score has decreased by 2.1 points this month</p>
+                    {% if dashboard_data.risk_trends.trend == 'improving' %}
+                        <div style="font-size: 3rem; margin-bottom: 1rem;">📈</div>
+                        <h4 style="color: #10b981; margin-bottom: 0.5rem;">Improving</h4>
+                        <p style="color: #666; font-size: 0.9rem;">Your risk score has decreased by {{ "%.1f"|format(dashboard_data.risk_trends.change_amount|abs) }} points this month</p>
+                    {% elif dashboard_data.risk_trends.trend == 'increasing' %}
+                        <div style="font-size: 3rem; margin-bottom: 1rem;">📉</div>
+                        <h4 style="color: #ef4444; margin-bottom: 0.5rem;">Increasing</h4>
+                        <p style="color: #666; font-size: 0.9rem;">Your risk score has increased by {{ "%.1f"|format(dashboard_data.risk_trends.change_amount) }} points this month</p>
+                    {% else %}
+                        <div style="font-size: 3rem; margin-bottom: 1rem;">➡️</div>
+                        <h4 style="color: #f59e0b; margin-bottom: 0.5rem;">Stable</h4>
+                        <p style="color: #666; font-size: 0.9rem;">Your risk score has remained stable this month</p>
+                    {% endif %}
                 </div>
                 <div style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid #f3f4f6;">
                     <div style="display: flex; justify-content: space-between; margin-bottom: 1rem;">
                         <span style="color: #666;">Last Month</span>
-                        <span style="font-weight: 600;">9.3</span>
+                        <span style="font-weight: 600;">{{ "%.1f"|format(dashboard_data.risk_metrics.previous_risk_score) }}</span>
                     </div>
                     <div style="display: flex; justify-content: space-between;">
                         <span style="color: #666;">This Month</span>
-                        <span style="font-weight: 600; color: #10b981;">7.2</span>
+                        <span style="font-weight: 600; color: {% if dashboard_data.risk_metrics.score_change > 0 %}#10b981{% else %}#333{% endif %};">{{ "%.1f"|format(dashboard_data.risk_metrics.current_risk_score) }}</span>
                     </div>
                 </div>
             </div>
@@ -187,50 +222,46 @@
             <div class="habit-card">
                 <div class="habit-header">
                     <h3 class="habit-title">Water Intake</h3>
-                    <div class="habit-streak">5 day streak</div>
+                    <div class="habit-streak">{{ dashboard_data.water_intake.streak_days }} day streak</div>
                 </div>
                 <div class="habit-progress">
                     <div class="progress-bar">
-                        <div class="progress-fill" style="width: 63%"></div>
+                        <div class="progress-fill" style="width: {{ dashboard_data.water_intake.completion_percentage }}%"></div>
                     </div>
                     <div class="progress-text">
-                        <span>5/8 glasses today</span>
-                        <span>63%</span>
+                        <span>{{ dashboard_data.water_intake.completed_glasses }}/{{ dashboard_data.water_intake.target_glasses }} glasses today</span>
+                        <span>{{ "%.0f"|format(dashboard_data.water_intake.completion_percentage) }}%</span>
                     </div>
                 </div>
                 <div class="habit-days">
-                    <div class="habit-day completed">M</div>
-                    <div class="habit-day completed">T</div>
-                    <div class="habit-day completed">W</div>
-                    <div class="habit-day completed">T</div>
-                    <div class="habit-day completed">F</div>
-                    <div class="habit-day today">S</div>
-                    <div class="habit-day upcoming">S</div>
+                    {% for day in dashboard_data.water_intake.weekly_progress %}
+                        <div class="habit-day {% if day.status == 'completed' %}completed{% elif day.is_today %}today{% else %}upcoming{% endif %}">
+                            {{ day.day_name[0] }}
+                        </div>
+                    {% endfor %}
                 </div>
             </div>
 
             <div class="habit-card">
                 <div class="habit-header">
                     <h3 class="habit-title">Eye Exercises</h3>
-                    <div class="habit-streak">12 day streak</div>
+                    <div class="habit-streak">{{ dashboard_data.eye_exercises.streak_days }} day streak</div>
                 </div>
                 <div class="habit-progress">
                     <div class="progress-bar">
-                        <div class="progress-fill" style="width: 100%"></div>
+                        <div class="progress-fill" style="width: {{ dashboard_data.eye_exercises.completion_percentage }}%"></div>
                     </div>
                     <div class="progress-text">
-                        <span>3/3 sessions today</span>
-                        <span>100%</span>
+                        <span>{{ dashboard_data.eye_exercises.completed_sessions }}/{{ dashboard_data.eye_exercises.target_sessions }} sessions today</span>
+                        <span>{{ "%.0f"|format(dashboard_data.eye_exercises.completion_percentage) }}%</span>
                     </div>
                 </div>
                 <div class="habit-days">
-                    <div class="habit-day completed">M</div>
-                    <div class="habit-day completed">T</div>
-                    <div class="habit-day completed">W</div>
-                    <div class="habit-day completed">T</div>
-                    <div class="habit-day completed">F</div>
-                    <div class="habit-day completed">S</div>
-                    <div class="habit-day upcoming">S</div>
+                    {% for day in dashboard_data.eye_exercises.weekly_progress %}
+                        <div class="habit-day {% if day.status == 'completed' %}completed{% elif day.is_today %}today{% else %}upcoming{% endif %}">
+                            {{ day.day_name[0] }}
+                        </div>
+                    {% endfor %}
                 </div>
             </div>
         </div>
