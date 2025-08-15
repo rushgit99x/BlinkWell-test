@@ -26,16 +26,38 @@ window.addEventListener('resize', function() {
     }
 });
 
+// Initialize dynamic progress bars
+function initializeProgressBars() {
+    const progressBars = document.querySelectorAll('.progress-fill[data-width]');
+    progressBars.forEach(bar => {
+        const width = bar.getAttribute('data-width');
+        if (width) {
+            // Set initial width to 0
+            bar.style.width = '0%';
+            // Animate to target width
+            setTimeout(() => {
+                bar.style.width = width + '%';
+            }, 500);
+        }
+    });
+}
+
 // Animate progress bars on load
 window.addEventListener('load', function() {
-    const progressBars = document.querySelectorAll('.progress-fill');
-    progressBars.forEach(bar => {
+    // Handle traditional progress bars with inline styles
+    const traditionalProgressBars = document.querySelectorAll('.progress-fill:not([data-width])');
+    traditionalProgressBars.forEach(bar => {
         const width = bar.style.width;
-        bar.style.width = '0%';
-        setTimeout(() => {
-            bar.style.width = width;
-        }, 500);
+        if (width) {
+            bar.style.width = '0%';
+            setTimeout(() => {
+                bar.style.width = width;
+            }, 500);
+        }
     });
+    
+    // Handle dynamic progress bars with data attributes
+    initializeProgressBars();
 });
 
 // Simulate habit completion
@@ -67,3 +89,15 @@ document.querySelectorAll('.fade-in-up').forEach(item => {
     item.style.transition = 'all 0.6s ease-out';
     observer.observe(item);
 });
+
+// Update progress bars when data changes (for dynamic updates)
+function updateProgressBar(selector, newWidth) {
+    const bar = document.querySelector(selector);
+    if (bar) {
+        bar.setAttribute('data-width', newWidth);
+        bar.style.width = newWidth + '%';
+    }
+}
+
+// Export function for external use
+window.updateProgressBar = updateProgressBar;
