@@ -796,3 +796,205 @@ body {
 .progress-fill[data-width] {
     transition: width 0.3s ease;
 }
+
+/* Logout Popup Modal Styles */
+.logout-modal {
+    display: none;
+    position: fixed;
+    z-index: 2000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(5px);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.logout-modal.show {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 1;
+}
+
+.logout-modal-content {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    max-width: 450px;
+    width: 90%;
+    transform: scale(0.7) translateY(20px);
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    overflow: hidden;
+}
+
+.logout-modal.show .logout-modal-content {
+    transform: scale(1) translateY(0);
+}
+
+.logout-modal-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 2rem 2rem 1.5rem;
+    text-align: center;
+    position: relative;
+}
+
+.logout-modal-header::after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
+    border-top: 10px solid #764ba2;
+}
+
+.logout-icon {
+    width: 60px;
+    height: 60px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+    font-size: 1.5rem;
+    backdrop-filter: blur(10px);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.logout-modal-header h3 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.logout-modal-header p {
+    font-size: 1rem;
+    opacity: 0.9;
+    margin: 0;
+}
+
+.logout-modal-body {
+    padding: 2rem;
+    text-align: center;
+}
+
+.logout-modal-body p {
+    color: #666;
+    line-height: 1.6;
+    margin: 0;
+    font-size: 1rem;
+}
+
+.logout-modal-footer {
+    padding: 0 2rem 2rem;
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+}
+
+.btn-cancel, .btn-logout {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 120px;
+    justify-content: center;
+}
+
+.btn-cancel {
+    background: #f8f9fa;
+    color: #6c757d;
+    border: 2px solid #e9ecef;
+}
+
+.btn-cancel:hover {
+    background: #e9ecef;
+    border-color: #dee2e6;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.btn-logout {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    color: white;
+    border: 2px solid #dc3545;
+}
+
+.btn-logout:hover {
+    background: linear-gradient(135deg, #c82333 0%, #bd2130 100%);
+    border-color: #c82333;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+}
+
+.btn-cancel:active, .btn-logout:active {
+    transform: translateY(0);
+}
+
+/* Logout link hover effect */
+.logout-link:hover {
+    background: rgba(220, 53, 69, 0.1);
+    color: #dc3545 !important;
+}
+
+/* Responsive design for mobile */
+@media (max-width: 768px) {
+    .logout-modal-content {
+        width: 95%;
+        margin: 1rem;
+    }
+    
+    .logout-modal-header {
+        padding: 1.5rem 1.5rem 1rem;
+    }
+    
+    .logout-modal-body {
+        padding: 1.5rem;
+    }
+    
+    .logout-modal-footer {
+        padding: 0 1.5rem 1.5rem;
+        flex-direction: column;
+    }
+    
+    .btn-cancel, .btn-logout {
+        width: 100%;
+        min-width: auto;
+    }
+    
+    .logout-icon {
+        width: 50px;
+        height: 50px;
+        font-size: 1.2rem;
+    }
+    
+    .logout-modal-header h3 {
+        font-size: 1.3rem;
+    }
+}
+
+/* Animation keyframes for enhanced effects */
+@keyframes modalPulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.02); }
+    100% { transform: scale(1); }
+}
+
+.logout-modal.show .logout-modal-content {
+    animation: modalPulse 0.6s ease-out;
+}

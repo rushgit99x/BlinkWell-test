@@ -32,7 +32,7 @@
             <li><a href="{{ url_for('main.habits') }}"><i class="fas fa-dumbbell"></i><span>Eye Habits</span></a></li>
             <li><a href="{{ url_for('chatbot.chatbot_page') }}"><i class="fas fa-robot"></i><span>AI Assistant</span></a></li>
             <li><a href="{{ url_for('settings.settings_page') }}"><i class="fas fa-cog"></i><span>Settings</span></a></li>
-            <li><a href="{{ url_for('auth.logout') }}"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a></li>
+            <li><a href="#" onclick="showLogoutPopup()" class="logout-link"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a></li>
         </ul>
     </div>
 
@@ -280,6 +280,32 @@
             </div>
         </div>
         {% endif %}
+    </div>
+
+    <!-- Logout Popup Modal -->
+    <div id="logoutModal" class="logout-modal">
+        <div class="logout-modal-content">
+            <div class="logout-modal-header">
+                <div class="logout-icon">
+                    <i class="fas fa-sign-out-alt"></i>
+                </div>
+                <h3>Logout Confirmation</h3>
+                <p>Are you sure you want to log out?</p>
+            </div>
+            <div class="logout-modal-body">
+                <p>You'll need to log in again to access your dashboard and continue tracking your eye health.</p>
+            </div>
+            <div class="logout-modal-footer">
+                <button class="btn-cancel" onclick="hideLogoutPopup()">
+                    <i class="fas fa-times"></i>
+                    Cancel
+                </button>
+                <button class="btn-logout" onclick="confirmLogout()">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Logout
+                </button>
+            </div>
+        </div>
     </div>
 
     <script src="static/js/js-dashboard.js"></script>
