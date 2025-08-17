@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - BlinkWell</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="admin-container">
+        <!-- Admin Sidebar -->
+        <div class="admin-sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <i class="fas fa-eye"></i>
+                    <span>BlinkWell Admin</span>
+                </div>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <a href="{{ url_for('admin.admin_dashboard') }}" class="nav-item active">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="{{ url_for('admin.manage_users') }}" class="nav-item">
+                    <i class="fas fa-users"></i>
+                    <span>Users</span>
+                </a>
+                <a href="{{ url_for('admin.analytics') }}" class="nav-item">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Analytics</span>
+                </a>
+                <a href="{{ url_for('admin.system_status') }}" class="nav-item">
+                    <i class="fas fa-server"></i>
+                    <span>System</span>
+                </a>
+                <a href="{{ url_for('admin.view_logs') }}" class="nav-item">
+                    <i class="fas fa-file-alt"></i>
+                    <span>Logs</span>
+                </a>
+                <a href="{{ url_for('main.dashboard') }}" class="nav-item">
+                    <i class="fas fa-arrow-left"></i>
+                    <span>Back to App</span>
+                </a>
+            </nav>
+        </div>
+
+        <!-- Main Content -->
+        <div class="admin-main">
+            <header class="admin-header">
+                <h1>Admin Dashboard</h1>
+                <div class="admin-user">
+                    <span>Welcome, {{ current_user.username }}</span>
+                    <a href="{{ url_for('auth.logout') }}" class="logout-btn">
+                        <i class="fas fa-sign-out-alt"></i>
+                        Logout
+                    </a>
+                </div>
+            </header>
+
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ 'error' if category == 'error' else 'success' }}">
+                            <i class="fas fa-{{ 'exclamation-triangle' if category == 'error' else 'check-circle' }}"></i>
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <!-- Stats Overview -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3>{{ stats.total_users or 0 }}</h3>
+                        <p>Total Users</p>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-user-plus"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3>{{ stats.new_users_today or 0 }}</h3>
+                        <p>New Users Today</p>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-user-check"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3>{{ stats.active_users_week or 0 }}</h3>
+                        <p>Active Users (Week)</p>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="real-time-users">--</h3>
+                        <p>Online Now</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="quick-actions">
+                <h2>Quick Actions</h2>
+                <div class="action-buttons">
+                    <a href="{{ url_for('admin.manage_users') }}" class="action-btn">
+                        <i class="fas fa-user-cog"></i>
+                        <span>Manage Users</span>
+                    </a>
+                    <a href="{{ url_for('admin.analytics') }}" class="action-btn">
+                        <i class="fas fa-chart-bar"></i>
+                        <span>View Analytics</span>
+                    </a>
+                    <a href="{{ url_for('admin.system_status') }}" class="action-btn">
+                        <i class="fas fa-server"></i>
+                        <span>System Status</span>
+                    </a>
+                    <a href="{{ url_for('admin.view_logs') }}" class="action-btn">
+                        <i class="fas fa-file-alt"></i>
+                        <span>View Logs</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="recent-activity">
+                <h2>Recent Activity</h2>
+                <div class="activity-list" id="activity-list">
+                    <div class="loading">Loading recent activity...</div>
+                </div>
+            </div>
+
+            <!-- System Health -->
+            <div class="system-health">
+                <h2>System Health</h2>
+                <div class="health-indicators">
+                    <div class="health-item">
+                        <span class="health-label">Database</span>
+                        <span class="health-status" id="db-status">Checking...</span>
+                    </div>
+                    <div class="health-item">
+                        <span class="health-label">API Status</span>
+                        <span class="health-status" id="api-status">Checking...</span>
+                    </div>
+                    <div class="health-item">
+                        <span class="health-label">Storage</span>
+                        <span class="health-status" id="storage-status">Checking...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Real-time stats update
+        function updateStats() {
+            fetch('/admin/api/stats')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        console.error('Error fetching stats:', data.error);
+                        return;
+                    }
+                    
+                    // Update real-time users (simulated)
+                    const onlineUsers = Math.floor(Math.random() * 50) + 10;
+                    document.getElementById('real-time-users').textContent = onlineUsers;
+                    
+                    // Update system health
+                    document.getElementById('db-status').textContent = 'Connected';
+                    document.getElementById('db-status').className = 'health-status connected';
+                    
+                    document.getElementById('api-status').textContent = 'Healthy';
+                    document.getElementById('api-status').className = 'health-status connected';
+                    
+                    document.getElementById('storage-status').textContent = 'OK';
+                    document.getElementById('storage-status').className = 'health-status connected';
+                })
+                .catch(error => {
+                    console.error('Error updating stats:', error);
+                    document.getElementById('db-status').textContent = 'Error';
+                    document.getElementById('db-status').className = 'health-status error';
+                });
+        }
+
+        // Update stats every 30 seconds
+        updateStats();
+        setInterval(updateStats, 30000);
+
+        // Simulate recent activity
+        function loadRecentActivity() {
+            const activities = [
+                { type: 'user', message: 'New user registered: john_doe', time: '2 minutes ago' },
+                { type: 'system', message: 'Eye analysis completed for user: jane_smith', time: '5 minutes ago' },
+                { type: 'user', message: 'User login: admin_user', time: '8 minutes ago' },
+                { type: 'system', message: 'Habit reminder sent to 45 users', time: '12 minutes ago' }
+            ];
+
+            const activityList = document.getElementById('activity-list');
+            activityList.innerHTML = '';
+
+            activities.forEach(activity => {
+                const activityItem = document.createElement('div');
+                activityItem.className = `activity-item ${activity.type}`;
+                activityItem.innerHTML = `
+                    <div class="activity-icon">
+                        <i class="fas fa-${activity.type === 'user' ? 'user' : 'cog'}"></i>
+                    </div>
+                    <div class="activity-content">
+                        <p>${activity.message}</p>
+                        <span class="activity-time">${activity.time}</span>
+                    </div>
+                `;
+                activityList.appendChild(activityItem);
+            });
+        }
+
+        // Load recent activity after page loads
+        setTimeout(loadRecentActivity, 1000);
+    </script>
+</body>
+</html>

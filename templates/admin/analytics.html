@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytics - BlinkWell Admin</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="admin-container">
+        <!-- Admin Sidebar -->
+        <div class="admin-sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <i class="fas fa-eye"></i>
+                    <span>BlinkWell Admin</span>
+                </div>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <a href="{{ url_for('admin.admin_dashboard') }}" class="nav-item">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="{{ url_for('admin.manage_users') }}" class="nav-item">
+                    <i class="fas fa-users"></i>
+                    <span>Users</span>
+                </a>
+                <a href="{{ url_for('admin.analytics') }}" class="nav-item active">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Analytics</span>
+                </a>
+                <a href="{{ url_for('admin.system_status') }}" class="nav-item">
+                    <i class="fas fa-server"></i>
+                    <span>System</span>
+                </a>
+                <a href="{{ url_for('admin.view_logs') }}" class="nav-item">
+                    <i class="fas fa-file-alt"></i>
+                    <span>Logs</span>
+                </a>
+                <a href="{{ url_for('main.dashboard') }}" class="nav-item">
+                    <i class="fas fa-arrow-left"></i>
+                    <span>Back to App</span>
+                </a>
+            </nav>
+        </div>
+
+        <!-- Main Content -->
+        <div class="admin-main">
+            <header class="admin-header">
+                <h1>Analytics & Reporting</h1>
+                <div class="header-actions">
+                    <div class="date-range">
+                        <label>Date Range:</label>
+                        <select id="date-range" onchange="updateCharts()">
+                            <option value="7">Last 7 Days</option>
+                            <option value="30" selected>Last 30 Days</option>
+                            <option value="90">Last 90 Days</option>
+                            <option value="365">Last Year</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary" onclick="exportAnalytics()">
+                        <i class="fas fa-download"></i>
+                        Export Report
+                    </button>
+                </div>
+            </header>
+
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ 'error' if category == 'error' else 'success' }}">
+                            <i class="fas fa-{{ 'exclamation-triangle' if category == 'error' else 'check-circle' }}"></i>
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <!-- Key Metrics -->
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="metric-content">
+                        <h3 id="total-users">{{ user_growth|length if user_growth else 0 }}</h3>
+                        <p>Total Users</p>
+                        <span class="metric-change positive">+12% from last month</span>
+                    </div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-icon">
+                        <i class="fas fa-user-plus"></i>
+                    </div>
+                    <div class="metric-content">
+                        <h3 id="new-users">{{ user_growth|length if user_growth else 0 }}</h3>
+                        <p>New Users (Period)</p>
+                        <span class="metric-change positive">+8% from last period</span>
+                    </div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div class="metric-content">
+                        <h3 id="growth-rate">15.2%</h3>
+                        <p>Growth Rate</p>
+                        <span class="metric-change positive">+2.1% from last period</span>
+                    </div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-icon">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="metric-content">
+                        <h3 id="avg-session">24m</h3>
+                        <p>Avg. Session</p>
+                        <span class="metric-change negative">-3% from last period</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Section -->
+            <div class="charts-section">
+                <!-- User Growth Chart -->
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h3>User Growth Over Time</h3>
+                        <div class="chart-controls">
+                            <button class="chart-btn active" onclick="setChartType('growth', 'line')">Line</button>
+                            <button class="chart-btn" onclick="setChartType('growth', 'bar')">Bar</button>
+                        </div>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="userGrowthChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- User Activity Chart -->
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h3>User Activity (Last 7 Days)</h3>
+                        <div class="chart-controls">
+                            <button class="chart-btn active" onclick="setChartType('activity', 'line')">Line</button>
+                            <button class="chart-btn" onclick="setChartType('activity', 'bar')">Bar</button>
+                        </div>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="userActivityChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detailed Analytics -->
+            <div class="analytics-details">
+                <div class="detail-section">
+                    <h3>User Demographics</h3>
+                    <div class="demographics-grid">
+                        <div class="demo-item">
+                            <span class="demo-label">Age Groups</span>
+                            <div class="demo-chart">
+                                <canvas id="ageChart" width="200" height="200"></canvas>
+                            </div>
+                        </div>
+                        <div class="demo-item">
+                            <span class="demo-label">Geographic Distribution</span>
+                            <div class="demo-chart">
+                                <canvas id="geoChart" width="200" height="200"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="detail-section">
+                    <h3>Feature Usage</h3>
+                    <div class="feature-usage">
+                        <div class="usage-item">
+                            <span class="usage-label">Eye Analysis</span>
+                            <div class="usage-bar">
+                                <div class="usage-fill" style="width: 75%"></div>
+                            </div>
+                            <span class="usage-percentage">75%</span>
+                        </div>
+                        <div class="usage-item">
+                            <span class="usage-label">Habits Tracking</span>
+                            <div class="usage-bar">
+                                <div class="usage-fill" style="width: 60%"></div>
+                            </div>
+                            <span class="usage-percentage">60%</span>
+                        </div>
+                        <div class="usage-item">
+                            <span class="usage-label">AI Assistant</span>
+                            <div class="usage-bar">
+                                <div class="usage-fill" style="width: 45%"></div>
+                            </div>
+                            <span class="usage-percentage">45%</span>
+                        </div>
+                        <div class="usage-item">
+                            <span class="usage-label">Recommendations</span>
+                            <div class="usage-bar">
+                                <div class="usage-fill" style="width: 80%"></div>
+                            </div>
+                            <span class="usage-percentage">80%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Chart.js configuration
+        Chart.defaults.color = '#6b7280';
+        Chart.defaults.borderColor = '#e5e7eb';
+
+        // User Growth Chart
+        const growthCtx = document.getElementById('userGrowthChart').getContext('2d');
+        const userGrowthChart = new Chart(growthCtx, {
+            type: 'line',
+            data: {
+                labels: {{ user_growth|map(attribute=0)|list|tojson if user_growth else [] }},
+                datasets: [{
+                    label: 'New Users',
+                    data: {{ user_growth|map(attribute=1)|list|tojson if user_growth else [] }},
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: '#e5e7eb'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        });
+
+        // User Activity Chart
+        const activityCtx = document.getElementById('userActivityChart').getContext('2d');
+        const userActivityChart = new Chart(activityCtx, {
+            type: 'line',
+            data: {
+                labels: {{ user_activity|map(attribute=0)|list|tojson if user_activity else [] }},
+                datasets: [{
+                    label: 'Active Users',
+                    data: {{ user_activity|map(attribute=1)|list|tojson if user_activity else [] }},
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: '#e5e7eb'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        });
+
+        // Age Demographics Chart
+        const ageCtx = document.getElementById('ageChart').getContext('2d');
+        new Chart(ageCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['18-25', '26-35', '36-45', '46-55', '55+'],
+                datasets: [{
+                    data: [25, 35, 20, 15, 5],
+                    backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6']
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            boxWidth: 12
+                        }
+                    }
+                }
+            }
+        });
+
+        // Geographic Distribution Chart
+        const geoCtx = document.getElementById('geoChart').getContext('2d');
+        new Chart(geoCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['North America', 'Europe', 'Asia', 'Other'],
+                datasets: [{
+                    data: [45, 30, 20, 5],
+                    backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#6b7280']
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            boxWidth: 12
+                        }
+                    }
+                }
+            }
+        });
+
+        // Chart type switching
+        function setChartType(chartName, type) {
+            const chart = chartName === 'growth' ? userGrowthChart : userActivityChart;
+            const buttons = event.target.parentElement.children;
+            
+            // Update button states
+            Array.from(buttons).forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Change chart type
+            chart.config.type = type;
+            chart.update();
+        }
+
+        // Update charts based on date range
+        function updateCharts() {
+            const dateRange = document.getElementById('date-range').value;
+            // This would typically make an API call to get new data
+            console.log('Updating charts for date range:', dateRange);
+        }
+
+        // Export analytics
+        function exportAnalytics() {
+            // This would typically generate and download a report
+            alert('Export functionality would be implemented here');
+        }
+
+        // Auto-refresh charts every 5 minutes
+        setInterval(() => {
+            // You could implement real-time updates here
+        }, 300000);
+    </script>
+</body>
+</html>

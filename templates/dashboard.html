@@ -32,6 +32,9 @@
             <li><a href="{{ url_for('main.habits') }}"><i class="fas fa-dumbbell"></i><span>Eye Habits</span></a></li>
             <li><a href="{{ url_for('chatbot.chatbot_page') }}"><i class="fas fa-robot"></i><span>AI Assistant</span></a></li>
             <li><a href="{{ url_for('settings.settings_page') }}"><i class="fas fa-cog"></i><span>Settings</span></a></li>
+            {% if user.is_admin %}
+            <li><a href="{{ url_for('admin.admin_dashboard') }}"><i class="fas fa-shield-alt"></i><span>Admin Panel</span></a></li>
+            {% endif %}
             <li><a href="#" onclick="showLogoutPopup()" class="logout-link"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a></li>
         </ul>
     </div>

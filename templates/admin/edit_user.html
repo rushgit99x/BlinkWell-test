@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit User - BlinkWell Admin</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+</head>
+<body>
+    <div class="admin-container">
+        <!-- Admin Sidebar -->
+        <div class="admin-sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <i class="fas fa-eye"></i>
+                    <span>BlinkWell Admin</span>
+                </div>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <a href="{{ url_for('admin.admin_dashboard') }}" class="nav-item">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="{{ url_for('admin.manage_users') }}" class="nav-item active">
+                    <i class="fas fa-users"></i>
+                    <span>Users</span>
+                </a>
+                <a href="{{ url_for('admin.analytics') }}" class="nav-item">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Analytics</span>
+                </a>
+                <a href="{{ url_for('admin.system_status') }}" class="nav-item">
+                    <i class="fas fa-server"></i>
+                    <span>System</span>
+                </a>
+                <a href="{{ url_for('admin.view_logs') }}" class="nav-item">
+                    <i class="fas fa-file-alt"></i>
+                    <span>Logs</span>
+                </a>
+                <a href="{{ url_for('main.dashboard') }}" class="nav-item">
+                    <i class="fas fa-arrow-left"></i>
+                    <span>Back to App</span>
+                </a>
+            </nav>
+        </div>
+
+        <!-- Main Content -->
+        <div class="admin-main">
+            <header class="admin-header">
+                <div class="header-left">
+                    <a href="{{ url_for('admin.manage_users') }}" class="back-link">
+                        <i class="fas fa-arrow-left"></i>
+                        Back to Users
+                    </a>
+                    <h1>Edit User: {{ user[1] }}</h1>
+                </div>
+            </header>
+
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ 'error' if category == 'error' else 'success' }}">
+                            <i class="fas fa-{{ 'exclamation-triangle' if category == 'error' else 'check-circle' }}"></i>
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <!-- Edit User Form -->
+            <div class="edit-user-container">
+                <form method="POST" class="edit-user-form">
+                    <div class="form-section">
+                        <h3>Basic Information</h3>
+                        
+                        <div class="form-group">
+                            <label for="user_id">User ID</label>
+                            <input type="text" id="user_id" value="{{ user[0] }}" readonly>
+                            <small>User ID cannot be changed</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="username">Username *</label>
+                            <input type="text" id="username" name="username" value="{{ user[1] }}" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="email">Email *</label>
+                            <input type="email" id="email" name="email" value="{{ user[2] }}" required>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3>Account Settings</h3>
+                        
+                        <div class="form-group checkbox-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="is_active" {{ 'checked' if user[3] else '' }}>
+                                <span class="checkmark"></span>
+                                Active Account
+                            </label>
+                            <small>Deactivating will prevent user from logging in</small>
+                        </div>
+
+                        <div class="form-group checkbox-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="is_admin" {{ 'checked' if user[4] else '' }}>
+                                <span class="checkmark"></span>
+                                Admin Privileges
+                            </label>
+                            <small>Grants access to admin panel and system functions</small>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3>Account Details</h3>
+                        
+                        <div class="form-group">
+                            <label>Created Date</label>
+                            <input type="text" value="{{ user[5].strftime('%Y-%m-%d %H:%M:%S') if user[5] else 'N/A' }}" readonly>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Last Modified</label>
+                            <input type="text" value="{{ 'Just now' if request.method == 'POST' else 'N/A' }}" readonly>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <a href="{{ url_for('admin.manage_users') }}" class="btn btn-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </div>
+                </form>
+
+                <!-- User Activity Summary -->
+                <div class="user-activity">
+                    <h3>Recent Activity</h3>
+                    <div class="activity-summary">
+                        <div class="activity-item">
+                            <i class="fas fa-sign-in-alt"></i>
+                            <div class="activity-details">
+                                <span class="activity-title">Last Login</span>
+                                <span class="activity-value">Never</span>
+                            </div>
+                        </div>
+                        <div class="activity-item">
+                            <i class="fas fa-eye"></i>
+                            <div class="activity-details">
+                                <span class="activity-title">Eye Analyses</span>
+                                <span class="activity-value">0</span>
+                            </div>
+                        </div>
+                        <div class="activity-item">
+                            <i class="fas fa-tasks"></i>
+                            <div class="activity-details">
+                                <span class="activity-title">Habits Completed</span>
+                                <span class="activity-value">0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Form validation
+        document.querySelector('.edit-user-form').addEventListener('submit', function(e) {
+            const username = document.getElementById('username').value.trim();
+            const email = document.getElementById('email').value.trim();
+            
+            if (!username || !email) {
+                e.preventDefault();
+                alert('Please fill in all required fields');
+                return;
+            }
+            
+            if (username.length < 3) {
+                e.preventDefault();
+                alert('Username must be at least 3 characters long');
+                return;
+            }
+            
+            if (!email.includes('@')) {
+                e.preventDefault();
+                alert('Please enter a valid email address');
+                return;
+            }
+        });
+
+        // Real-time form validation
+        document.getElementById('username').addEventListener('input', function() {
+            const username = this.value.trim();
+            const submitBtn = document.querySelector('.form-actions .btn-primary');
+            
+            if (username.length < 3) {
+                this.classList.add('error');
+                submitBtn.disabled = true;
+            } else {
+                this.classList.remove('error');
+                submitBtn.disabled = false;
+            }
+        });
+
+        document.getElementById('email').addEventListener('input', function() {
+            const email = this.value.trim();
+            const submitBtn = document.querySelector('.form-actions .btn-primary');
+            
+            if (!email.includes('@')) {
+                this.classList.add('error');
+                submitBtn.disabled = true;
+            } else {
+                this.classList.remove('error');
+                submitBtn.disabled = false;
+            }
+        });
+
+        // Confirmation for admin privilege changes
+        document.querySelector('input[name="is_admin"]').addEventListener('change', function() {
+            if (this.checked) {
+                if (!confirm('Are you sure you want to grant admin privileges to this user? This will give them access to sensitive system functions.')) {
+                    this.checked = false;
+                }
+            }
+        });
+
+        // Confirmation for deactivating account
+        document.querySelector('input[name="is_active"]').addEventListener('change', function() {
+            if (!this.checked) {
+                if (!confirm('Are you sure you want to deactivate this user account? They will not be able to log in.')) {
+                    this.checked = true;
+                }
+            }
+        });
+    </script>
+</body>
+</html>

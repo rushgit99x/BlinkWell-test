@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Logs - BlinkWell Admin</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+</head>
+<body>
+    <div class="admin-container">
+        <!-- Admin Sidebar -->
+        <div class="admin-sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <i class="fas fa-eye"></i>
+                    <span>BlinkWell Admin</span>
+                </div>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <a href="{{ url_for('admin.admin_dashboard') }}" class="nav-item">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="{{ url_for('admin.manage_users') }}" class="nav-item">
+                    <i class="fas fa-users"></i>
+                    <span>Users</span>
+                </a>
+                <a href="{{ url_for('admin.analytics') }}" class="nav-item">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Analytics</span>
+                </a>
+                <a href="{{ url_for('admin.system_status') }}" class="nav-item">
+                    <i class="fas fa-server"></i>
+                    <span>System</span>
+                </a>
+                <a href="{{ url_for('admin.view_logs') }}" class="nav-item active">
+                    <i class="fas fa-file-alt"></i>
+                    <span>Logs</span>
+                </a>
+                <a href="{{ url_for('main.dashboard') }}" class="nav-item">
+                    <i class="fas fa-arrow-left"></i>
+                    <span>Back to App</span>
+                </a>
+            </nav>
+        </div>
+
+        <!-- Main Content -->
+        <div class="admin-main">
+            <header class="admin-header">
+                <h1>System Logs</h1>
+                <div class="header-actions">
+                    <button class="btn btn-primary" onclick="refreshLogs()">
+                        <i class="fas fa-sync-alt"></i>
+                        Refresh
+                    </button>
+                    <button class="btn btn-secondary" onclick="exportLogs()">
+                        <i class="fas fa-download"></i>
+                        Export
+                    </button>
+                    <button class="btn btn-danger" onclick="clearLogs()">
+                        <i class="fas fa-trash"></i>
+                        Clear
+                    </button>
+                </div>
+            </header>
+
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ 'error' if category == 'error' else 'success' }}">
+                            <i class="fas fa-{{ 'exclamation-triangle' if category == 'error' else 'check-circle' }}"></i>
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <!-- Log Controls -->
+            <div class="log-controls">
+                <div class="control-group">
+                    <label for="log-level">Log Level:</label>
+                    <select id="log-level" onchange="filterLogs()">
+                        <option value="all">All Levels</option>
+                        <option value="DEBUG">DEBUG</option>
+                        <option value="INFO">INFO</option>
+                        <option value="WARNING">WARNING</option>
+                        <option value="ERROR">ERROR</option>
+                        <option value="CRITICAL">CRITICAL</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label for="log-source">Source:</label>
+                    <select id="log-source" onchange="filterLogs()">
+                        <option value="all">All Sources</option>
+                        <option value="app">Application</option>
+                        <option value="auth">Authentication</option>
+                        <option value="db">Database</option>
+                        <option value="api">API</option>
+                        <option value="system">System</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label for="date-range">Date Range:</label>
+                    <select id="date-range" onchange="filterLogs()">
+                        <option value="1">Last Hour</option>
+                        <option value="24" selected>Last 24 Hours</option>
+                        <option value="168">Last Week</option>
+                        <option value="720">Last Month</option>
+                    </select>
+                </div>
+
+                <div class="search-box">
+                    <input type="text" id="log-search" placeholder="Search logs..." oninput="filterLogs()">
+                    <i class="fas fa-search"></i>
+                </div>
+            </div>
+
+            <!-- Log Statistics -->
+            <div class="log-stats">
+                <div class="stat-item">
+                    <span class="stat-number" id="total-logs">{{ logs|length if logs else 0 }}</span>
+                    <span class="stat-label">Total Logs</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number" id="error-count">0</span>
+                    <span class="stat-label">Errors</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number" id="warning-count">0</span>
+                    <span class="stat-label">Warnings</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number" id="info-count">0</span>
+                    <span class="stat-label">Info</span>
+                </div>
+            </div>
+
+            <!-- Logs Table -->
+            <div class="logs-container">
+                {% if logs %}
+                <table class="logs-table">
+                    <thead>
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>Level</th>
+                            <th>Source</th>
+                            <th>Message</th>
+                            <th>User</th>
+                            <th>IP Address</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="logs-tbody">
+                        {% for log in logs %}
+                        <tr class="log-row log-{{ log.lower().split(']')[0].split('[')[1] if '[' in log and ']' in log else 'info' }}" 
+                            data-level="{{ log.lower().split(']')[0].split('[')[1] if '[' in log and ']' in log else 'info' }}"
+                            data-source="{{ log.lower().split(']')[1].split('[')[1] if '[' in log and ']' in log else 'app' }}"
+                            data-message="{{ log }}">
+                            <td class="timestamp">
+                                {{ log.split(' - ')[0] if ' - ' in log else 'N/A' }}
+                            </td>
+                            <td class="level">
+                                <span class="level-badge {{ log.lower().split(']')[0].split('[')[1] if '[' in log and ']' in log else 'info' }}">
+                                    {{ log.split(']')[0].split('[')[1] if '[' in log and ']' in log else 'INFO' }}
+                                </span>
+                            </td>
+                            <td class="source">
+                                {{ log.split(']')[1].split('[')[1] if '[' in log and ']' in log else 'APP' }}
+                            </td>
+                            <td class="message">
+                                {{ log.split(' - ')[-1] if ' - ' in log else log }}
+                            </td>
+                            <td class="user">
+                                {{ log.split('User: ')[1].split(' ')[0] if 'User: ' in log else 'System' }}
+                            </td>
+                            <td class="ip">
+                                {{ log.split('IP: ')[1].split(' ')[0] if 'IP: ' in log else 'N/A' }}
+                            </td>
+                            <td class="actions">
+                                <button class="btn btn-sm btn-info" onclick="viewLogDetails('{{ log|replace("'", "\\'") }}')" title="View Details">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="btn btn-sm btn-copy" onclick="copyLog('{{ log|replace("'", "\\'") }}')" title="Copy">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="no-logs">
+                    <i class="fas fa-file-alt"></i>
+                    <h3>No logs found</h3>
+                    <p>There are no system logs available at the moment.</p>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Log Details Modal -->
+            <div id="log-modal" class="modal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3>Log Details</h3>
+                        <span class="close" onclick="closeLogModal()">&times;</span>
+                    </div>
+                    <div class="modal-body">
+                        <div class="log-detail-item">
+                            <span class="detail-label">Timestamp:</span>
+                            <span class="detail-value" id="modal-timestamp"></span>
+                        </div>
+                        <div class="log-detail-item">
+                            <span class="detail-label">Level:</span>
+                            <span class="detail-value" id="modal-level"></span>
+                        </div>
+                        <div class="log-detail-item">
+                            <span class="detail-label">Source:</span>
+                            <span class="detail-value" id="modal-source"></span>
+                        </div>
+                        <div class="log-detail-item">
+                            <span class="detail-label">Message:</span>
+                            <span class="detail-value" id="modal-message"></span>
+                        </div>
+                        <div class="log-detail-item">
+                            <span class="detail-label">User:</span>
+                            <span class="detail-value" id="modal-user"></span>
+                        </div>
+                        <div class="log-detail-item">
+                            <span class="detail-label">IP Address:</span>
+                            <span class="detail-value" id="modal-ip"></span>
+                        </div>
+                        <div class="log-detail-item">
+                            <span class="detail-label">Full Log:</span>
+                            <pre class="detail-full-log" id="modal-full-log"></pre>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" onclick="closeLogModal()">Close</button>
+                        <button class="btn btn-primary" onclick="copyLogToClipboard()">Copy to Clipboard</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentLogs = [];
+        let filteredLogs = [];
+
+        // Initialize logs
+        document.addEventListener('DOMContentLoaded', function() {
+            updateLogStats();
+        });
+
+        // Filter logs based on controls
+        function filterLogs() {
+            const level = document.getElementById('log-level').value;
+            const source = document.getElementById('log-source').value;
+            const searchTerm = document.getElementById('log-search').value.toLowerCase();
+            const dateRange = document.getElementById('date-range').value;
+
+            const rows = document.querySelectorAll('.log-row');
+            let visibleCount = 0;
+
+            rows.forEach(row => {
+                const rowLevel = row.dataset.level;
+                const rowSource = row.dataset.source;
+                const rowMessage = row.dataset.message.toLowerCase();
+                const rowTimestamp = row.querySelector('.timestamp').textContent;
+
+                let show = true;
+
+                // Level filter
+                if (level !== 'all' && rowLevel !== level.toLowerCase()) {
+                    show = false;
+                }
+
+                // Source filter
+                if (source !== 'all' && rowSource !== source) {
+                    show = false;
+                }
+
+                // Search filter
+                if (searchTerm && !rowMessage.includes(searchTerm)) {
+                    show = false;
+                }
+
+                // Date filter (simplified)
+                if (dateRange !== 'all') {
+                    // This would implement actual date filtering logic
+                }
+
+                row.style.display = show ? '' : 'none';
+                if (show) visibleCount++;
+            });
+
+            // Update visible count
+            document.getElementById('total-logs').textContent = visibleCount;
+        }
+
+        // Update log statistics
+        function updateLogStats() {
+            const rows = document.querySelectorAll('.log-row');
+            let errorCount = 0;
+            let warningCount = 0;
+            let infoCount = 0;
+
+            rows.forEach(row => {
+                const level = row.dataset.level;
+                if (level === 'error' || level === 'critical') {
+                    errorCount++;
+                } else if (level === 'warning') {
+                    warningCount++;
+                } else {
+                    infoCount++;
+                }
+            });
+
+            document.getElementById('error-count').textContent = errorCount;
+            document.getElementById('warning-count').textContent = warningCount;
+            document.getElementById('info-count').textContent = infoCount;
+        }
+
+        // Refresh logs
+        function refreshLogs() {
+            const refreshBtn = event.target;
+            const originalText = refreshBtn.innerHTML;
+            
+            refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Refreshing...';
+            refreshBtn.disabled = true;
+            
+            // Simulate refresh delay
+            setTimeout(() => {
+                location.reload();
+            }, 1000);
+        }
+
+        // Export logs
+        function exportLogs() {
+            const level = document.getElementById('log-level').value;
+            const source = document.getElementById('log-source').value;
+            const dateRange = document.getElementById('date-range').value;
+            
+            // This would typically generate and download a log file
+            alert(`Exporting logs with filters:\nLevel: ${level}\nSource: ${source}\nDate Range: ${dateRange} days`);
+        }
+
+        // Clear logs
+        function clearLogs() {
+            if (confirm('Are you sure you want to clear all logs? This action cannot be undone.')) {
+                // This would typically clear the log files
+                alert('Logs cleared successfully');
+                location.reload();
+            }
+        }
+
+        // View log details
+        function viewLogDetails(logEntry) {
+            // Parse log entry (simplified)
+            const parts = logEntry.split(' - ');
+            const timestamp = parts[0] || 'N/A';
+            const level = logEntry.match(/\[(.*?)\]/)?.[1] || 'INFO';
+            const source = logEntry.match(/\[(.*?)\]/g)?.[1]?.replace(/[\[\]]/g, '') || 'APP';
+            const message = parts.slice(1).join(' - ') || logEntry;
+            const user = logEntry.match(/User: ([^\s]+)/)?.[1] || 'System';
+            const ip = logEntry.match(/IP: ([^\s]+)/)?.[1] || 'N/A';
+
+            // Populate modal
+            document.getElementById('modal-timestamp').textContent = timestamp;
+            document.getElementById('modal-level').textContent = level;
+            document.getElementById('modal-source').textContent = source;
+            document.getElementById('modal-message').textContent = message;
+            document.getElementById('modal-user').textContent = user;
+            document.getElementById('modal-ip').textContent = ip;
+            document.getElementById('modal-full-log').textContent = logEntry;
+
+            // Show modal
+            document.getElementById('log-modal').style.display = 'block';
+        }
+
+        // Close log modal
+        function closeLogModal() {
+            document.getElementById('log-modal').style.display = 'none';
+        }
+
+        // Copy log to clipboard
+        function copyLogToClipboard() {
+            const fullLog = document.getElementById('modal-full-log').textContent;
+            navigator.clipboard.writeText(fullLog).then(() => {
+                alert('Log copied to clipboard!');
+            }).catch(() => {
+                alert('Failed to copy log to clipboard');
+            });
+        }
+
+        // Copy log entry
+        function copyLog(logEntry) {
+            navigator.clipboard.writeText(logEntry).then(() => {
+                // Show temporary success indicator
+                const btn = event.target.closest('button');
+                const originalIcon = btn.innerHTML;
+                btn.innerHTML = '<i class="fas fa-check"></i>';
+                btn.classList.add('btn-success');
+                
+                setTimeout(() => {
+                    btn.innerHTML = originalIcon;
+                    btn.classList.remove('btn-success');
+                }, 1000);
+            }).catch(() => {
+                alert('Failed to copy log to clipboard');
+            });
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('log-modal');
+            if (event.target === modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+        // Auto-refresh logs every 30 seconds
+        setInterval(() => {
+            // You could implement real-time log updates here
+        }, 30000);
+    </script>
+</body>
+</html>

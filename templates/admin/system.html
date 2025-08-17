@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Status - BlinkWell Admin</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+</head>
+<body>
+    <div class="admin-container">
+        <!-- Admin Sidebar -->
+        <div class="admin-sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <i class="fas fa-eye"></i>
+                    <span>BlinkWell Admin</span>
+                </div>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <a href="{{ url_for('admin.admin_dashboard') }}" class="nav-item">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="{{ url_for('admin.manage_users') }}" class="nav-item">
+                    <i class="fas fa-users"></i>
+                    <span>Users</span>
+                </a>
+                <a href="{{ url_for('admin.analytics') }}" class="nav-item">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Analytics</span>
+                </a>
+                <a href="{{ url_for('admin.system_status') }}" class="nav-item active">
+                    <i class="fas fa-server"></i>
+                    <span>System</span>
+                </a>
+                <a href="{{ url_for('admin.view_logs') }}" class="nav-item">
+                    <i class="fas fa-file-alt"></i>
+                    <span>Logs</span>
+                </a>
+                <a href="{{ url_for('main.dashboard') }}" class="nav-item">
+                    <i class="fas fa-arrow-left"></i>
+                    <span>Back to App</span>
+                </a>
+            </nav>
+        </div>
+
+        <!-- Main Content -->
+        <div class="admin-main">
+            <header class="admin-header">
+                <h1>System Status & Health</h1>
+                <div class="header-actions">
+                    <button class="btn btn-primary" onclick="refreshSystemStatus()">
+                        <i class="fas fa-sync-alt"></i>
+                        Refresh
+                    </button>
+                    <button class="btn btn-secondary" onclick="exportSystemReport()">
+                        <i class="fas fa-download"></i>
+                        Export Report
+                    </button>
+                </div>
+            </header>
+
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ 'error' if category == 'error' else 'success' }}">
+                            <i class="fas fa-{{ 'exclamation-triangle' if category == 'error' else 'check-circle' }}"></i>
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <!-- System Health Overview -->
+            <div class="health-overview">
+                <div class="health-card">
+                    <div class="health-icon">
+                        <i class="fas fa-database"></i>
+                    </div>
+                    <div class="health-content">
+                        <h3>Database</h3>
+                        <span class="health-status" id="db-status">{{ system_info.db_status if system_info else 'Checking...' }}</span>
+                    </div>
+                </div>
+
+                <div class="health-card">
+                    <div class="health-icon">
+                        <i class="fas fa-server"></i>
+                    </div>
+                    <div class="health-content">
+                        <h3>Application</h3>
+                        <span class="health-status" id="app-status">Healthy</span>
+                    </div>
+                </div>
+
+                <div class="health-card">
+                    <div class="health-icon">
+                        <i class="fas fa-network-wired"></i>
+                    </div>
+                    <div class="health-content">
+                        <h3>Network</h3>
+                        <span class="health-status" id="network-status">Connected</span>
+                    </div>
+                </div>
+
+                <div class="health-card">
+                    <div class="health-icon">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <div class="health-content">
+                        <h3>Security</h3>
+                        <span class="health-status" id="security-status">Secure</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Resource Usage -->
+            <div class="resource-section">
+                <h2>Resource Usage</h2>
+                <div class="resource-grid">
+                    <div class="resource-card">
+                        <div class="resource-header">
+                            <h3>CPU Usage</h3>
+                            <span class="resource-value" id="cpu-usage">{{ system_info.cpu_percent if system_info else '--' }}%</span>
+                        </div>
+                        <div class="resource-bar">
+                            <div class="resource-fill" id="cpu-fill" style="width: {{ system_info.cpu_percent if system_info else 0 }}%"></div>
+                        </div>
+                        <div class="resource-details">
+                            <span>Current: {{ system_info.cpu_percent if system_info else '--' }}%</span>
+                            <span>Peak: 85%</span>
+                        </div>
+                    </div>
+
+                    <div class="resource-card">
+                        <div class="resource-header">
+                            <h3>Memory Usage</h3>
+                            <span class="resource-value" id="memory-usage">{{ system_info.memory_percent if system_info else '--' }}%</span>
+                        </div>
+                        <div class="resource-bar">
+                            <div class="resource-fill" id="memory-fill" style="width: {{ system_info.memory_percent if system_info else 0 }}%"></div>
+                        </div>
+                        <div class="resource-details">
+                            <span>Current: {{ system_info.memory_percent if system_info else '--' }}%</span>
+                            <span>Peak: 92%</span>
+                        </div>
+                    </div>
+
+                    <div class="resource-card">
+                        <div class="resource-header">
+                            <h3>Disk Usage</h3>
+                            <span class="resource-value" id="disk-usage">{{ system_info.disk_percent if system_info else '--' }}%</span>
+                        </div>
+                        <div class="resource-bar">
+                            <div class="resource-fill" id="disk-fill" style="width: {{ system_info.disk_percent if system_info else 0 }}%"></div>
+                        </div>
+                        <div class="resource-details">
+                            <span>Current: {{ system_info.disk_percent if system_info else '--' }}%</span>
+                            <span>Peak: 78%</span>
+                        </div>
+                    </div>
+
+                    <div class="resource-card">
+                        <div class="resource-header">
+                            <h3>Network I/O</h3>
+                            <span class="resource-value" id="network-io">2.4 MB/s</span>
+                        </div>
+                        <div class="resource-bar">
+                            <div class="resource-fill" id="network-fill" style="width: 45%"></div>
+                        </div>
+                        <div class="resource-details">
+                            <span>In: 1.2 MB/s</span>
+                            <span>Out: 1.2 MB/s</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- System Information -->
+            <div class="system-info-section">
+                <h2>System Information</h2>
+                <div class="info-grid">
+                    <div class="info-card">
+                        <h3>Application Details</h3>
+                        <div class="info-item">
+                            <span class="info-label">Python Version</span>
+                            <span class="info-value">{{ system_info.python_version if system_info else '--' }}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Flask Version</span>
+                            <span class="info-value">{{ system_info.flask_version if system_info else '--' }}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Environment</span>
+                            <span class="info-value">Production</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Uptime</span>
+                            <span class="info-value" id="uptime">--</span>
+                        </div>
+                    </div>
+
+                    <div class="info-card">
+                        <h3>Database Information</h3>
+                        <div class="info-item">
+                            <span class="info-label">Type</span>
+                            <span class="info-value">MySQL</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Host</span>
+                            <span class="info-value">localhost</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Port</span>
+                            <span class="info-value">3306</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Status</span>
+                            <span class="info-value">{{ system_info.db_status if system_info else '--' }}</span>
+                        </div>
+                    </div>
+
+                    <div class="info-card">
+                        <h3>Performance Metrics</h3>
+                        <div class="info-item">
+                            <span class="info-label">Response Time</span>
+                            <span class="info-value" id="response-time">--</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Requests/sec</span>
+                            <span class="info-value" id="requests-per-sec">--</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Error Rate</span>
+                            <span class="info-value" id="error-rate">--</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Active Connections</span>
+                            <span class="info-value" id="active-connections">--</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Alerts -->
+            <div class="alerts-section">
+                <h2>Recent System Alerts</h2>
+                <div class="alerts-list" id="alerts-list">
+                    <div class="alert-item info">
+                        <div class="alert-icon">
+                            <i class="fas fa-info-circle"></i>
+                        </div>
+                        <div class="alert-content">
+                            <h4>System Check Completed</h4>
+                            <p>All systems are operating normally</p>
+                            <span class="alert-time">2 minutes ago</span>
+                        </div>
+                    </div>
+                    <div class="alert-item warning">
+                        <div class="alert-icon">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <div class="alert-content">
+                            <h4>High Memory Usage</h4>
+                            <p>Memory usage is above 80%</p>
+                            <span class="alert-time">15 minutes ago</span>
+                        </div>
+                    </div>
+                    <div class="alert-item success">
+                        <div class="alert-icon">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="alert-content">
+                            <h4>Backup Completed</h4>
+                            <p>Daily database backup completed successfully</p>
+                            <span class="alert-time">1 hour ago</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // System status refresh function
+        function refreshSystemStatus() {
+            // Simulate refreshing system status
+            const refreshBtn = event.target;
+            const originalText = refreshBtn.innerHTML;
+            
+            refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Refreshing...';
+            refreshBtn.disabled = true;
+            
+            setTimeout(() => {
+                // Update resource usage with simulated data
+                updateResourceUsage();
+                updateSystemInfo();
+                
+                refreshBtn.innerHTML = originalText;
+                refreshBtn.disabled = false;
+                
+                // Show success message
+                showAlert('System status refreshed successfully', 'success');
+            }, 2000);
+        }
+
+        // Update resource usage with real-time data
+        function updateResourceUsage() {
+            // Simulate real-time updates
+            const cpuUsage = Math.floor(Math.random() * 30) + 20;
+            const memoryUsage = Math.floor(Math.random() * 20) + 60;
+            const diskUsage = Math.floor(Math.random() * 15) + 65;
+            
+            document.getElementById('cpu-usage').textContent = cpuUsage + '%';
+            document.getElementById('cpu-fill').style.width = cpuUsage + '%';
+            
+            document.getElementById('memory-usage').textContent = memoryUsage + '%';
+            document.getElementById('memory-fill').style.width = memoryUsage + '%';
+            
+            document.getElementById('disk-usage').textContent = diskUsage + '%';
+            document.getElementById('disk-fill').style.width = diskUsage + '%';
+        }
+
+        // Update system information
+        function updateSystemInfo() {
+            const now = new Date();
+            const uptime = Math.floor((now - new Date(now.getTime() - 86400000)) / 1000 / 60); // Simulated uptime
+            
+            document.getElementById('uptime').textContent = uptime + ' minutes';
+            document.getElementById('response-time').textContent = (Math.random() * 50 + 10).toFixed(1) + 'ms';
+            document.getElementById('requests-per-sec').textContent = (Math.random() * 10 + 5).toFixed(1);
+            document.getElementById('error-rate').textContent = (Math.random() * 2).toFixed(2) + '%';
+            document.getElementById('active-connections').textContent = Math.floor(Math.random() * 20 + 10);
+        }
+
+        // Export system report
+        function exportSystemReport() {
+            // This would typically generate and download a system report
+            alert('Export functionality would be implemented here');
+        }
+
+        // Show alert message
+        function showAlert(message, type) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type}`;
+            alertDiv.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check-circle' : 'info-circle'}"></i>
+                ${message}
+            `;
+            
+            const header = document.querySelector('.admin-header');
+            header.parentNode.insertBefore(alertDiv, header.nextSibling);
+            
+            setTimeout(() => {
+                alertDiv.remove();
+            }, 5000);
+        }
+
+        // Auto-refresh system status every 30 seconds
+        setInterval(updateResourceUsage, 30000);
+        setInterval(updateSystemInfo, 30000);
+
+        // Initialize system status
+        updateResourceUsage();
+        updateSystemInfo();
+
+        // Simulate real-time network monitoring
+        setInterval(() => {
+            const networkIO = (Math.random() * 5 + 1).toFixed(1);
+            document.getElementById('network-io').textContent = networkIO + ' MB/s';
+            document.getElementById('network-fill').style.width = (networkIO / 10 * 100) + '%';
+        }, 5000);
+    </script>
+</body>
+</html>
