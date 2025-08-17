@@ -1,0 +1,327 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block page_title %}Dashboard{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active">Dashboard</li>
+{% endblock %}
+
+{% block content %}
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="stat-card users h-100">
+            <div class="d-flex align-items-center">
+                <div class="stat-icon me-3">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div>
+                    <div class="h4 mb-0">{{ stats.total_users or 0 }}</div>
+                    <div class="text-muted">Total Users</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="stat-card admins h-100">
+            <div class="d-flex align-items-center">
+                <div class="stat-icon me-3">
+                    <i class="fas fa-user-shield"></i>
+                </div>
+                <div>
+                    <div class="h4 mb-0">{{ stats.total_admins or 0 }}</div>
+                    <div class="text-muted">Administrators</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="stat-card system h-100">
+            <div class="d-flex align-items-center">
+                <div class="stat-icon me-3">
+                    <i class="fas fa-user-plus"></i>
+                </div>
+                <div>
+                    <div class="h4 mb-0">{{ stats.recent_users or 0 }}</div>
+                    <div class="text-muted">New Users (7 days)</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="stat-card actions h-100">
+            <div class="d-flex align-items-center">
+                <div class="stat-icon me-3">
+                    <i class="fas fa-list-alt"></i>
+                </div>
+                <div>
+                    <div class="h4 mb-0">{{ stats.recent_admin_actions or 0 }}</div>
+                    <div class="text-muted">Admin Actions (24h)</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- System Status and Charts -->
+<div class="row mb-4">
+    <!-- System Status -->
+    <div class="col-lg-6 mb-4">
+        <div class="table-container">
+            <h5 class="mb-3">
+                <i class="fas fa-server me-2"></i>
+                System Status
+            </h5>
+            
+            <div class="system-metric">
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="metric-label">CPU Usage</span>
+                    <span class="metric-value">{{ "%.1f"|format(system_info.cpu_percent or 0) }}%</span>
+                </div>
+                <div class="progress mt-2">
+                    <div class="progress-bar bg-{{ 'success' if (system_info.cpu_percent or 0) < 50 else 'warning' if (system_info.cpu_percent or 0) < 80 else 'danger' }}" 
+                         style="width: {{ system_info.cpu_percent or 0 }}%"></div>
+                </div>
+            </div>
+            
+            <div class="system-metric">
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="metric-label">Memory Usage</span>
+                    <span class="metric-value">{{ "%.1f"|format(system_info.memory_percent or 0) }}%</span>
+                </div>
+                <div class="progress mt-2">
+                    <div class="progress-bar bg-{{ 'success' if (system_info.memory_percent or 0) < 50 else 'warning' if (system_info.memory_percent or 0) < 80 else 'danger' }}" 
+                         style="width: {{ system_info.memory_percent or 0 }}%"></div>
+                </div>
+            </div>
+            
+            <div class="system-metric">
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="metric-label">Disk Usage</span>
+                    <span class="metric-value">{{ "%.1f"|format(system_info.disk_percent or 0) }}%</span>
+                </div>
+                <div class="progress mt-2">
+                    <div class="progress-bar bg-{{ 'success' if (system_info.disk_percent or 0) < 50 else 'warning' if (system_info.disk_percent or 0) < 80 else 'danger' }}" 
+                         style="width: {{ system_info.disk_percent or 0 }}%"></div>
+                </div>
+            </div>
+            
+            <div class="system-metric">
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="metric-label">Uploads Size</span>
+                    <span class="metric-value">{{ system_info.uploads_size_mb or 0 }} MB</span>
+                </div>
+            </div>
+            
+            <div class="system-metric">
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="metric-label">Models Size</span>
+                    <span class="metric-value">{{ system_info.models_size_mb or 0 }} MB</span>
+                </div>
+            </div>
+            
+            <div class="system-metric">
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="metric-label">System Uptime</span>
+                    <span class="metric-value">{{ (system_info.uptime or 0).days }}d {{ ((system_info.uptime or 0).seconds // 3600) }}h</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- System Usage Chart -->
+    <div class="col-lg-6 mb-4">
+        <div class="table-container">
+            <h5 class="mb-3">
+                <i class="fas fa-chart-line me-2"></i>
+                System Usage
+            </h5>
+            <canvas id="systemChart" width="400" height="200"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activity -->
+<div class="row">
+    <div class="col-12">
+        <div class="table-container">
+            <h5 class="mb-3">
+                <i class="fas fa-clock me-2"></i>
+                Recent Admin Activity
+            </h5>
+            
+            {% if recent_logs %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Time</th>
+                                <th>Admin</th>
+                                <th>Action</th>
+                                <th>Details</th>
+                                <th>IP Address</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for log in recent_logs %}
+                            <tr>
+                                <td>
+                                    <small class="text-muted">
+                                        {{ log[4].strftime('%Y-%m-%d %H:%M') if log[4] else 'N/A' }}
+                                    </small>
+                                </td>
+                                <td>
+                                    <span class="badge bg-primary">{{ log[6] or 'Unknown' }}</span>
+                                </td>
+                                <td>{{ log[1] }}</td>
+                                <td>
+                                    <small class="text-muted">
+                                        {{ log[2] or 'No details' }}
+                                    </small>
+                                </td>
+                                <td>
+                                    <code class="small">{{ log[3] or 'N/A' }}</code>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="text-center mt-3">
+                    <a href="{{ url_for('admin.logs') }}" class="btn btn-outline-primary btn-admin">
+                        <i class="fas fa-list me-2"></i>
+                        View All Logs
+                    </a>
+                </div>
+            {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">No recent activity to display</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// System Usage Chart
+const ctx = document.getElementById('systemChart').getContext('2d');
+const systemChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+        labels: ['CPU', 'Memory', 'Disk'],
+        datasets: [{
+            data: [
+                {{ system_info.cpu_percent or 0 }},
+                {{ system_info.memory_percent or 0 }},
+                {{ system_info.disk_percent or 0 }}
+            ],
+            backgroundColor: [
+                '#3498db',
+                '#e74c3c',
+                '#f39c12'
+            ],
+            borderWidth: 2,
+            borderColor: '#fff'
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom'
+            }
+        }
+    }
+});
+
+// Auto-refresh system stats every 30 seconds
+setInterval(function() {
+    fetch('/admin/api/system')
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                console.error('Error fetching system data:', data.error);
+                return;
+            }
+            
+            // Update CPU usage
+            const cpuElement = document.querySelector('.system-metric:nth-child(1) .metric-value');
+            if (cpuElement) {
+                cpuElement.textContent = data.cpu_percent.toFixed(1) + '%';
+            }
+            
+            // Update memory usage
+            const memoryElement = document.querySelector('.system-metric:nth-child(2) .metric-value');
+            if (memoryElement) {
+                memoryElement.textContent = data.memory_percent.toFixed(1) + '%';
+            }
+            
+            // Update disk usage
+            const diskElement = document.querySelector('.system-metric:nth-child(3) .metric-value');
+            if (diskElement) {
+                diskElement.textContent = data.disk_percent.toFixed(1) + '%';
+            }
+            
+            // Update chart
+            systemChart.data.datasets[0].data = [
+                data.cpu_percent,
+                data.memory_percent,
+                data.disk_percent
+            ];
+            systemChart.update();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+}, 30000);
+
+// Auto-refresh stats every 60 seconds
+setInterval(function() {
+    fetch('/admin/api/stats')
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                console.error('Error fetching stats:', data.error);
+                return;
+            }
+            
+            // Update user count
+            const userElement = document.querySelector('.stat-card.users .h4');
+            if (userElement) {
+                userElement.textContent = data.total_users || 0;
+            }
+            
+            // Update admin count
+            const adminElement = document.querySelector('.stat-card.admins .h4');
+            if (adminElement) {
+                adminElement.textContent = data.total_admins || 0;
+            }
+            
+            // Update recent users count
+            const recentElement = document.querySelector('.stat-card.system .h4');
+            if (recentElement) {
+                recentElement.textContent = data.recent_users || 0;
+            }
+            
+            // Update admin actions count
+            const actionsElement = document.querySelector('.stat-card.actions .h4');
+            if (actionsElement) {
+                actionsElement.textContent = data.recent_admin_actions || 0;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+}, 60000);
+</script>
+{% endblock %}

@@ -86,3 +86,18 @@ def get_user_by_google_id(google_id):
     if user_data:
         return User(user_data[0], user_data[1], user_data[2])
     return None
+
+def get_all_users():
+    """Get all users for admin purposes"""
+    conn = current_app.config['get_db_connection']()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("SELECT id, username, email, created_at FROM users ORDER BY created_at DESC")
+        users = cursor.fetchall()
+        return users
+    except Exception as e:
+        print(f"Error fetching users: {e}")
+        return []
+    finally:
+        cursor.close()
+        conn.close()

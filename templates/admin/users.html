@@ -1,0 +1,329 @@
+{% extends "admin/base.html" %}
+
+{% block title %}User Management{% endblock %}
+
+{% block page_title %}User Management{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active">Users</li>
+{% endblock %}
+
+{% block content %}
+<div class="table-container">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="mb-0">
+            <i class="fas fa-users me-2"></i>
+            Registered Users
+        </h5>
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-secondary btn-admin" onclick="exportUsers()">
+                <i class="fas fa-download me-2"></i>
+                Export
+            </button>
+            <button class="btn btn-outline-primary btn-admin" onclick="refreshUsers()">
+                <i class="fas fa-sync-alt me-2"></i>
+                Refresh
+            </button>
+        </div>
+    </div>
+    
+    {% if users %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Username</th>
+                        <th>Email</th>
+                        <th>Registration Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                    <tr>
+                        <td>
+                            <span class="badge bg-secondary">{{ user[0] }}</span>
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-user-circle fa-2x text-primary me-2"></i>
+                                <div>
+                                    <strong>{{ user[1] }}</strong>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <a href="mailto:{{ user[2] }}" class="text-decoration-none">
+                                {{ user[2] }}
+                            </a>
+                        </td>
+                        <td>
+                            {% if user[3] %}
+                                <small class="text-muted">
+                                    {{ user[3].strftime('%Y-%m-%d %H:%M') }}
+                                </small>
+                            {% else %}
+                                <span class="text-muted">N/A</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <button class="btn btn-sm btn-outline-info" 
+                                        onclick="viewUserDetails({{ user[0] }}, '{{ user[1] }}')"
+                                        title="View Details">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-warning" 
+                                        onclick="editUser({{ user[0] }}, '{{ user[1] }}')"
+                                        title="Edit User">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger" 
+                                        onclick="deleteUser({{ user[0] }}, '{{ user[1] }}')"
+                                        title="Delete User">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- User Statistics -->
+        <div class="row mt-4">
+            <div class="col-md-3">
+                <div class="card bg-primary text-white">
+                    <div class="card-body text-center">
+                        <i class="fas fa-users fa-2x mb-2"></i>
+                        <h4>{{ users|length }}</h4>
+                        <small>Total Users</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-success text-white">
+                    <div class="card-body text-center">
+                        <i class="fas fa-user-check fa-2x mb-2"></i>
+                        <h4>{{ users|length }}</h4>
+                        <small>Active Users</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-info text-white">
+                    <div class="card-body text-center">
+                        <i class="fas fa-calendar fa-2x mb-2"></i>
+                        <h4>{{ users|length }}</h4>
+                        <small>This Month</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-warning text-white">
+                    <div class="card-body text-center">
+                        <i class="fas fa-clock fa-2x mb-2"></i>
+                        <h4>{{ users|length }}</h4>
+                        <small>Today</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-users fa-4x text-muted mb-3"></i>
+            <h5 class="text-muted">No users found</h5>
+            <p class="text-muted">There are no registered users in the system.</p>
+        </div>
+    {% endif %}
+</div>
+
+<!-- User Details Modal -->
+<div class="modal fade" id="userDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">User Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="userDetailsContent">
+                <!-- Content will be loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit User Modal -->
+<div class="modal fade" id="editUserModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit User</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editUserForm">
+                    <input type="hidden" id="editUserId">
+                    <div class="mb-3">
+                        <label for="editUsername" class="form-label">Username</label>
+                        <input type="text" class="form-control" id="editUsername" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editEmail" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="editEmail" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editPassword" class="form-label">New Password (leave blank to keep current)</label>
+                        <input type="password" class="form-control" id="editPassword">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="saveUserChanges()">Save Changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteUserModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Deletion</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete the user <strong id="deleteUserName"></strong>?</p>
+                <p class="text-danger">This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" onclick="confirmDeleteUser()">Delete User</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let currentUserId = null;
+
+function viewUserDetails(userId, username) {
+    // For now, just show basic info
+    const content = `
+        <div class="text-center">
+            <i class="fas fa-user-circle fa-4x text-primary mb-3"></i>
+            <h5>${username}</h5>
+            <p class="text-muted">User ID: ${userId}</p>
+            <div class="row mt-3">
+                <div class="col-6">
+                    <div class="card bg-light">
+                        <div class="card-body text-center">
+                            <i class="fas fa-calendar text-primary"></i>
+                            <p class="mb-0">Registration Date</p>
+                            <small class="text-muted">N/A</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="card bg-light">
+                        <div class="card-body text-center">
+                            <i class="fas fa-clock text-primary"></i>
+                            <p class="mb-0">Last Login</p>
+                            <small class="text-muted">N/A</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('userDetailsContent').innerHTML = content;
+    new bootstrap.Modal(document.getElementById('userDetailsModal')).show();
+}
+
+function editUser(userId, username) {
+    currentUserId = userId;
+    document.getElementById('editUserId').value = userId;
+    document.getElementById('editUsername').value = username;
+    document.getElementById('editEmail').value = ''; // You might want to fetch this from the server
+    document.getElementById('editPassword').value = '';
+    
+    new bootstrap.Modal(document.getElementById('editUserModal')).show();
+}
+
+function saveUserChanges() {
+    const userId = document.getElementById('editUserId').value;
+    const username = document.getElementById('editUsername').value;
+    const email = document.getElementById('editEmail').value;
+    const password = document.getElementById('editPassword').value;
+    
+    // Here you would typically make an API call to update the user
+    // For now, just show a success message
+    alert('User updated successfully! (This is a demo - no actual changes were made)');
+    
+    // Close the modal
+    bootstrap.Modal.getInstance(document.getElementById('editUserModal')).hide();
+}
+
+function deleteUser(userId, username) {
+    currentUserId = userId;
+    document.getElementById('deleteUserName').textContent = username;
+    
+    new bootstrap.Modal(document.getElementById('deleteUserModal')).show();
+}
+
+function confirmDeleteUser() {
+    // Here you would typically make an API call to delete the user
+    // For now, just show a success message
+    alert('User deleted successfully! (This is a demo - no actual changes were made)');
+    
+    // Close the modal
+    bootstrap.Modal.getInstance(document.getElementById('deleteUserModal')).hide();
+    
+    // Remove the row from the table
+    const row = document.querySelector(`tr[data-user-id="${currentUserId}"]`);
+    if (row) {
+        row.remove();
+    }
+}
+
+function exportUsers() {
+    // Create CSV content
+    const headers = ['ID', 'Username', 'Email', 'Registration Date'];
+    const csvContent = [
+        headers.join(','),
+        ...Array.from(document.querySelectorAll('tbody tr')).map(row => {
+            const cells = row.querySelectorAll('td');
+            return [
+                cells[0].textContent.trim(),
+                cells[1].textContent.trim(),
+                cells[2].textContent.trim(),
+                cells[3].textContent.trim()
+            ].join(',');
+        })
+    ].join('\n');
+    
+    // Create and download file
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'users_export.csv';
+    a.click();
+    window.URL.revokeObjectURL(url);
+}
+
+function refreshUsers() {
+    location.reload();
+}
+</script>
+{% endblock %}
