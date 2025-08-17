@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - BlinkWell</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        :root {
+            --admin-primary: #2c3e50;
+            --admin-secondary: #34495e;
+            --admin-accent: #3498db;
+            --admin-success: #27ae60;
+            --admin-warning: #f39c12;
+            --admin-danger: #e74c3c;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+        }
+        
+        .admin-sidebar {
+            background: linear-gradient(135deg, var(--admin-primary), var(--admin-secondary));
+            min-height: 100vh;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1000;
+        }
+        
+        .admin-sidebar .nav-link {
+            color: rgba(255,255,255,0.8);
+            padding: 12px 20px;
+            border-radius: 8px;
+            margin: 4px 0;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: block;
+        }
+        
+        .admin-sidebar .nav-link:hover,
+        .admin-sidebar .nav-link.active {
+            color: white;
+            background: rgba(255,255,255,0.1);
+            transform: translateX(5px);
+        }
+        
+        .admin-sidebar .nav-link i {
+            width: 20px;
+            margin-right: 10px;
+        }
+        
+        .admin-header {
+            background: white;
+            border-bottom: 1px solid #e9ecef;
+            padding: 1rem 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 999;
+        }
+        
+        .admin-content {
+            background: #f8f9fa;
+            min-height: calc(100vh - 80px);
+            padding: 2rem;
+            margin-left: 250px;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+            height: 100%;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .stat-card .stat-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: white;
+        }
+        
+        .stat-card.users { border-left: 4px solid var(--admin-success); }
+        .stat-card.users .stat-icon { background: var(--admin-success); }
+        
+        .stat-card.admins { border-left: 4px solid var(--admin-accent); }
+        .stat-card.admins .stat-icon { background: var(--admin-accent); }
+        
+        .stat-card.system { border-left: 4px solid var(--admin-warning); }
+        .stat-card.system .stat-icon { background: var(--admin-warning); }
+        
+        .stat-card.actions { border-left: 4px solid var(--admin-danger); }
+        .stat-card.actions .stat-icon { background: var(--admin-danger); }
+        
+        .table-container {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+        
+        .btn-admin {
+            border-radius: 8px;
+            padding: 8px 16px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-admin:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        
+        .alert {
+            border-radius: 8px;
+            border: none;
+        }
+        
+        .progress {
+            height: 8px;
+            border-radius: 4px;
+        }
+        
+        .system-metric {
+            background: white;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .metric-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--admin-primary);
+        }
+        
+        .metric-label {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+        
+        .sidebar-toggle {
+            display: none;
+            background: var(--admin-primary);
+            border: none;
+            color: white;
+            padding: 0.5rem;
+            border-radius: 4px;
+        }
+        
+        @media (max-width: 768px) {
+            .admin-sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+            
+            .admin-sidebar.show {
+                transform: translateX(0);
+            }
+            
+            .admin-content {
+                margin-left: 0;
+            }
+            
+            .sidebar-toggle {
+                display: block;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar Toggle Button (Mobile) -->
+    <button class="sidebar-toggle position-fixed top-0 start-0 m-3" onclick="toggleSidebar()">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <!-- Sidebar -->
+    <nav class="admin-sidebar col-md-3 col-lg-2" id="adminSidebar">
+        <div class="position-sticky pt-3">
+            <div class="text-center mb-4">
+                <h4 class="text-white">
+                    <i class="fas fa-shield-alt"></i>
+                    Admin Panel
+                </h4>
+                <small class="text-white-50">BlinkWell</small>
+            </div>
+            
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link active" href="{{ url_for('admin.dashboard') }}">
+                        <i class="fas fa-tachometer-alt"></i>
+                        Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin.users') }}">
+                        <i class="fas fa-users"></i>
+                        Users
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin.admins') }}">
+                        <i class="fas fa-user-shield"></i>
+                        Administrators
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin.system') }}">
+                        <i class="fas fa-server"></i>
+                        System
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin.logs') }}">
+                        <i class="fas fa-list-alt"></i>
+                        Logs
+                    </a>
+                </li>
+            </ul>
+            
+            <hr class="text-white-50">
+            
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link text-white-50" href="{{ url_for('main.index') }}">
+                        <i class="fas fa-home"></i>
+                        Back to Site
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-white-50" href="{{ url_for('admin.logout') }}">
+                        <i class="fas fa-sign-out-alt"></i>
+                        Logout
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Main content -->
+    <main class="admin-content">
+        <!-- Header -->
+        <div class="admin-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 mb-0">Dashboard</h1>
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb mb-0">
+                            <li class="breadcrumb-item">Admin</li>
+                            <li class="breadcrumb-item active">Dashboard</li>
+                        </ol>
+                    </nav>
+                </div>
+                <div class="d-flex align-items-center">
+                    <span class="text-muted me-3">
+                        <i class="fas fa-user-circle"></i>
+                        {{ current_user.username }} ({{ current_user.role }})
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Content -->
+        <div class="admin-content">
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <!-- Statistics Cards -->
+            <div class="row mb-4">
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="stat-card users">
+                        <div class="d-flex align-items-center">
+                            <div class="stat-icon me-3">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <div>
+                                <div class="h4 mb-0">{{ stats.total_users or 0 }}</div>
+                                <div class="text-muted">Total Users</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="stat-card admins">
+                        <div class="d-flex align-items-center">
+                            <div class="stat-icon me-3">
+                                <i class="fas fa-user-shield"></i>
+                            </div>
+                            <div>
+                                <div class="h4 mb-0">{{ stats.total_admins or 0 }}</div>
+                                <div class="text-muted">Administrators</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="stat-card system">
+                        <div class="d-flex align-items-center">
+                            <div class="stat-icon me-3">
+                                <i class="fas fa-user-plus"></i>
+                            </div>
+                            <div>
+                                <div class="h4 mb-0">{{ stats.recent_users or 0 }}</div>
+                                <div class="text-muted">New Users (7 days)</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="stat-card actions">
+                        <div class="d-flex align-items-center">
+                            <div class="stat-icon me-3">
+                                <i class="fas fa-list-alt"></i>
+                            </div>
+                            <div>
+                                <div class="h4 mb-0">{{ stats.recent_admin_actions or 0 }}</div>
+                                <div class="text-muted">Admin Actions (24h)</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- System Status and Charts -->
+            <div class="row mb-4">
+                <!-- System Status -->
+                <div class="col-lg-6 mb-4">
+                    <div class="table-container">
+                        <h5 class="mb-3">
+                            <i class="fas fa-server me-2"></i>
+                            System Status
+                        </h5>
+                        
+                        <div class="system-metric">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="metric-label">CPU Usage</span>
+                                <span class="metric-value">{{ "%.1f"|format(system_info.cpu_percent or 0) }}%</span>
+                            </div>
+                            <div class="progress mt-2">
+                                {% set cpu_percent = system_info.cpu_percent or 0 %}
+                                {% if cpu_percent < 50 %}
+                                    <div class="progress-bar bg-success" style="width: {{ cpu_percent }}%"></div>
+                                {% elif cpu_percent < 80 %}
+                                    <div class="progress-bar bg-warning" style="width: {{ cpu_percent }}%"></div>
+                                {% else %}
+                                    <div class="progress-bar bg-danger" style="width: {{ cpu_percent }}%"></div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="system-metric">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="metric-label">Memory Usage</span>
+                                <span class="metric-value">{{ "%.1f"|format(system_info.memory_percent or 0) }}%</span>
+                            </div>
+                            <div class="progress mt-2">
+                                {% set memory_percent = system_info.memory_percent or 0 %}
+                                {% if memory_percent < 50 %}
+                                    <div class="progress-bar bg-success" style="width: {{ memory_percent }}%"></div>
+                                {% elif memory_percent < 80 %}
+                                    <div class="progress-bar bg-warning" style="width: {{ memory_percent }}%"></div>
+                                {% else %}
+                                    <div class="progress-bar bg-danger" style="width: {{ memory_percent }}%"></div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="system-metric">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="metric-label">Disk Usage</span>
+                                <span class="metric-value">{{ "%.1f"|format(system_info.disk_percent or 0) }}%</span>
+                            </div>
+                            <div class="progress mt-2">
+                                {% set disk_percent = system_info.disk_percent or 0 %}
+                                {% if disk_percent < 50 %}
+                                    <div class="progress-bar bg-success" style="width: {{ disk_percent }}%"></div>
+                                {% elif disk_percent < 80 %}
+                                    <div class="progress-bar bg-warning" style="width: {{ disk_percent }}%"></div>
+                                {% else %}
+                                    <div class="progress-bar bg-danger" style="width: {{ disk_percent }}%"></div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="system-metric">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="metric-label">Uploads Size</span>
+                                <span class="metric-value">{{ system_info.uploads_size_mb or 0 }} MB</span>
+                            </div>
+                        </div>
+                        
+                        <div class="system-metric">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="metric-label">Models Size</span>
+                                <span class="metric-value">{{ system_info.models_size_mb or 0 }} MB</span>
+                            </div>
+                        </div>
+                        
+                        <div class="system-metric">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="metric-label">System Uptime</span>
+                                <span class="metric-value">
+                                    {% if system_info.uptime %}
+                                        {{ system_info.uptime.days }}d {{ (system_info.uptime.seconds // 3600) }}h
+                                    {% else %}
+                                        0d 0h
+                                    {% endif %}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- System Usage Chart -->
+                <div class="col-lg-6 mb-4">
+                    <div class="table-container">
+                        <h5 class="mb-3">
+                            <i class="fas fa-chart-line me-2"></i>
+                            System Usage
+                        </h5>
+                        <canvas id="systemChart" width="400" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="table-container">
+                        <h5 class="mb-3">
+                            <i class="fas fa-clock me-2"></i>
+                            Recent Admin Activity
+                        </h5>
+                        
+                        {% if recent_logs %}
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Time</th>
+                                            <th>Admin</th>
+                                            <th>Action</th>
+                                            <th>Details</th>
+                                            <th>IP Address</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for log in recent_logs %}
+                                        <tr>
+                                            <td>
+                                                <small class="text-muted">
+                                                    {% if log[4] %}
+                                                        {{ log[4].strftime('%Y-%m-%d %H:%M') }}
+                                                    {% else %}
+                                                        N/A
+                                                    {% endif %}
+                                                </small>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-primary">{{ log[6] or 'Unknown' }}</span>
+                                            </td>
+                                            <td>{{ log[1] }}</td>
+                                            <td>
+                                                <small class="text-muted">
+                                                    {{ log[2] or 'No details' }}
+                                                </small>
+                                            </td>
+                                            <td>
+                                                <code class="small">{{ log[3] or 'N/A' }}</code>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <div class="text-center mt-3">
+                                <a href="{{ url_for('admin.logs') }}" class="btn btn-outline-primary btn-admin">
+                                    <i class="fas fa-list me-2"></i>
+                                    View All Logs
+                                </a>
+                            </div>
+                        {% else %}
+                            <div class="text-center py-4">
+                                <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                                <p class="text-muted">No recent activity to display</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Mobile sidebar toggle
+        function toggleSidebar() {
+            const sidebar = document.getElementById('adminSidebar');
+            sidebar.classList.toggle('show');
+        }
+
+        // System Usage Chart
+        document.addEventListener('DOMContentLoaded', function() {
+            const ctx = document.getElementById('systemChart');
+            if (ctx) {
+                const systemChart = new Chart(ctx.getContext('2d'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['CPU', 'Memory', 'Disk'],
+                        datasets: [{
+                            data: [
+                                {{ system_info.cpu_percent or 0 }},
+                                {{ system_info.memory_percent or 0 }},
+                                {{ system_info.disk_percent or 0 }}
+                            ],
+                            backgroundColor: [
+                                '#3498db',
+                                '#e74c3c',
+                                '#f39c12'
+                            ],
+                            borderWidth: 2,
+                            borderColor: '#fff'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            }
+                        }
+                    }
+                });
+
+                // Auto-refresh system stats every 30 seconds
+                setInterval(function() {
+                    fetch('/admin/api/system')
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.error) {
+                                console.error('Error fetching system data:', data.error);
+                                return;
+                            }
+                            
+                            // Update CPU usage
+                            const cpuElement = document.querySelector('.system-metric:nth-child(1) .metric-value');
+                            if (cpuElement) {
+                                cpuElement.textContent = data.cpu_percent.toFixed(1) + '%';
+                            }
+                            
+                            // Update memory usage
+                            const memoryElement = document.querySelector('.system-metric:nth-child(2) .metric-value');
+                            if (memoryElement) {
+                                memoryElement.textContent = data.memory_percent.toFixed(1) + '%';
+                            }
+                            
+                            // Update disk usage
+                            const diskElement = document.querySelector('.system-metric:nth-child(3) .metric-value');
+                            if (diskElement) {
+                                diskElement.textContent = data.disk_percent.toFixed(1) + '%';
+                            }
+                            
+                            // Update chart
+                            systemChart.data.datasets[0].data = [
+                                data.cpu_percent,
+                                data.memory_percent,
+                                data.disk_percent
+                            ];
+                            systemChart.update();
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                        });
+                }, 30000);
+
+                // Auto-refresh stats every 60 seconds
+                setInterval(function() {
+                    fetch('/admin/api/stats')
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.error) {
+                                console.error('Error fetching stats:', data.error);
+                                return;
+                            }
+                            
+                            // Update user count
+                            const userElement = document.querySelector('.stat-card.users .h4');
+                            if (userElement) {
+                                userElement.textContent = data.total_users || 0;
+                            }
+                            
+                            // Update admin count
+                            const adminElement = document.querySelector('.stat-card.admins .h4');
+                            if (adminElement) {
+                                adminElement.textContent = data.total_admins || 0;
+                            }
+                            
+                            // Update recent users count
+                            const recentElement = document.querySelector('.stat-card.system .h4');
+                            if (recentElement) {
+                                recentElement.textContent = data.recent_users || 0;
+                            }
+                            
+                            // Update admin actions count
+                            const actionsElement = document.querySelector('.stat-card.actions .h4');
+                            if (actionsElement) {
+                                actionsElement.textContent = data.recent_admin_actions || 0;
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                        });
+                }, 60000);
+            }
+        });
+    </script>
+</body>
+</html>

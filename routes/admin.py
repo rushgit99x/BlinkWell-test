@@ -52,7 +52,7 @@ def login():
         else:
             flash('Invalid username or password.', 'error')
     
-    return render_template('admin/login.html')
+    return render_template('admin/login_standalone.html')
 
 @admin_bp.route('/logout')
 @login_required
@@ -101,13 +101,13 @@ def dashboard():
         
         log_admin_action(current_user.id, 'dashboard_access', 'Accessed admin dashboard', request.remote_addr)
         
-        return render_template('admin/dashboard.html', 
+        return render_template('admin/dashboard_standalone.html', 
                              stats=stats, 
                              recent_logs=recent_logs,
                              system_info=system_info)
     except Exception as e:
         flash(f'Error loading dashboard: {str(e)}', 'error')
-        return render_template('admin/dashboard.html', 
+        return render_template('admin/dashboard_standalone.html', 
                              stats={}, 
                              recent_logs=[],
                              system_info={})
@@ -119,10 +119,10 @@ def users():
     try:
         users = get_all_users()
         log_admin_action(current_user.id, 'users_access', 'Accessed user management', request.remote_addr)
-        return render_template('admin/users.html', users=users)
+        return render_template('admin/users_standalone.html', users=users)
     except Exception as e:
         flash(f'Error loading users: {str(e)}', 'error')
-        return render_template('admin/users.html', users=[])
+        return render_template('admin/users_standalone.html', users=[])
 
 @admin_bp.route('/admins')
 @admin_required
