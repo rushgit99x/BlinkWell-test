@@ -797,9 +797,6 @@ body {
     transition: width 0.3s ease;
 }
 
-/* Export function for external use */
-window.updateProgressBar = updateProgressBar;
-
 /* Logout Popup Modal Styles */
 .logout-modal {
     display: none;
