@@ -101,3 +101,75 @@ function updateProgressBar(selector, newWidth) {
 
 // Export function for external use
 window.updateProgressBar = updateProgressBar;
+
+// Logout Popup Functions
+function showLogoutPopup() {
+    const modal = document.getElementById('logoutModal');
+    modal.style.display = 'flex';
+    
+    // Trigger animation after a brief delay
+    setTimeout(() => {
+        modal.classList.add('show');
+    }, 10);
+    
+    // Prevent body scroll when modal is open
+    document.body.style.overflow = 'hidden';
+    
+    // Add escape key listener
+    document.addEventListener('keydown', handleEscapeKey);
+    
+    // Add click outside to close
+    modal.addEventListener('click', handleOutsideClick);
+}
+
+function hideLogoutPopup() {
+    const modal = document.getElementById('logoutModal');
+    modal.classList.remove('show');
+    
+    // Wait for animation to complete before hiding
+    setTimeout(() => {
+        modal.style.display = 'none';
+        document.body.style.overflow = 'auto';
+    }, 300);
+    
+    // Remove event listeners
+    document.removeEventListener('keydown', handleEscapeKey);
+    modal.removeEventListener('click', handleOutsideClick);
+}
+
+function confirmLogout() {
+    // Show loading state
+    const logoutBtn = document.querySelector('.btn-logout');
+    const originalText = logoutBtn.innerHTML;
+    logoutBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Logging out...';
+    logoutBtn.disabled = true;
+    
+    // Redirect to logout route
+    setTimeout(() => {
+        window.location.href = '/logout';
+    }, 500);
+}
+
+function handleEscapeKey(event) {
+    if (event.key === 'Escape') {
+        hideLogoutPopup();
+    }
+}
+
+function handleOutsideClick(event) {
+    if (event.target === event.currentTarget) {
+        hideLogoutPopup();
+    }
+}
+
+// Close modal when clicking outside
+document.addEventListener('DOMContentLoaded', function() {
+    const modal = document.getElementById('logoutModal');
+    if (modal) {
+        modal.addEventListener('click', function(event) {
+            if (event.target === modal) {
+                hideLogoutPopup();
+            }
+        });
+    }
+});
