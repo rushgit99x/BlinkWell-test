@@ -8,7 +8,7 @@ class Config:
     MYSQL_HOST = os.environ.get('MYSQL_HOST') or 'localhost'
     MYSQL_USER = os.environ.get('MYSQL_USER') or 'root'
     MYSQL_PASSWORD = os.environ.get('MYSQL_PASSWORD') or ''
-    MYSQL_DB = os.environ.get('MYSQL_DB') or 'blinkwell'
+    MYSQL_DB = os.environ.get('MYSQL_DB') or 'b_test8'
     MYSQL_CURSORCLASS = 'DictCursor'
 
     GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID') or 'your-google-client-id'
