@@ -11,6 +11,10 @@
     height: 20px;
 }
 
+.progress-xs {
+    height: 8px;
+}
+
 .progress-bar {
     transition: width 0.6s ease;
 }

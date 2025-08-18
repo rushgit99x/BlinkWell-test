@@ -130,8 +130,8 @@
                                     </td>
                                     <td>
                                         <div class="d-flex align-items-center">
-                                            <div class="progress flex-grow-1 me-2" style="height: 8px;">
-                                                <div class="progress-bar bg-success" style="width: {{ habit[3] }}%"></div>
+                                            <div class="progress flex-grow-1 me-2 progress-xs">
+                                                <div class="progress-bar bg-success" data-width="{{ habit[3] }}"></div>
                                             </div>
                                             <span class="badge bg-success">{{ "%.1f"|format(habit[3]) }}%</span>
                                         </div>
@@ -210,10 +210,19 @@
         </div>
     </div>
 </div>
+<!-- Hidden data elements for JavaScript -->
+<!-- This approach avoids Jinja2 template syntax in JavaScript code -->
+<script type="application/json" id="dailyActivityData" style="display: none;">
+    {{ stats.daily_activity|tojson if stats.daily_activity else '[]' }}
+</script>
+
 {% endblock %}
 
 {% block scripts %}
 <script>
+// Note: This template uses data attributes and hidden elements to avoid
+// Jinja2 template syntax in JavaScript, preventing linter warnings
+
 // Activity Chart
 const activityCtx = document.getElementById('activityChart').getContext('2d');
 let activityChart;
@@ -277,7 +286,9 @@ function initActivityChart() {
 
 // Load activity data
 function loadActivityData() {
-    const dailyActivity = {{ stats.daily_activity|tojson if stats.daily_activity else '[]' }};
+    // Get data from data attributes to avoid Jinja2 template syntax in JavaScript
+    const dailyActivityElement = document.getElementById('dailyActivityData');
+    const dailyActivity = dailyActivityElement ? JSON.parse(dailyActivityElement.textContent) : [];
     
     if (dailyActivity.length > 0) {
         activityData.labels = dailyActivity.map(item => {
@@ -294,7 +305,7 @@ function loadActivityData() {
 
 // Real-time stats refresh
 function refreshRealTimeStats() {
-    fetch('{{ url_for("admin.api_stats") }}')
+    fetch('/admin/api/stats')
         .then(response => response.json())
         .then(data => {
             if (data.error) {
@@ -359,8 +370,20 @@ document.getElementById('refreshStats').addEventListener('click', function() {
     }, 1000);
 });
 
+// Initialize progress bars
+function initializeProgressBars() {
+    const progressBars = document.querySelectorAll('.progress-bar[data-width]');
+    progressBars.forEach(bar => {
+        const width = bar.dataset.width;
+        if (width && !isNaN(width)) {
+            bar.style.width = width + '%';
+        }
+    });
+}
+
 // Initialize everything when page loads
 document.addEventListener('DOMContentLoaded', function() {
+    initializeProgressBars();
     loadActivityData();
     refreshRealTimeStats();
     
