@@ -4,13 +4,14 @@ from datetime import datetime
 import json
 
 class AdminUser:
-    def __init__(self, id, username, email, role, is_active, created_at):
+    def __init__(self, id, username, email, role, is_active, created_at, password_hash=None):
         self.id = id
         self.username = username
         self.email = email
         self.role = role
         self.is_active = is_active
         self.created_at = created_at
+        self.password_hash = password_hash
         self.is_authenticated = True
         self.is_anonymous = False
 
@@ -18,6 +19,8 @@ class AdminUser:
         return str(self.id)
 
     def check_password(self, password):
+        if not self.password_hash:
+            return False
         return check_password_hash(self.password_hash, password)
 
 def get_admin_db_connection():

@@ -18,9 +18,17 @@ def admin_required(f):
     """Decorator to check if user is admin"""
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if not hasattr(current_user, 'role') or not current_user.role:
+        # Check if admin user is logged in via session
+        print(f"🔒 Admin access check - Session data: {session}")
+        print(f"   admin_user_id: {session.get('admin_user_id')}")
+        print(f"   admin_role: {session.get('admin_role')}")
+        
+        if not session.get('admin_user_id') or not session.get('admin_role'):
+            print("❌ Access denied - No admin session data")
             flash('Access denied. Admin privileges required.', 'error')
             return redirect(url_for('admin.login'))
+        
+        print(f"✅ Admin access granted for user: {session.get('admin_username')}")
         return f(*args, **kwargs)
     return decorated_function
 
@@ -29,11 +37,13 @@ def permission_required(resource, action):
     def decorator(f):
         @wraps(f)
         def decorated_function(*args, **kwargs):
-            if not hasattr(current_user, 'role') or not current_user.role:
+            # Check if admin user is logged in via session
+            if not session.get('admin_user_id') or not session.get('admin_role'):
                 flash('Access denied. Admin privileges required.', 'error')
                 return redirect(url_for('admin.login'))
             
-            if not check_admin_permission(current_user.role, resource, action):
+            admin_role = session.get('admin_role')
+            if not check_admin_permission(admin_role, resource, action):
                 flash(f'Access denied. You need {action} permission for {resource}.', 'error')
                 return redirect(url_for('admin.dashboard'))
             
@@ -63,39 +73,65 @@ def login():
         username = request.form.get('username')
         password = request.form.get('password')
         
+        print(f"🔐 Login attempt for username: {username}")
+        
         admin_user = get_admin_user_by_username(username)
         
-        if admin_user and admin_user.check_password(password):
-            login_user(admin_user)
-            update_admin_last_login(admin_user.id)
+        if admin_user:
+            print(f"✅ Admin user found: {admin_user.username}, role: {admin_user.role}")
             
-            log_admin_activity(
-                admin_id=admin_user.id,
-                action='login',
-                ip_address=request.remote_addr,
-                user_agent=request.headers.get('User-Agent')
-            )
-            
-            flash('Login successful!', 'success')
-            return redirect(url_for('admin.dashboard'))
+            if admin_user.check_password(password):
+                print(f"✅ Password correct for user: {username}")
+                
+                # Store admin user info in session for admin panel
+                session['admin_user_id'] = admin_user.id
+                session['admin_username'] = admin_user.username
+                session['admin_role'] = admin_user.role
+                
+                print(f"📝 Session data set: {session}")
+                
+                login_user(admin_user)
+                update_admin_last_login(admin_user.id)
+                
+                log_admin_activity(
+                    admin_id=admin_user.id,
+                    action='login',
+                    ip_address=request.remote_addr,
+                    user_agent=request.headers.get('User-Agent')
+                )
+                
+                flash('Login successful!', 'success')
+                return redirect(url_for('admin.dashboard'))
+            else:
+                print(f"❌ Password incorrect for user: {username}")
+                flash('Invalid username or password.', 'error')
         else:
+            print(f"❌ Admin user not found: {username}")
             flash('Invalid username or password.', 'error')
     
     return render_template('admin/login.html')
 
 @admin_bp.route('/logout')
-@login_required
 def logout():
     """Admin logout"""
-    if hasattr(current_user, 'id'):
+    admin_user_id = session.get('admin_user_id')
+    if admin_user_id:
         log_admin_activity(
-            admin_id=current_user.id,
+            admin_id=admin_user_id,
             action='logout',
             ip_address=request.remote_addr,
             user_agent=request.headers.get('User-Agent')
         )
     
-    logout_user()
+    # Clear session
+    session.pop('admin_user_id', None)
+    session.pop('admin_username', None)
+    session.pop('admin_role', None)
+    
+    # Also logout from Flask-Login if user was logged in
+    if hasattr(current_user, 'id'):
+        logout_user()
+    
     flash('You have been logged out.', 'info')
     return redirect(url_for('admin.login'))
 
@@ -385,7 +421,7 @@ def create_habit():
             conn.commit()
             
             log_admin_activity(
-                admin_id=current_user.id,
+                admin_id=session.get('admin_user_id'),
                 action='create_habit',
                 table_name='eye_habits',
                 record_id=cursor.lastrowid,
@@ -443,7 +479,7 @@ def edit_habit(habit_id):
             conn.commit()
             
             log_admin_activity(
-                admin_id=current_user.id,
+                admin_id=session.get('admin_user_id'),
                 action='edit_habit',
                 table_name='eye_habits',
                 record_id=habit_id,
@@ -495,7 +531,7 @@ def delete_habit(habit_id):
         conn.commit()
         
         log_admin_activity(
-            admin_id=current_user.id,
+            admin_id=session.get('admin_user_id'),
             action='delete_habit',
             table_name='eye_habits',
             record_id=habit_id,
@@ -620,15 +656,15 @@ def create_admin_user():
             )
             
             if admin_id:
-                log_admin_activity(
-                    admin_id=current_user.id,
-                    action='create_admin_user',
-                    table_name='admin_users',
-                    record_id=admin_id,
-                    details=request.form.to_dict(),
-                    ip_address=request.remote_addr,
-                    user_agent=request.headers.get('User-Agent')
-                )
+                            log_admin_activity(
+                admin_id=session.get('admin_user_id'),
+                action='create_admin_user',
+                table_name='admin_users',
+                record_id=admin_id,
+                details=request.form.to_dict(),
+                ip_address=request.remote_addr,
+                user_agent=request.headers.get('User-Agent')
+            )
                 
                 flash('Admin user created successfully!', 'success')
                 return redirect(url_for('admin.admin_users'))
@@ -656,15 +692,15 @@ def edit_admin_user(admin_id):
             )
             
             if success:
-                log_admin_activity(
-                    admin_id=current_user.id,
-                    action='edit_admin_user',
-                    table_name='admin_users',
-                    record_id=admin_id,
-                    details=request.form.to_dict(),
-                    ip_address=request.remote_addr,
-                    user_agent=request.headers.get('User-Agent')
-                )
+                            log_admin_activity(
+                admin_id=session.get('admin_user_id'),
+                action='edit_admin_user',
+                table_name='admin_users',
+                record_id=admin_id,
+                details=request.form.to_dict(),
+                ip_address=request.remote_addr,
+                user_agent=request.headers.get('User-Agent')
+            )
                 
                 flash('Admin user updated successfully!', 'success')
                 return redirect(url_for('admin.admin_users'))
@@ -687,7 +723,7 @@ def edit_admin_user(admin_id):
 def delete_admin_user(admin_id):
     """Delete admin user"""
     try:
-        if admin_id == current_user.id:
+        if admin_id == session.get('admin_user_id'):
             flash('You cannot delete your own account.', 'error')
             return redirect(url_for('admin.admin_users'))
         
@@ -695,7 +731,7 @@ def delete_admin_user(admin_id):
         
         if success:
             log_admin_activity(
-                admin_id=current_user.id,
+                admin_id=session.get('admin_user_id'),
                 action='delete_admin_user',
                 table_name='admin_users',
                 record_id=admin_id,

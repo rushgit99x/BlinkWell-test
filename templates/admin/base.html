@@ -367,14 +367,14 @@
             <div class="header-right">
                 <div class="admin-user-info dropdown">
                     <div class="admin-avatar">
-                        {{ current_user.username[0].upper() if current_user.username else 'A' }}
+                        {{ session.admin_username[0].upper() if session.admin_username else 'A' }}
                     </div>
                     <div class="dropdown-toggle" data-bs-toggle="dropdown" style="cursor: pointer;">
-                        <span>{{ current_user.username if current_user.username else 'Admin' }}</span>
+                        <span>{{ session.admin_username if session.admin_username else 'Admin' }}</span>
                         <i class="fas fa-chevron-down ms-2"></i>
                     </div>
                     <ul class="dropdown-menu dropdown-menu-end">
-                        <li><span class="dropdown-item-text text-muted">{{ current_user.role.title() if current_user.role else 'Admin' }}</span></li>
+                        <li><span class="dropdown-item-text text-muted">{{ session.admin_role.title() if session.admin_role else 'Admin' }}</span></li>
                         <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item" href="{{ url_for('admin.logout') }}"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
                     </ul>
