@@ -12,6 +12,7 @@ from routes.notifications import notifications_bp
 from services.email_service import email_service
 from services.notification_scheduler import notification_scheduler
 from routes.settings import settings_bp
+from routes.admin import admin_bp
 import os
 
 # Add this to your app.py after the existing imports
@@ -57,6 +58,7 @@ app.register_blueprint(habits_bp)
 app.register_blueprint(chatbot_bp)
 app.register_blueprint(notifications_bp)
 app.register_blueprint(settings_bp)
+app.register_blueprint(admin_bp)
 
 if __name__ == '__main__':
     # Start the notification scheduler

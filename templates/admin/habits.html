@@ -1,0 +1,418 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Eye Habits Management - BlinkWell Admin{% endblock %}
+{% block page_title %}Eye Habits Management{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-6">
+        <h5 class="mb-0">Total Habits: {{ habits|length }}</h5>
+        <small class="text-muted">Manage all eye health habits</small>
+    </div>
+    <div class="col-md-6 text-end">
+        <a href="{{ url_for('admin.create_habit') }}" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i>Create New Habit
+        </a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="fas fa-list-check me-2"></i>Habits List</h5>
+    </div>
+    <div class="card-body">
+        {% if habits %}
+            <div class="table-responsive">
+                <table class="table table-hover" id="habitsTable">
+                    <thead>
+                        <tr>
+                            <th>Habit</th>
+                            <th>Category</th>
+                            <th>Difficulty</th>
+                            <th>Users</th>
+                            <th>Completion Rate</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for habit in habits %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="habit-icon me-3">
+                                        {% if habit.icon %}
+                                            <i class="{{ habit.icon }} fa-2x text-primary"></i>
+                                        {% else %}
+                                            <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                                <i class="fas fa-eye text-white"></i>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-0">{{ habit.name }}</h6>
+                                        <small class="text-muted">{{ habit.description[:50] }}{% if habit.description|length > 50 %}...{% endif %}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge bg-{{ 'primary' if habit.category == 'screen_health' else 'success' if habit.category == 'exercise' else 'info' if habit.category == 'hydration' else 'warning' if habit.category == 'sleep' else 'secondary' }}">
+                                    {{ habit.category.replace('_', ' ').title() }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge bg-{{ 'success' if habit.difficulty_level == 'easy' else 'warning' if habit.difficulty_level == 'medium' else 'danger' }}">
+                                    {{ habit.difficulty_level.title() }}
+                                </span>
+                                <small class="text-muted d-block">{{ habit.estimated_time_minutes }} min</small>
+                            </td>
+                            <td>
+                                <span class="badge bg-primary">{{ habit.total_users or 0 }}</span>
+                                <small class="text-muted d-block">users</small>
+                            </td>
+                            <td>
+                                {% if habit.avg_completion_rate %}
+                                    <div class="d-flex align-items-center">
+                                        <div class="progress flex-grow-1 me-2" style="height: 8px;">
+                                            <div class="progress-bar bg-success" style="width: {{ habit.avg_completion_rate }}%"></div>
+                                        </div>
+                                        <span class="badge bg-success">{{ "%.1f"|format(habit.avg_completion_rate) }}%</span>
+                                    </div>
+                                {% else %}
+                                    <span class="text-muted">No data</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if habit.is_active %}
+                                    <span class="badge bg-success">Active</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Inactive</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a href="{{ url_for('admin.edit_habit', habit_id=habit.id) }}" 
+                                       class="btn btn-sm btn-outline-primary" 
+                                       title="Edit Habit">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <button type="button" 
+                                            class="btn btn-sm btn-outline-info" 
+                                           title="View Details"
+                                           onclick="viewHabitDetails({{ habit.id }})">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button type="button" 
+                                            class="btn btn-sm btn-outline-warning" 
+                                           title="Toggle Status"
+                                           onclick="toggleHabitStatus({{ habit.id }}, '{{ habit.name }}', {{ habit.is_active|int }})">
+                                        <i class="fas fa-{{ 'ban' if habit.is_active else 'check' }}"></i>
+                                    </button>
+                                    <button type="button" 
+                                            class="btn btn-sm btn-outline-danger" 
+                                           title="Delete Habit"
+                                           onclick="deleteHabit({{ habit.id }}, '{{ habit.name }}')">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-list-check fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">No habits found</h5>
+                <p class="text-muted">There are no eye habits created yet.</p>
+                <a href="{{ url_for('admin.create_habit') }}" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>Create First Habit
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Habit Details Modal -->
+<div class="modal fade" id="habitDetailsModal" tabindex="-1" aria-labelledby="habitDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="habitDetailsModalLabel">Habit Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="habitDetailsContent">
+                <!-- Content will be loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteHabitModal" tabindex="-1" aria-labelledby="deleteHabitModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteHabitModalLabel">Delete Habit</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete the habit <strong id="deleteHabitName"></strong>?</p>
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Warning:</strong> This action cannot be undone. All user data associated with this habit will be affected.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" onclick="confirmDeleteHabit()">Delete Habit</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Status Toggle Modal -->
+<div class="modal fade" id="statusToggleModal" tabindex="-1" aria-labelledby="statusToggleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="statusToggleModalLabel">Toggle Habit Status</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to change the status for habit <strong id="statusHabitName"></strong>?</p>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="habitStatus" id="statusActive" value="1">
+                    <label class="form-check-label" for="statusActive">
+                        Active
+                    </label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="habitStatus" id="statusInactive" value="0">
+                    <label class="form-check-label" for="statusInactive">
+                        Inactive
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-warning" onclick="confirmStatusToggle()">Change Status</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let currentHabitId = null;
+let currentHabitName = null;
+let currentHabitStatus = null;
+
+// Search functionality
+function searchHabits() {
+    const searchTerm = document.getElementById('searchHabits').value.toLowerCase();
+    const table = document.getElementById('habitsTable');
+    const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+    
+    for (let row of rows) {
+        const habitName = row.cells[0].textContent.toLowerCase();
+        const category = row.cells[1].textContent.toLowerCase();
+        
+        if (habitName.includes(searchTerm) || category.includes(searchTerm)) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    }
+}
+
+// View habit details
+function viewHabitDetails(habitId) {
+    // Here you would fetch habit details from the server
+    // For now, we'll show a placeholder
+    document.getElementById('habitDetailsContent').innerHTML = `
+        <div class="text-center py-4">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2">Loading habit details...</p>
+        </div>
+    `;
+    
+    const modal = new bootstrap.Modal(document.getElementById('habitDetailsModal'));
+    modal.show();
+    
+    // Simulate loading habit details
+    setTimeout(() => {
+        document.getElementById('habitDetailsContent').innerHTML = `
+            <div class="row">
+                <div class="col-md-6">
+                    <h6>Basic Information</h6>
+                    <p><strong>Name:</strong> Sample Habit</p>
+                    <p><strong>Category:</strong> Screen Health</p>
+                    <p><strong>Difficulty:</strong> Easy</p>
+                    <p><strong>Time:</strong> 5 minutes</p>
+                </div>
+                <div class="col-md-6">
+                    <h6>Usage Statistics</h6>
+                    <p><strong>Total Users:</strong> 25</p>
+                    <p><strong>Completion Rate:</strong> 78%</p>
+                    <p><strong>Total Attempts:</strong> 150</p>
+                    <p><strong>Created:</strong> Jan 15, 2024</p>
+                </div>
+            </div>
+            <hr>
+            <div class="row">
+                <div class="col-12">
+                    <h6>Description</h6>
+                    <p>This is a sample habit description that shows how the habit details would be displayed in the modal.</p>
+                </div>
+            </div>
+        `;
+    }, 1000);
+}
+
+// Delete habit
+function deleteHabit(habitId, habitName) {
+    currentHabitId = habitId;
+    currentHabitName = habitName;
+    
+    document.getElementById('deleteHabitName').textContent = habitName;
+    
+    const modal = new bootstrap.Modal(document.getElementById('deleteHabitModal'));
+    modal.show();
+}
+
+// Confirm delete habit
+function confirmDeleteHabit() {
+    // Here you would implement the actual deletion logic
+    // For now, we'll just show a success message
+    alert(`Habit "${currentHabitName}" deleted successfully!`);
+    
+    const modal = bootstrap.Modal.getInstance(document.getElementById('deleteHabitModal'));
+    modal.hide();
+    
+    // Reload the page to reflect changes
+    location.reload();
+}
+
+// Toggle habit status
+function toggleHabitStatus(habitId, habitName, currentStatus) {
+    currentHabitId = habitId;
+    currentHabitName = habitName;
+    currentHabitStatus = currentStatus;
+    
+    document.getElementById('statusHabitName').textContent = habitName;
+    
+    // Set the current status as checked
+    if (currentStatus) {
+        document.getElementById('statusInactive').checked = true;
+    } else {
+        document.getElementById('statusActive').checked = true;
+    }
+    
+    const modal = new bootstrap.Modal(document.getElementById('statusToggleModal'));
+    modal.show();
+}
+
+// Confirm status toggle
+function confirmStatusToggle() {
+    const newStatus = document.querySelector('input[name="habitStatus"]:checked').value;
+    
+    // Here you would implement the actual status change logic
+    // For now, we'll just show a success message
+    const statusText = newStatus == 1 ? 'active' : 'inactive';
+    alert(`Habit "${currentHabitName}" status changed to ${statusText}!`);
+    
+    const modal = bootstrap.Modal.getInstance(document.getElementById('statusToggleModal'));
+    modal.hide();
+    
+    // Reload the page to reflect changes
+    location.reload();
+}
+
+// Export habits data
+function exportHabits() {
+    // Implementation for exporting habits data
+    alert('Export functionality would be implemented here.');
+}
+
+// Bulk actions
+function bulkAction() {
+    const selectedHabits = document.querySelectorAll('input[name="habitSelect"]:checked');
+    
+    if (selectedHabits.length === 0) {
+        alert('Please select at least one habit.');
+        return;
+    }
+    
+    const action = document.getElementById('bulkAction').value;
+    
+    if (action === 'delete') {
+        if (confirm(`Are you sure you want to delete ${selectedHabits.length} habits?`)) {
+            // Implementation for bulk delete
+            alert('Bulk delete would be implemented here.');
+        }
+    } else if (action === 'activate') {
+        if (confirm(`Are you sure you want to activate ${selectedHabits.length} habits?`)) {
+            // Implementation for bulk activate
+            alert('Bulk activate would be implemented here.');
+        }
+    } else if (action === 'deactivate') {
+        if (confirm(`Are you sure you want to deactivate ${selectedHabits.length} habits?`)) {
+            // Implementation for bulk deactivate
+            alert('Bulk deactivate would be implemented here.');
+        }
+    }
+}
+
+// Filter habits by category
+function filterByCategory(category) {
+    const table = document.getElementById('habitsTable');
+    const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+    
+    for (let row of rows) {
+        const habitCategory = row.cells[1].textContent.toLowerCase();
+        
+        if (category === 'all' || habitCategory.includes(category.toLowerCase())) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    }
+}
+
+// Sort habits
+function sortHabits(column) {
+    const table = document.getElementById('habitsTable');
+    const tbody = table.getElementsByTagName('tbody')[0];
+    const rows = Array.from(tbody.getElementsByTagName('tr'));
+    
+    rows.sort((a, b) => {
+        let aValue = a.cells[column].textContent;
+        let bValue = b.cells[column].textContent;
+        
+        // Try to convert to numbers for numeric sorting
+        if (!isNaN(aValue) && !isNaN(bValue)) {
+            return parseFloat(aValue) - parseFloat(bValue);
+        }
+        
+        // String sorting
+        return aValue.localeCompare(bValue);
+    });
+    
+    // Reorder the rows
+    rows.forEach(row => tbody.appendChild(row));
+}
+
+// Auto-refresh table every 30 seconds
+setInterval(function() {
+    // You could implement auto-refresh here if needed
+}, 30000);
+</script>
+{% endblock %}

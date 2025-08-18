@@ -1,0 +1,339 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Users Management - BlinkWell Admin{% endblock %}
+{% block page_title %}Users Management{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-6">
+        <h5 class="mb-0">Total Users: {{ total_users }}</h5>
+        <small class="text-muted">Manage all registered users</small>
+    </div>
+    <div class="col-md-6 text-end">
+        <div class="input-group">
+            <input type="text" class="form-control" id="searchUsers" placeholder="Search users...">
+            <button class="btn btn-outline-secondary" type="button" id="searchBtn">
+                <i class="fas fa-search"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="fas fa-users me-2"></i>Users List</h5>
+    </div>
+    <div class="card-body">
+        {% if users %}
+            <div class="table-responsive">
+                <table class="table table-hover" id="usersTable">
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Email</th>
+                            <th>Registration Date</th>
+                            <th>Habits</th>
+                            <th>Last Activity</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar me-3">
+                                        {% if user.profile_pic %}
+                                            <img src="{{ user.profile_pic }}" alt="Profile" class="rounded-circle" width="40" height="40">
+                                        {% else %}
+                                            <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                                <span class="text-white fw-bold">{{ user.username[0].upper() }}</span>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-0">{{ user.username }}</h6>
+                                        <small class="text-muted">ID: {{ user.id }}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="text-break">{{ user.email }}</span>
+                                {% if user.is_google_user %}
+                                    <span class="badge bg-info ms-2">Google</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span title="{{ user.created_at }}">
+                                    {{ user.created_at.strftime('%b %d, %Y') if user.created_at else 'N/A' }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge bg-primary">{{ user.total_habits or 0 }}</span>
+                                <small class="text-muted d-block">habits</small>
+                            </td>
+                            <td>
+                                {% if user.last_activity %}
+                                    <span title="{{ user.last_activity }}">
+                                        {{ user.last_activity.strftime('%b %d, %Y') }}
+                                    </span>
+                                {% else %}
+                                    <span class="text-muted">Never</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if user.is_google_user %}
+                                    <span class="badge bg-success">Active</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Standard</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a href="{{ url_for('admin.user_detail', user_id=user.id) }}" 
+                                       class="btn btn-sm btn-outline-primary" 
+                                       title="View Details">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <button type="button" 
+                                            class="btn btn-sm btn-outline-info" 
+                                            title="Send Message"
+                                            onclick="sendMessage({{ user.id }}, '{{ user.username }}')">
+                                        <i class="fas fa-envelope"></i>
+                                    </button>
+                                    <button type="button" 
+                                            class="btn btn-sm btn-outline-warning" 
+                                            title="Suspend User"
+                                            onclick="toggleUserStatus({{ user.id }}, '{{ user.username }}')">
+                                        <i class="fas fa-ban"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            {% if total_pages > 1 %}
+            <nav aria-label="Users pagination" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if page > 1 %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('admin.users', page=page-1) }}">
+                                <i class="fas fa-chevron-left"></i> Previous
+                            </a>
+                        </li>
+                    {% endif %}
+                    
+                    {% for p in range(1, total_pages + 1) %}
+                        {% if p == page %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ p }}</span>
+                            </li>
+                        {% elif p <= page + 2 and p >= page - 2 %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('admin.users', page=p) }}">{{ p }}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if page < total_pages %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('admin.users', page=page+1) }}">
+                                Next <i class="fas fa-chevron-right"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">No users found</h5>
+                <p class="text-muted">There are no users registered yet.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Send Message Modal -->
+<div class="modal fade" id="messageModal" tabindex="-1" aria-labelledby="messageModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="messageModalLabel">Send Message to User</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="messageForm">
+                    <div class="mb-3">
+                        <label for="recipient" class="form-label">Recipient</label>
+                        <input type="text" class="form-control" id="recipient" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label for="subject" class="form-label">Subject</label>
+                        <input type="text" class="form-control" id="subject" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="message" class="form-label">Message</label>
+                        <textarea class="form-control" id="message" rows="4" required></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="sendMessageToUser()">Send Message</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- User Status Modal -->
+<div class="modal fade" id="statusModal" tabindex="-1" aria-labelledby="statusModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="statusModalLabel">Change User Status</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to change the status for user <strong id="statusUsername"></strong>?</p>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="userStatus" id="statusActive" value="active" checked>
+                    <label class="form-check-label" for="statusActive">
+                        Active
+                    </label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="userStatus" id="statusSuspended" value="suspended">
+                    <label class="form-check-label" for="statusSuspended">
+                        Suspended
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-warning" onclick="confirmStatusChange()">Change Status</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let currentUserId = null;
+let currentUsername = null;
+
+// Search functionality
+document.getElementById('searchUsers').addEventListener('input', function() {
+    const searchTerm = this.value.toLowerCase();
+    const table = document.getElementById('usersTable');
+    const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+    
+    for (let row of rows) {
+        const username = row.cells[0].textContent.toLowerCase();
+        const email = row.cells[1].textContent.toLowerCase();
+        
+        if (username.includes(searchTerm) || email.includes(searchTerm)) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    }
+});
+
+// Send message modal
+function sendMessage(userId, username) {
+    currentUserId = userId;
+    currentUsername = username;
+    
+    document.getElementById('recipient').value = username;
+    document.getElementById('subject').value = '';
+    document.getElementById('message').value = '';
+    
+    const modal = new bootstrap.Modal(document.getElementById('messageModal'));
+    modal.show();
+}
+
+// Send message to user
+function sendMessageToUser() {
+    const subject = document.getElementById('subject').value.trim();
+    const message = document.getElementById('message').value.trim();
+    
+    if (!subject || !message) {
+        alert('Please fill in all fields.');
+        return;
+    }
+    
+    // Here you would implement the actual message sending logic
+    // For now, we'll just show a success message
+    alert(`Message sent to ${currentUsername}!`);
+    
+    const modal = bootstrap.Modal.getInstance(document.getElementById('messageModal'));
+    modal.hide();
+}
+
+// Toggle user status modal
+function toggleUserStatus(userId, username) {
+    currentUserId = userId;
+    currentUsername = username;
+    
+    document.getElementById('statusUsername').textContent = username;
+    
+    const modal = new bootstrap.Modal(document.getElementById('statusModal'));
+    modal.show();
+}
+
+// Confirm status change
+function confirmStatusChange() {
+    const status = document.querySelector('input[name="userStatus"]:checked').value;
+    
+    // Here you would implement the actual status change logic
+    // For now, we'll just show a success message
+    alert(`User ${currentUsername} status changed to ${status}!`);
+    
+    const modal = bootstrap.Modal.getInstance(document.getElementById('statusModal'));
+    modal.hide();
+}
+
+// Export users data
+function exportUsers() {
+    // Implementation for exporting users data
+    alert('Export functionality would be implemented here.');
+}
+
+// Bulk actions
+function bulkAction() {
+    const selectedUsers = document.querySelectorAll('input[name="userSelect"]:checked');
+    
+    if (selectedUsers.length === 0) {
+        alert('Please select at least one user.');
+        return;
+    }
+    
+    const action = document.getElementById('bulkAction').value;
+    
+    if (action === 'delete') {
+        if (confirm(`Are you sure you want to delete ${selectedUsers.length} users?`)) {
+            // Implementation for bulk delete
+            alert('Bulk delete would be implemented here.');
+        }
+    } else if (action === 'suspend') {
+        if (confirm(`Are you sure you want to suspend ${selectedUsers.length} users?`)) {
+            // Implementation for bulk suspend
+            alert('Bulk suspend would be implemented here.');
+        }
+    }
+}
+
+// Auto-refresh table every 30 seconds
+setInterval(function() {
+    // You could implement auto-refresh here if needed
+}, 30000);
+</script>
+{% endblock %}

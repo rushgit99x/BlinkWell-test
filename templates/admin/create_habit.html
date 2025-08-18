@@ -1,0 +1,396 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Create New Habit - BlinkWell Admin{% endblock %}
+{% block page_title %}Create New Habit{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-plus me-2"></i>Create New Eye Habit</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('admin.create_habit') }}" id="createHabitForm">
+                    <div class="row">
+                        <!-- Basic Information -->
+                        <div class="col-md-6">
+                            <h6 class="mb-3 text-primary"><i class="fas fa-info-circle me-2"></i>Basic Information</h6>
+                            
+                            <div class="mb-3">
+                                <label for="name" class="form-label">Habit Name *</label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="name" 
+                                       name="name" 
+                                       required 
+                                       placeholder="e.g., 20-20-20 Rule">
+                                <div class="form-text">Choose a clear, descriptive name for the habit.</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="category" class="form-label">Category *</label>
+                                <select class="form-select" id="category" name="category" required>
+                                    <option value="">Select Category</option>
+                                    <option value="screen_health">Screen Health</option>
+                                    <option value="exercise">Exercise</option>
+                                    <option value="hydration">Hydration</option>
+                                    <option value="sleep">Sleep</option>
+                                    <option value="environment">Environment</option>
+                                    <option value="nutrition">Nutrition</option>
+                                </select>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="icon" class="form-label">Icon</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-icons"></i></span>
+                                    <input type="text" 
+                                           class="form-control" 
+                                           id="icon" 
+                                           name="icon" 
+                                           placeholder="fas fa-eye">
+                                </div>
+                                <div class="form-text">Font Awesome icon class (e.g., fas fa-eye)</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Target Settings -->
+                        <div class="col-md-6">
+                            <h6 class="mb-3 text-primary"><i class="fas fa-bullseye me-2"></i>Target Settings</h6>
+                            
+                            <div class="mb-3">
+                                <label for="target_frequency" class="form-label">Target Frequency *</label>
+                                <select class="form-select" id="target_frequency" name="target_frequency" required>
+                                    <option value="daily">Daily</option>
+                                    <option value="weekly">Weekly</option>
+                                    <option value="custom">Custom</option>
+                                </select>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="target_count" class="form-label">Target Count *</label>
+                                <input type="number" 
+                                       class="form-control" 
+                                       id="target_count" 
+                                       name="target_count" 
+                                       required 
+                                       min="1" 
+                                       value="1">
+                                <div class="form-text">How many times should this habit be completed?</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="target_unit" class="form-label">Target Unit</label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="target_unit" 
+                                       name="target_unit" 
+                                       placeholder="times" 
+                                       value="times">
+                                <div class="form-text">Unit for the target count (e.g., times, glasses, minutes)</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="row">
+                        <!-- Difficulty & Time -->
+                        <div class="col-md-6">
+                            <h6 class="mb-3 text-primary"><i class="fas fa-clock me-2"></i>Difficulty & Time</h6>
+                            
+                            <div class="mb-3">
+                                <label for="difficulty_level" class="form-label">Difficulty Level *</label>
+                                <select class="form-select" id="difficulty_level" name="difficulty_level" required>
+                                    <option value="easy">Easy</option>
+                                    <option value="medium">Medium</option>
+                                    <option value="hard">Hard</option>
+                                </select>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="estimated_time_minutes" class="form-label">Estimated Time (minutes) *</label>
+                                <input type="number" 
+                                       class="form-control" 
+                                       id="estimated_time_minutes" 
+                                       name="estimated_time_minutes" 
+                                       required 
+                                       min="1" 
+                                       max="120" 
+                                       value="5">
+                                <div class="form-text">How long does it typically take to complete this habit?</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Status -->
+                        <div class="col-md-6">
+                            <h6 class="mb-3 text-primary"><i class="fas fa-toggle-on me-2"></i>Status</h6>
+                            
+                            <div class="mb-3">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="is_active" name="is_active" checked>
+                                    <label class="form-check-label" for="is_active">
+                                        Active Habit
+                                    </label>
+                                </div>
+                                <div class="form-text">Active habits are available to users</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <!-- Description & Instructions -->
+                    <div class="row">
+                        <div class="col-12">
+                            <h6 class="mb-3 text-primary"><i class="fas fa-align-left me-2"></i>Content</h6>
+                            
+                            <div class="mb-3">
+                                <label for="description" class="form-label">Description *</label>
+                                <textarea class="form-control" 
+                                          id="description" 
+                                          name="description" 
+                                          rows="3" 
+                                          required 
+                                          placeholder="Brief description of what this habit involves..."></textarea>
+                                <div class="form-text">Provide a clear, concise description of the habit.</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="instructions" class="form-label">Instructions</label>
+                                <textarea class="form-control" 
+                                          id="instructions" 
+                                          name="instructions" 
+                                          rows="4" 
+                                          placeholder="Step-by-step instructions for completing this habit..."></textarea>
+                                <div class="form-text">Detailed instructions on how to perform this habit.</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="benefits" class="form-label">Benefits</label>
+                                <textarea class="form-control" 
+                                          id="benefits" 
+                                          name="benefits" 
+                                          rows="3" 
+                                          placeholder="What are the benefits of this habit?"></textarea>
+                                <div class="form-text">Explain the benefits and positive effects of this habit.</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <!-- Preview Section -->
+                    <div class="row">
+                        <div class="col-12">
+                            <h6 class="mb-3 text-primary"><i class="fas fa-eye me-2"></i>Preview</h6>
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <div id="habitPreview">
+                                        <p class="text-muted text-center">Fill in the form above to see a preview of your habit.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <!-- Form Actions -->
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="d-flex justify-content-between">
+                                <a href="{{ url_for('admin.habits') }}" class="btn btn-secondary">
+                                    <i class="fas fa-arrow-left me-2"></i>Back to Habits
+                                </a>
+                                <div>
+                                    <button type="button" class="btn btn-outline-primary me-2" onclick="previewHabit()">
+                                        <i class="fas fa-eye me-2"></i>Preview
+                                    </button>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save me-2"></i>Create Habit
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Form validation
+document.getElementById('createHabitForm').addEventListener('submit', function(e) {
+    const name = document.getElementById('name').value.trim();
+    const description = document.getElementById('description').value.trim();
+    const category = document.getElementById('category').value;
+    
+    if (!name || !description || !category) {
+        e.preventDefault();
+        alert('Please fill in all required fields.');
+        return false;
+    }
+    
+    if (name.length < 3) {
+        e.preventDefault();
+        alert('Habit name must be at least 3 characters long.');
+        return false;
+    }
+    
+    if (description.length < 10) {
+        e.preventDefault();
+        alert('Description must be at least 10 characters long.');
+        return false;
+    }
+});
+
+// Preview functionality
+function previewHabit() {
+    const name = document.getElementById('name').value.trim() || 'Habit Name';
+    const description = document.getElementById('description').value.trim() || 'Description will appear here...';
+    const category = document.getElementById('category').value || 'Category';
+    const icon = document.getElementById('icon').value || 'fas fa-eye';
+    const targetFrequency = document.getElementById('target_frequency').value || 'daily';
+    const targetCount = document.getElementById('target_count').value || '1';
+    const targetUnit = document.getElementById('target_unit').value || 'times';
+    const difficulty = document.getElementById('difficulty_level').value || 'easy';
+    const time = document.getElementById('estimated_time_minutes').value || '5';
+    const instructions = document.getElementById('instructions').value.trim() || 'No instructions provided.';
+    const benefits = document.getElementById('benefits').value.trim() || 'No benefits listed.';
+    
+    const previewHtml = `
+        <div class="row">
+            <div class="col-md-8">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="me-3">
+                        <i class="${icon} fa-2x text-primary"></i>
+                    </div>
+                    <div>
+                        <h5 class="mb-1">${name}</h5>
+                        <span class="badge bg-primary">${category.replace('_', ' ').toUpperCase()}</span>
+                    </div>
+                </div>
+                <p class="text-muted">${description}</p>
+            </div>
+            <div class="col-md-4">
+                <div class="card bg-light">
+                    <div class="card-body">
+                        <h6>Quick Info</h6>
+                        <p class="mb-1"><strong>Frequency:</strong> ${targetFrequency}</p>
+                        <p class="mb-1"><strong>Target:</strong> ${targetCount} ${targetUnit}</p>
+                        <p class="mb-1"><strong>Difficulty:</strong> ${difficulty}</p>
+                        <p class="mb-0"><strong>Time:</strong> ${time} min</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        ${instructions !== 'No instructions provided.' ? `
+        <hr>
+        <div class="row">
+            <div class="col-12">
+                <h6>Instructions</h6>
+                <p class="text-muted">${instructions}</p>
+            </div>
+        </div>
+        ` : ''}
+        ${benefits !== 'No benefits listed.' ? `
+        <hr>
+        <div class="row">
+            <div class="col-12">
+                <h6>Benefits</h6>
+                <p class="text-muted">${benefits}</p>
+            </div>
+        </div>
+        ` : ''}
+    `;
+    
+    document.getElementById('habitPreview').innerHTML = previewHtml;
+}
+
+// Auto-preview on form changes
+document.querySelectorAll('#createHabitForm input, #createHabitForm select, #createHabitForm textarea').forEach(element => {
+    element.addEventListener('input', previewHabit);
+    element.addEventListener('change', previewHabit);
+});
+
+// Icon preview
+document.getElementById('icon').addEventListener('input', function() {
+    const iconValue = this.value.trim();
+    if (iconValue) {
+        this.nextElementSibling.innerHTML = `<i class="${iconValue}"></i>`;
+    }
+});
+
+// Category color coding
+document.getElementById('category').addEventListener('change', function() {
+    const category = this.value;
+    const categoryColors = {
+        'screen_health': 'primary',
+        'exercise': 'success',
+        'hydration': 'info',
+        'sleep': 'warning',
+        'environment': 'secondary',
+        'nutrition': 'danger'
+    };
+    
+    if (category && categoryColors[category]) {
+        this.className = `form-select border-${categoryColors[category]}`;
+    } else {
+        this.className = 'form-select';
+    }
+});
+
+// Initialize preview
+document.addEventListener('DOMContentLoaded', function() {
+    previewHabit();
+});
+
+// Form auto-save (localStorage)
+function saveFormData() {
+    const formData = new FormData(document.getElementById('createHabitForm'));
+    const data = {};
+    
+    for (let [key, value] of formData.entries()) {
+        data[key] = value;
+    }
+    
+    localStorage.setItem('habitFormData', JSON.stringify(data));
+}
+
+function loadFormData() {
+    const saved = localStorage.getItem('habitFormData');
+    if (saved) {
+        const data = JSON.parse(saved);
+        
+        for (let key in data) {
+            const element = document.querySelector(`[name="${key}"]`);
+            if (element) {
+                if (element.type === 'checkbox') {
+                    element.checked = data[key] === 'on';
+                } else {
+                    element.value = data[key];
+                }
+            }
+        }
+        
+        previewHabit();
+    }
+}
+
+// Auto-save every 30 seconds
+setInterval(saveFormData, 30000);
+
+// Load saved data on page load
+loadFormData();
+
+// Clear saved data on successful form submission
+document.getElementById('createHabitForm').addEventListener('submit', function() {
+    localStorage.removeItem('habitFormData');
+});
+</script>
+{% endblock %}
