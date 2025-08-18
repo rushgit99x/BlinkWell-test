@@ -1,0 +1,405 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Analytics - BlinkWell Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-chart-line me-2"></i>Analytics Dashboard
+        </h1>
+        <div class="btn-group" role="group">
+            <button type="button" class="btn btn-outline-primary" onclick="refreshData()">
+                <i class="fas fa-sync-alt me-2"></i>Refresh
+            </button>
+            <button type="button" class="btn btn-outline-success" onclick="exportData()">
+                <i class="fas fa-download me-2"></i>Export
+            </button>
+        </div>
+    </div>
+
+    <!-- Date Range Selector -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="card-title">Date Range</h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label for="startDate" class="form-label">Start Date</label>
+                            <input type="date" class="form-control" id="startDate" value="{{ (now - timedelta(days=30)).strftime('%Y-%m-%d') }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="endDate" class="form-label">End Date</label>
+                            <input type="date" class="form-control" id="endDate" value="{{ now.strftime('%Y-%m-%d') }}">
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-primary mt-2" onclick="updateCharts()">
+                        <i class="fas fa-search me-2"></i>Update Charts
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="card-title">Quick Stats</h6>
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <div class="text-primary h4">{{ engagement_metrics[0] if engagement_metrics else 0 }}</div>
+                            <small class="text-muted">Total Users</small>
+                        </div>
+                        <div class="col-6">
+                            <div class="text-success h4">{{ engagement_metrics[1] if engagement_metrics else 0 }}</div>
+                            <small class="text-muted">Active Users</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="row">
+        <!-- User Growth Chart -->
+        <div class="col-xl-8 col-lg-7">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">User Growth Over Time</h6>
+                    <div class="dropdown no-arrow">
+                        <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-bs-toggle="dropdown">
+                            <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in">
+                            <a class="dropdown-item" href="#" onclick="downloadChart('userGrowthChart')">Download</a>
+                            <a class="dropdown-item" href="#" onclick="printChart('userGrowthChart')">Print</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <canvas id="userGrowthChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Habit Completion Rate -->
+        <div class="col-xl-4 col-lg-5">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Habit Completion Rate</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="habitCompletionChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Second Row -->
+    <div class="row">
+        <!-- Daily Activity Chart -->
+        <div class="col-xl-6 col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Daily Activity</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="dailyActivityChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Category Distribution -->
+        <div class="col-xl-6 col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Habit Category Distribution</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="categoryDistributionChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Third Row -->
+    <div class="row">
+        <!-- Top Performing Habits -->
+        <div class="col-xl-8 col-lg-7">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Top Performing Habits</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered" id="topHabitsTable">
+                            <thead>
+                                <tr>
+                                    <th>Habit</th>
+                                    <th>Category</th>
+                                    <th>Users</th>
+                                    <th>Completion Rate</th>
+                                    <th>Trend</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for habit in category_performance or [] %}
+                                <tr>
+                                    <td>{{ habit[0] }}</td>
+                                    <td><span class="badge bg-primary">{{ habit[0].replace('_', ' ').title() }}</span></td>
+                                    <td>{{ habit[1] }}</td>
+                                    <td>
+                                        <div class="progress" style="height: 20px;">
+                                            <div class="progress-bar bg-success" style="width: {{ habit[3] }}%">
+                                                {{ "%.1f"|format(habit[3]) }}%
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="text-success">
+                                            <i class="fas fa-arrow-up"></i> +5.2%
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="col-xl-4 col-lg-5">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Recent Activity</h6>
+                </div>
+                <div class="card-body">
+                    <div class="timeline">
+                        {% for activity in user_trend[:5] or [] %}
+                        <div class="timeline-item">
+                            <div class="timeline-marker bg-primary"></div>
+                            <div class="timeline-content">
+                                <h6 class="timeline-title">New Users</h6>
+                                <p class="timeline-text">{{ activity[1] }} users on {{ activity[0] }}</p>
+                                <small class="text-muted">{{ activity[0] }}</small>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Chart.js configurations and data
+let userGrowthChart, habitCompletionChart, dailyActivityChart, categoryDistributionChart;
+
+document.addEventListener('DOMContentLoaded', function() {
+    initializeCharts();
+    loadChartData();
+});
+
+function initializeCharts() {
+    // User Growth Chart
+    const userGrowthCtx = document.getElementById('userGrowthChart').getContext('2d');
+    userGrowthChart = new Chart(userGrowthCtx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'Total Users',
+                data: [],
+                borderColor: 'rgb(75, 192, 192)',
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                tension: 0.1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+    // Habit Completion Chart
+    const habitCompletionCtx = document.getElementById('habitCompletionChart').getContext('2d');
+    habitCompletionChart = new Chart(habitCompletionCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Completed', 'In Progress', 'Not Started'],
+            datasets: [{
+                data: [65, 25, 10],
+                backgroundColor: ['#28a745', '#ffc107', '#dc3545']
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+
+    // Daily Activity Chart
+    const dailyActivityCtx = document.getElementById('dailyActivityChart').getContext('2d');
+    dailyActivityChart = new Chart(dailyActivityCtx, {
+        type: 'bar',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'Active Users',
+                data: [],
+                backgroundColor: 'rgba(54, 162, 235, 0.8)'
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+    // Category Distribution Chart
+    const categoryDistributionCtx = document.getElementById('categoryDistributionChart').getContext('2d');
+    categoryDistributionChart = new Chart(categoryDistributionCtx, {
+        type: 'pie',
+        data: {
+            labels: ['Screen Health', 'Exercise', 'Hydration', 'Sleep', 'Environment', 'Nutrition'],
+            datasets: [{
+                data: [30, 25, 15, 15, 10, 5],
+                backgroundColor: [
+                    '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+        });
+}
+
+function loadChartData() {
+    // Load data from API
+    fetch('/admin/api/stats')
+        .then(response => response.json())
+        .then(data => {
+            updateChartsWithData(data);
+        })
+        .catch(error => {
+            console.error('Error loading chart data:', error);
+        });
+}
+
+function updateChartsWithData(data) {
+    // Update user growth chart with user_trend data
+    if (data.user_trend) {
+        const labels = data.user_trend.map(item => item[0]);
+        const values = data.user_trend.map(item => item[1]);
+        
+        userGrowthChart.data.labels = labels;
+        userGrowthChart.data.datasets[0].data = values;
+        userGrowthChart.update();
+    }
+
+    // Update daily activity chart with habit_trend data
+    if (data.habit_trend) {
+        const labels = data.habit_trend.map(item => item[0]);
+        const values = data.habit_trend.map(item => item[2]);
+        
+        dailyActivityChart.data.labels = labels;
+        dailyActivityChart.data.datasets[0].data = values;
+        dailyActivityChart.update();
+    }
+}
+
+function updateCharts() {
+    const startDate = document.getElementById('startDate').value;
+    const endDate = document.getElementById('endDate').value;
+    
+    // Here you would typically make an API call with the new date range
+    console.log('Updating charts for date range:', startDate, 'to', endDate);
+    
+    // For now, just reload the data
+    loadChartData();
+}
+
+function refreshData() {
+    loadChartData();
+}
+
+function exportData() {
+    // Implementation for exporting data
+    alert('Export functionality would be implemented here');
+}
+
+function downloadChart(chartId) {
+    // Implementation for downloading chart
+    alert('Download functionality would be implemented here');
+}
+
+function printChart(chartId) {
+    // Implementation for printing chart
+    alert('Print functionality would be implemented here');
+}
+</script>
+
+<style>
+.timeline {
+    position: relative;
+    padding-left: 20px;
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: -30px;
+    top: 0;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+}
+
+.timeline-content {
+    padding-left: 10px;
+}
+
+.timeline-title {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.timeline-text {
+    margin: 5px 0;
+    font-size: 12px;
+    color: #666;
+}
+
+.timeline-content small {
+    font-size: 11px;
+}
+</style>
+{% endblock %}

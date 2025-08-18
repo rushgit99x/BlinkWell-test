@@ -19,16 +19,9 @@ def admin_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         # Check if admin user is logged in via session
-        print(f"🔒 Admin access check - Session data: {session}")
-        print(f"   admin_user_id: {session.get('admin_user_id')}")
-        print(f"   admin_role: {session.get('admin_role')}")
-        
         if not session.get('admin_user_id') or not session.get('admin_role'):
-            print("❌ Access denied - No admin session data")
             flash('Access denied. Admin privileges required.', 'error')
             return redirect(url_for('admin.login'))
-        
-        print(f"✅ Admin access granted for user: {session.get('admin_username')}")
         return f(*args, **kwargs)
     return decorated_function
 
@@ -73,40 +66,27 @@ def login():
         username = request.form.get('username')
         password = request.form.get('password')
         
-        print(f"🔐 Login attempt for username: {username}")
-        
         admin_user = get_admin_user_by_username(username)
         
-        if admin_user:
-            print(f"✅ Admin user found: {admin_user.username}, role: {admin_user.role}")
+        if admin_user and admin_user.check_password(password):
+            # Store admin user info in session for admin panel
+            session['admin_user_id'] = admin_user.id
+            session['admin_username'] = admin_user.username
+            session['admin_role'] = admin_user.role
             
-            if admin_user.check_password(password):
-                print(f"✅ Password correct for user: {username}")
-                
-                # Store admin user info in session for admin panel
-                session['admin_user_id'] = admin_user.id
-                session['admin_username'] = admin_user.username
-                session['admin_role'] = admin_user.role
-                
-                print(f"📝 Session data set: {session}")
-                
-                login_user(admin_user)
-                update_admin_last_login(admin_user.id)
-                
-                log_admin_activity(
-                    admin_id=admin_user.id,
-                    action='login',
-                    ip_address=request.remote_addr,
-                    user_agent=request.headers.get('User-Agent')
-                )
-                
-                flash('Login successful!', 'success')
-                return redirect(url_for('admin.dashboard'))
-            else:
-                print(f"❌ Password incorrect for user: {username}")
-                flash('Invalid username or password.', 'error')
+            login_user(admin_user)
+            update_admin_last_login(admin_user.id)
+            
+            log_admin_activity(
+                admin_id=admin_user.id,
+                action='login',
+                ip_address=request.remote_addr,
+                user_agent=request.headers.get('User-Agent')
+            )
+            
+            flash('Login successful!', 'success')
+            return redirect(url_for('admin.dashboard'))
         else:
-            print(f"❌ Admin user not found: {username}")
             flash('Invalid username or password.', 'error')
     
     return render_template('admin/login.html')
@@ -263,7 +243,22 @@ def users():
             LIMIT %s OFFSET %s
         """, (per_page, offset))
         
-        users = cursor.fetchall()
+        raw_users = cursor.fetchall()
+        
+        # Convert tuples to dictionaries for easier template handling
+        users = []
+        for user_data in raw_users:
+            user = {
+                'id': user_data[0],
+                'username': user_data[1],
+                'email': user_data[2],
+                'created_at': user_data[3],
+                'is_google_user': user_data[4],
+                'total_habits': user_data[5],
+                'total_tracking_records': user_data[6],
+                'last_activity': user_data[7]
+            }
+            users.append(user)
         
         total_pages = (total_users + per_page - 1) // per_page
         
@@ -626,7 +621,8 @@ def analytics():
                          habit_trend=habit_trend,
                          category_performance=category_performance,
                          engagement_metrics=engagement_metrics,
-                         days=days)
+                         days=days,
+                         now=datetime.now())
 
 @admin_bp.route('/admin-users')
 @admin_required
@@ -634,7 +630,22 @@ def analytics():
 def admin_users():
     """Admin users management page"""
     try:
-        admins = get_admin_users()
+        raw_admins = get_admin_users()
+        
+        # Convert tuples to dictionaries for easier template handling
+        admins = []
+        for admin_data in raw_admins:
+            admin = {
+                'id': admin_data[0],
+                'username': admin_data[1],
+                'email': admin_data[2],
+                'role': admin_data[3],
+                'is_active': admin_data[4],
+                'last_login': admin_data[5],
+                'created_at': admin_data[6]
+            }
+            admins.append(admin)
+            
     except Exception as e:
         print(f"Error fetching admin users: {e}")
         admins = []
@@ -773,8 +784,25 @@ def activity_logs():
             LIMIT %s OFFSET %s
         """, (per_page, offset))
         
-        logs = cursor.fetchall()
+        raw_logs = cursor.fetchall()
         total_pages = (total_logs + per_page - 1) // per_page
+        
+        # Convert tuples to dictionaries for easier template handling
+        logs = []
+        for log_data in raw_logs:
+            log = {
+                'id': log_data[0],
+                'admin_id': log_data[1],
+                'action': log_data[2],
+                'table_name': log_data[3],
+                'record_id': log_data[4],
+                'details': log_data[5],
+                'ip_address': log_data[6],
+                'user_agent': log_data[7],
+                'created_at': log_data[8],
+                'admin_username': log_data[9]
+            }
+            logs.append(log)
         
     except Exception as e:
         print(f"Error fetching activity logs: {e}")
@@ -785,11 +813,19 @@ def activity_logs():
         cursor.close()
         conn.close()
     
+    # Get admin users for filter dropdown
+    try:
+        admin_users = get_admin_users()
+    except Exception as e:
+        print(f"Error fetching admin users for filter: {e}")
+        admin_users = []
+    
     return render_template('admin/activity_logs.html',
                          logs=logs,
                          page=page,
                          total_pages=total_pages,
-                         total_logs=total_logs)
+                         total_logs=total_logs,
+                         admin_users=admin_users)
 
 @admin_bp.route('/api/stats')
 @admin_required
@@ -809,10 +845,35 @@ def api_stats():
         cursor.execute("SELECT COUNT(*) FROM users WHERE created_at >= CURDATE()")
         today_users = cursor.fetchone()[0]
         
+        # Get user trend data for charts
+        start_date = datetime.now() - timedelta(days=30)
+        cursor.execute("""
+            SELECT DATE(created_at) as date, COUNT(*) as new_users
+            FROM users
+            WHERE created_at >= %s
+            GROUP BY DATE(created_at)
+            ORDER BY date
+        """, (start_date,))
+        user_trend = cursor.fetchall()
+        
+        # Get habit trend data for charts
+        cursor.execute("""
+            SELECT DATE(date) as date, 
+                   COUNT(*) as total_activities,
+                   SUM(CASE WHEN is_completed = 1 THEN 1 ELSE 0 END) as completed_activities
+            FROM habit_tracking
+            WHERE date >= %s
+            GROUP BY DATE(date)
+            ORDER BY date
+        """, (start_date,))
+        habit_trend = cursor.fetchall()
+        
         stats = {
             'total_users': total_users,
             'today_activities': today_activities,
             'today_users': today_users,
+            'user_trend': user_trend,
+            'habit_trend': habit_trend,
             'timestamp': datetime.now().isoformat()
         }
         

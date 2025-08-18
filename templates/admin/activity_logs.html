@@ -1,0 +1,460 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Activity Logs - BlinkWell Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-history me-2"></i>Activity Logs
+        </h1>
+        <div class="btn-group" role="group">
+            <button type="button" class="btn btn-outline-primary" onclick="refreshLogs()">
+                <i class="fas fa-sync-alt me-2"></i>Refresh
+            </button>
+            <button type="button" class="btn btn-outline-success" onclick="exportLogs()">
+                <i class="fas fa-download me-2"></i>Export
+            </button>
+            <button type="button" class="btn btn-outline-danger" onclick="clearOldLogs()">
+                <i class="fas fa-trash me-2"></i>Clear Old
+            </button>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <label for="filterAction" class="form-label">Action</label>
+            <select class="form-select" id="filterAction">
+                <option value="">All Actions</option>
+                <option value="login">Login</option>
+                <option value="logout">Logout</option>
+                <option value="create">Create</option>
+                <option value="edit">Edit</option>
+                <option value="delete">Delete</option>
+                <option value="view">View</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label for="filterTable" class="form-label">Table</label>
+            <select class="form-select" id="filterTable">
+                <option value="">All Tables</option>
+                <option value="users">Users</option>
+                <option value="eye_habits">Eye Habits</option>
+                <option value="habit_tracking">Habit Tracking</option>
+                <option value="admin_users">Admin Users</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label for="filterAdmin" class="form-label">Admin User</label>
+            <select class="form-select" id="filterAdmin">
+                <option value="">All Admins</option>
+                {% for admin in admin_users %}
+                <option value="{{ admin.id }}">{{ admin.username }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label for="filterDate" class="form-label">Date Range</label>
+            <select class="form-select" id="filterDate">
+                <option value="today">Today</option>
+                <option value="yesterday">Yesterday</option>
+                <option value="week">Last 7 Days</option>
+                <option value="month" selected>Last 30 Days</option>
+                <option value="custom">Custom Range</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Custom Date Range (hidden by default) -->
+    <div class="row mb-4" id="customDateRange" style="display: none;">
+        <div class="col-md-3">
+            <label for="startDate" class="form-label">Start Date</label>
+            <input type="date" class="form-control" id="startDate">
+        </div>
+        <div class="col-md-3">
+            <label for="endDate" class="form-label">End Date</label>
+            <input type="date" class="form-control" id="endDate">
+        </div>
+        <div class="col-md-6 d-flex align-items-end">
+            <button type="button" class="btn btn-primary" onclick="applyCustomDateFilter()">
+                <i class="fas fa-search me-2"></i>Apply Filter
+            </button>
+        </div>
+    </div>
+
+    <!-- Activity Logs Table -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+            <h6 class="m-0 font-weight-bold text-primary">Activity Logs</h6>
+            <div class="text-muted">
+                Showing {{ logs|length }} of {{ total_logs }} logs
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered" id="activityLogsTable">
+                    <thead>
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>Admin</th>
+                            <th>Action</th>
+                            <th>Table</th>
+                            <th>Record ID</th>
+                            <th>Details</th>
+                            <th>IP Address</th>
+                            <th>User Agent</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in logs %}
+                        <tr>
+                            <td>
+                                <span title="{{ log.created_at }}">
+                                    {{ log.created_at.strftime('%b %d, %Y %H:%M:%S') if log.created_at else 'N/A' }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="admin-avatar me-2">
+                                        {{ log.admin_username[0].upper() if log.admin_username else 'A' }}
+                                    </div>
+                                    <span>{{ log.admin_username or 'Unknown' }}</span>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge bg-{{ 'success' if log.action == 'login' else 'warning' if log.action == 'edit' else 'danger' if log.action == 'delete' else 'info' if log.action == 'view' else 'primary' }}">
+                                    {{ log.action.title() }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if log.table_name %}
+                                    <span class="badge bg-secondary">{{ log.table_name }}</span>
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if log.record_id %}
+                                    <span class="badge bg-info">{{ log.record_id }}</span>
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if log.details %}
+                                    <button type="button" class="btn btn-sm btn-outline-info" onclick="viewDetails({{ log.id }})">
+                                        <i class="fas fa-eye me-1"></i>View
+                                    </button>
+                                {% else %}
+                                    <span class="text-muted">No details</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <small class="text-muted">{{ log.ip_address or 'N/A' }}</small>
+                            </td>
+                            <td>
+                                <small class="text-muted" title="{{ log.user_agent or 'N/A' }}">
+                                    {{ (log.user_agent or 'N/A')[:30] }}{% if (log.user_agent or '')|length > 30 %}...{% endif %}
+                                </small>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            {% if total_pages > 1 %}
+            <nav aria-label="Activity logs pagination">
+                <ul class="pagination justify-content-center">
+                    <li class="page-item {{ 'disabled' if page == 1 }}">
+                        <a class="page-link" href="{{ url_for('admin.activity_logs', page=page-1) if page > 1 else '#' }}">Previous</a>
+                    </li>
+                    
+                    {% for p in range(1, total_pages + 1) %}
+                        {% if p == page %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ p }}</span>
+                            </li>
+                        {% elif p <= 3 or p > total_pages - 3 or (p >= page - 1 and p <= page + 1) %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('admin.activity_logs', page=p) }}">{{ p }}</a>
+                            </li>
+                        {% elif p == 4 and page > 5 %}
+                            <li class="page-item disabled">
+                                <span class="page-link">...</span>
+                            </li>
+                        {% elif p == total_pages - 2 and page < total_pages - 4 %}
+                            <li class="page-item disabled">
+                                <span class="page-link">...</span>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    <li class="page-item {{ 'disabled' if page == total_pages }}">
+                        <a class="page-link" href="{{ url_for('admin.activity_logs', page=page+1) if page < total_pages else '#' }}">Next</a>
+                    </li>
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Details Modal -->
+<div class="modal fade" id="detailsModal" tabindex="-1" aria-labelledby="detailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="detailsModalLabel">Activity Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="detailsContent">
+                    <p class="text-muted">Loading details...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize filters
+    initializeFilters();
+    
+    // Initialize DataTable if available
+    if (typeof $.fn.DataTable !== 'undefined') {
+        $('#activityLogsTable').DataTable({
+            order: [[0, 'desc']], // Sort by timestamp descending
+            pageLength: 50,
+            language: {
+                search: "Search logs:",
+                lengthMenu: "Show _MENU_ logs per page",
+                info: "Showing _START_ to _END_ of _TOTAL_ logs"
+            }
+        });
+    }
+});
+
+function initializeFilters() {
+    // Filter change handlers
+    document.getElementById('filterAction').addEventListener('change', applyFilters);
+    document.getElementById('filterTable').addEventListener('change', applyFilters);
+    document.getElementById('filterAdmin').addEventListener('change', applyFilters);
+    document.getElementById('filterDate').addEventListener('change', handleDateFilterChange);
+    
+    // Set default dates
+    const today = new Date();
+    const thirtyDaysAgo = new Date(today.getTime() - (30 * 24 * 60 * 60 * 1000));
+    
+    document.getElementById('startDate').value = thirtyDaysAgo.toISOString().split('T')[0];
+    document.getElementById('endDate').value = today.toISOString().split('T')[0];
+}
+
+function handleDateFilterChange() {
+    const dateFilter = document.getElementById('filterDate').value;
+    const customDateRange = document.getElementById('customDateRange');
+    
+    if (dateFilter === 'custom') {
+        customDateRange.style.display = 'block';
+    } else {
+        customDateRange.style.display = 'none';
+        applyFilters();
+    }
+}
+
+function applyCustomDateFilter() {
+    applyFilters();
+}
+
+function applyFilters() {
+    const action = document.getElementById('filterAction').value;
+    const table = document.getElementById('filterTable').value;
+    const admin = document.getElementById('filterAdmin').value;
+    const dateFilter = document.getElementById('filterDate').value;
+    
+    let url = new URL(window.location);
+    
+    // Clear existing filters
+    url.searchParams.delete('action');
+    url.searchParams.delete('table');
+    url.searchParams.delete('admin');
+    url.searchParams.delete('date_filter');
+    url.searchParams.delete('start_date');
+    url.searchParams.delete('end_date');
+    url.searchParams.delete('page');
+    
+    // Add new filters
+    if (action) url.searchParams.set('action', action);
+    if (table) url.searchParams.set('table', table);
+    if (admin) url.searchParams.set('admin', admin);
+    if (dateFilter) url.searchParams.set('date_filter', dateFilter);
+    
+    if (dateFilter === 'custom') {
+        const startDate = document.getElementById('startDate').value;
+        const endDate = document.getElementById('endDate').value;
+        if (startDate) url.searchParams.set('start_date', startDate);
+        if (endDate) url.searchParams.set('end_date', endDate);
+    }
+    
+    // Navigate to filtered URL
+    window.location.href = url.toString();
+}
+
+function viewDetails(logId) {
+    const modal = new bootstrap.Modal(document.getElementById('detailsModal'));
+    const content = document.getElementById('detailsContent');
+    
+    content.innerHTML = '<p class="text-muted">Loading details...</p>';
+    modal.show();
+    
+    // Fetch log details
+    fetch(`/admin/api/activity-logs/${logId}/details`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                content.innerHTML = formatDetails(data.details);
+            } else {
+                content.innerHTML = '<p class="text-danger">Error loading details: ' + data.message + '</p>';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            content.innerHTML = '<p class="text-danger">Error loading details. Please try again.</p>';
+        });
+}
+
+function formatDetails(details) {
+    if (!details) return '<p class="text-muted">No details available</p>';
+    
+    try {
+        if (typeof details === 'string') {
+            details = JSON.parse(details);
+        }
+        
+        let html = '<div class="table-responsive"><table class="table table-sm">';
+        html += '<thead><tr><th>Field</th><th>Value</th></tr></thead><tbody>';
+        
+        for (const [key, value] of Object.entries(details)) {
+            let displayValue = value;
+            if (typeof value === 'object') {
+                displayValue = JSON.stringify(value, null, 2);
+            }
+            
+            html += `<tr><td><strong>${key}</strong></td><td><code>${displayValue}</code></td></tr>`;
+        }
+        
+        html += '</tbody></table></div>';
+        return html;
+    } catch (e) {
+        return `<pre><code>${details}</code></pre>`;
+    }
+}
+
+function refreshLogs() {
+    location.reload();
+}
+
+function exportLogs() {
+    // Get current filters
+    const action = document.getElementById('filterAction').value;
+    const table = document.getElementById('filterTable').value;
+    const admin = document.getElementById('filterAdmin').value;
+    const dateFilter = document.getElementById('filterDate').value;
+    
+    let url = '/admin/api/activity-logs/export?';
+    if (action) url += `action=${action}&`;
+    if (table) url += `table=${table}&`;
+    if (admin) url += `admin=${admin}&`;
+    if (dateFilter) url += `date_filter=${dateFilter}&`;
+    
+    // Download the export
+    window.open(url, '_blank');
+}
+
+function clearOldLogs() {
+    if (confirm('Are you sure you want to clear logs older than 90 days? This action cannot be undone.')) {
+        fetch('/admin/api/activity-logs/clear-old', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(`Successfully cleared ${data.cleared_count} old logs.`);
+                location.reload();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while clearing old logs.');
+        });
+    }
+}
+</script>
+
+<style>
+.admin-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background-color: #007bff;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.timeline {
+    position: relative;
+    padding-left: 20px;
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: -30px;
+    top: 0;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+}
+
+.timeline-content {
+    padding-left: 10px;
+}
+
+.timeline-title {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.timeline-text {
+    margin: 5px 0;
+    font-size: 12px;
+    color: #666;
+}
+
+.timeline-content small {
+    font-size: 11px;
+}
+</style>
+{% endblock %}
