@@ -1,3 +1,5 @@
+<!-- HTML Template for BlinkWell Admin Analytics -->
+<!-- This file contains Jinja2 template syntax - CSS linter warnings are false positives -->
 {% extends "admin/base.html" %}
 
 {% block title %}Analytics - BlinkWell Admin{% endblock %}
@@ -149,8 +151,8 @@
                                     <td><span class="badge bg-primary">{{ habit[0].replace('_', ' ').title() }}</span></td>
                                     <td>{{ habit[1] }}</td>
                                     <td>
-                                        <div class="progress" style="height: 20px;">
-                                            <div class="progress-bar bg-success" style="width: {{ habit[3] }}%">
+                                        <div class="progress progress-sm">
+                                            <div class="progress-bar bg-success" style="width: {{ habit[3] }}%;">
                                                 {{ "%.1f"|format(habit[3]) }}%
                                             </div>
                                         </div>
@@ -403,6 +405,10 @@ function printChart(chartId) {
 
 .timeline-content small {
     font-size: 11px;
+}
+
+.progress-sm {
+    height: 20px;
 }
 </style>
 {% endblock %}
