@@ -197,6 +197,9 @@
 
 {% block scripts %}
 <script>
+// Note: CSS linter warnings about Jinja2 template syntax are false positives
+// The templates will render correctly when processed by Flask/Jinja2
+
 // Chart.js configurations and data
 let userGrowthChart, habitCompletionChart, dailyActivityChart, categoryDistributionChart;
 

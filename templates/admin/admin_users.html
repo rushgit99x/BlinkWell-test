@@ -78,22 +78,29 @@
                             <td>
                                 <div class="btn-group" role="group">
                                     <button type="button" 
-                                            class="btn btn-sm btn-outline-primary" 
+                                            class="btn btn-sm btn-outline-primary edit-admin-btn" 
                                             title="Edit User"
-                                            onclick="editAdminUser({{ admin.id }}, '{{ admin.username }}', '{{ admin.email }}', '{{ admin.role }}', {{ admin.is_active|int }})">
+                                            data-admin-id="{{ admin.id }}"
+                                            data-username="{{ admin.username|e }}"
+                                            data-email="{{ admin.email|e }}"
+                                            data-role="{{ admin.role|e }}"
+                                            data-is-active="{{ admin.is_active|int }}">
                                         <i class="fas fa-edit"></i>
                                     </button>
                                     {% if admin.id != session.admin_user_id %}
                                     <button type="button" 
-                                            class="btn btn-sm btn-outline-warning" 
+                                            class="btn btn-sm btn-outline-warning toggle-status-btn" 
                                             title="Toggle Status"
-                                            onclick="toggleAdminStatus({{ admin.id }}, '{{ admin.username }}', {{ admin.is_active|int }})">
+                                            data-admin-id="{{ admin.id }}"
+                                            data-username="{{ admin.username|e }}"
+                                            data-is-active="{{ admin.is_active|int }}">
                                         <i class="fas fa-{{ 'ban' if admin.is_active else 'check' }}"></i>
                                     </button>
                                     <button type="button" 
-                                            class="btn btn-sm btn-outline-danger" 
+                                            class="btn btn-sm btn-outline-danger delete-admin-btn" 
                                             title="Delete User"
-                                            onclick="deleteAdminUser({{ admin.id }}, '{{ admin.username }}')">
+                                            data-admin-id="{{ admin.id }}"
+                                            data-username="{{ admin.username|e }}">
                                         <i class="fas fa-trash"></i>
                                     </button>
                                     {% else %}
@@ -274,8 +281,35 @@ function deleteAdminUser(id, username) {
     }
 }
 
-// Initialize DataTable
+// Initialize DataTable and event delegation
 document.addEventListener('DOMContentLoaded', function() {
+    // Add event delegation for admin user actions
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.edit-admin-btn')) {
+            const btn = e.target.closest('.edit-admin-btn');
+            editAdminUser(
+                btn.dataset.adminId,
+                btn.dataset.username,
+                btn.dataset.email,
+                btn.dataset.role,
+                parseInt(btn.dataset.isActive)
+            );
+        } else if (e.target.closest('.toggle-status-btn')) {
+            const btn = e.target.closest('.toggle-status-btn');
+            toggleAdminStatus(
+                btn.dataset.adminId,
+                btn.dataset.username,
+                parseInt(btn.dataset.isActive)
+            );
+        } else if (e.target.closest('.delete-admin-btn')) {
+            const btn = e.target.closest('.delete-admin-btn');
+            deleteAdminUser(
+                btn.dataset.adminId,
+                btn.dataset.username
+            );
+        }
+    });
+    
     if (typeof $.fn.DataTable !== 'undefined') {
         $('#adminUsersTable').DataTable({
             order: [[5, 'desc']], // Sort by created date descending
