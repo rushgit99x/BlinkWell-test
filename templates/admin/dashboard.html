@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="/static/css/style-admin-dashboard.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script defer src="/static/js/js-admin-dashboard.js"></script>
+</head>
+<body>
+    <div class="admin-layout">
+        <aside class="sidebar">
+            <div class="brand"><i class="fas fa-shield-alt"></i> Admin</div>
+            <nav>
+                <a href="{{ url_for('admin.dashboard') }}" class="active"><i class="fas fa-home"></i> Overview</a>
+                <a href="{{ url_for('admin.eye_habits') }}"><i class="fas fa-dumbbell"></i> Eye Habits</a>
+                <a href="{{ url_for('admin.logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            </nav>
+        </aside>
+        <main class="content">
+            <h1>Welcome, {{ admin.username }}</h1>
+            <div class="cards">
+                <div class="card"><div class="label">Users</div><div class="value">{{ users_count }}</div></div>
+                <div class="card"><div class="label">Eye Habits</div><div class="value">{{ habits_count }}</div></div>
+            </div>
+        </main>
+    </div>
+</body>
+</html>
+
