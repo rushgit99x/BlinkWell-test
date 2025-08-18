@@ -152,7 +152,7 @@
                                     <td>{{ habit[1] }}</td>
                                     <td>
                                         <div class="progress progress-sm">
-                                            <div class="progress-bar bg-success" style="width: {{ habit[3] }}%;">
+                                            <div class="progress-bar bg-success" data-width="{{ habit[3] }}">
                                                 {{ "%.1f"|format(habit[3]) }}%
                                             </div>
                                         </div>
@@ -199,16 +199,25 @@
 
 {% block scripts %}
 <script>
-// Note: CSS linter warnings about Jinja2 template syntax are false positives
-// The templates will render correctly when processed by Flask/Jinja2
-
 // Chart.js configurations and data
 let userGrowthChart, habitCompletionChart, dailyActivityChart, categoryDistributionChart;
 
 document.addEventListener('DOMContentLoaded', function() {
     initializeCharts();
     loadChartData();
+    initializeProgressBars();
 });
+
+function initializeProgressBars() {
+    // Set progress bar widths from data attributes
+    const progressBars = document.querySelectorAll('.progress-bar[data-width]');
+    progressBars.forEach(bar => {
+        const width = bar.dataset.width;
+        if (width && !isNaN(width)) {
+            bar.style.width = width + '%';
+        }
+    });
+}
 
 function initializeCharts() {
     // User Growth Chart
@@ -367,48 +376,4 @@ function printChart(chartId) {
 }
 </script>
 
-<style>
-.timeline {
-    position: relative;
-    padding-left: 20px;
-}
-
-.timeline-item {
-    position: relative;
-    margin-bottom: 20px;
-}
-
-.timeline-marker {
-    position: absolute;
-    left: -30px;
-    top: 0;
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-}
-
-.timeline-content {
-    padding-left: 10px;
-}
-
-.timeline-title {
-    margin: 0;
-    font-size: 14px;
-    font-weight: 600;
-}
-
-.timeline-text {
-    margin: 5px 0;
-    font-size: 12px;
-    color: #666;
-}
-
-.timeline-content small {
-    font-size: 11px;
-}
-
-.progress-sm {
-    height: 20px;
-}
-</style>
 {% endblock %}

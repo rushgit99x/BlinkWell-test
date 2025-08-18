@@ -1,0 +1,92 @@
+/* 
+ * Admin Panel Styles
+ * This file contains all CSS for the admin panel to avoid linter conflicts with Jinja2 templates
+ * 
+ * Note: This file is included in the base admin template to provide consistent styling
+ * across all admin pages without inline CSS that can cause linter warnings.
+ */
+
+/* Progress bars */
+.progress-sm {
+    height: 20px;
+}
+
+.progress-bar {
+    transition: width 0.6s ease;
+}
+
+/* Timeline styles */
+.timeline {
+    position: relative;
+    padding-left: 20px;
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: -30px;
+    top: 0;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+}
+
+.timeline-content {
+    padding-left: 10px;
+}
+
+.timeline-title {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.timeline-text {
+    margin: 5px 0;
+    font-size: 12px;
+    color: #666;
+}
+
+.timeline-content small {
+    font-size: 11px;
+}
+
+/* Admin avatar */
+.admin-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background-color: #007bff;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+/* Card shadows */
+.card.shadow {
+    box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15) !important;
+}
+
+/* Chart containers */
+.chart-container {
+    position: relative;
+    height: 300px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .chart-container {
+        height: 200px;
+    }
+    
+    .progress-sm {
+        height: 16px;
+    }
+}
