@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Eye Habits</title>
+    <link rel="stylesheet" href="/static/css/style-admin-eye-habits.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script defer src="/static/js/js-admin-eye-habits.js"></script>
+</head>
+<body>
+    <div class="admin-layout">
+        <aside class="sidebar">
+            <div class="brand"><i class="fas fa-shield-alt"></i> Admin</div>
+            <nav>
+                <a href="{{ url_for('admin.dashboard') }}"><i class="fas fa-home"></i> Overview</a>
+                <a href="{{ url_for('admin.eye_habits') }}" class="active"><i class="fas fa-dumbbell"></i> Eye Habits</a>
+                <a href="{{ url_for('admin.logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            </nav>
+        </aside>
+        <main class="content">
+            <h1>Eye Habits</h1>
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash {{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+            {% endwith %}
+            <section class="form-section">
+                <form method="post">
+                    <div class="grid">
+                        <label>Name<input type="text" name="name" required></label>
+                        <label>Category
+                            <select name="category" required>
+                                <option value="screen_health">Screen Health</option>
+                                <option value="exercise">Exercise</option>
+                                <option value="hydration">Hydration</option>
+                                <option value="sleep">Sleep</option>
+                                <option value="environment">Environment</option>
+                                <option value="nutrition">Nutrition</option>
+                            </select>
+                        </label>
+                        <label>Icon<input type="text" name="icon" placeholder="fa-eye"></label>
+                        <label>Target Frequency
+                            <select name="target_frequency">
+                                <option value="daily" selected>Daily</option>
+                                <option value="weekly">Weekly</option>
+                                <option value="custom">Custom</option>
+                            </select>
+                        </label>
+                        <label>Target Count<input type="number" name="target_count" value="1" min="0"></label>
+                        <label>Target Unit<input type="text" name="target_unit" value="times"></label>
+                        <label>Estimated Minutes<input type="number" name="estimated_time_minutes" value="5" min="0"></label>
+                        <label>Difficulty
+                            <select name="difficulty_level">
+                                <option value="easy" selected>Easy</option>
+                                <option value="medium">Medium</option>
+                                <option value="hard">Hard</option>
+                            </select>
+                        </label>
+                        <label>Active
+                            <select name="is_active">
+                                <option value="1" selected>Yes</option>
+                                <option value="0">No</option>
+                            </select>
+                        </label>
+                        <label class="wide">Description<textarea name="description" rows="3" required></textarea></label>
+                        <label class="wide">Instructions<textarea name="instructions" rows="3"></textarea></label>
+                        <label class="wide">Benefits<textarea name="benefits" rows="3"></textarea></label>
+                    </div>
+                    <button type="submit" class="btn-primary"><i class="fas fa-plus"></i> Create Habit</button>
+                </form>
+            </section>
+
+            <section class="list-section">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Category</th>
+                            <th>Target</th>
+                            <th>Difficulty</th>
+                            <th>Active</th>
+                            <th>Created</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for h in habits %}
+                        <tr>
+                            <td>{{ h.id }}</td>
+                            <td>{{ h.name }}</td>
+                            <td>{{ h.category }}</td>
+                            <td>{{ h.target_count }} {{ h.target_unit }} / {{ h.target_frequency }}</td>
+                            <td>{{ h.difficulty_level }}</td>
+                            <td>{{ 'Yes' if h.is_active else 'No' }}</td>
+                            <td>{{ h.created_at }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </section>
+        </main>
+    </div>
+</body>
+</html>
+

@@ -1,0 +1,13 @@
+:root{--bg:#0b1220;--panel:#0f172a;--muted:#94a3b8;--text:#e2e8f0;--brand:#2563eb}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,Arial,sans-serif}
+.admin-layout{display:grid;grid-template-columns:240px 1fr;min-height:100vh}
+.sidebar{background:#0a0f1c;padding:20px}
+.brand{font-weight:700;margin-bottom:16px}
+.sidebar nav a{display:block;color:#cbd5e1;padding:10px 12px;border-radius:8px;text-decoration:none;margin-bottom:6px}
+.sidebar nav a.active,.sidebar nav a:hover{background:#0f172a;color:#fff}
+.content{padding:24px}
+.cards{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}
+.card{background:var(--panel);border:1px solid #1f2937;border-radius:12px;padding:16px}
+.label{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.06em}
+.value{font-size:28px;font-weight:700;margin-top:6px}
