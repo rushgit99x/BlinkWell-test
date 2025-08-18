@@ -229,36 +229,30 @@ def users():
         cursor.execute("SELECT COUNT(*) FROM users")
         total_users = cursor.fetchone()[0]
         
-        # Get users
+        # Use dict cursor for clean dict results
+        cursor.close()
+        cursor = conn.cursor(MySQLdb.cursors.DictCursor)
+        
+        # Get users with explicit columns
         cursor.execute("""
-            SELECT u.*, 
-                   COUNT(DISTINCT uh.id) as total_habits,
-                   COUNT(DISTINCT ht.id) as total_tracking_records,
-                   MAX(ht.date) as last_activity
+            SELECT 
+                u.id,
+                u.username,
+                u.email,
+                u.created_at,
+                u.is_google_user,
+                COUNT(DISTINCT uh.id) AS total_habits,
+                COUNT(DISTINCT ht.id) AS total_tracking_records,
+                MAX(ht.date) AS last_activity
             FROM users u
             LEFT JOIN user_habits uh ON u.id = uh.user_id
             LEFT JOIN habit_tracking ht ON u.id = ht.user_id
-            GROUP BY u.id
+            GROUP BY u.id, u.username, u.email, u.created_at, u.is_google_user
             ORDER BY u.created_at DESC
             LIMIT %s OFFSET %s
         """, (per_page, offset))
         
-        raw_users = cursor.fetchall()
-        
-        # Convert tuples to dictionaries for easier template handling
-        users = []
-        for user_data in raw_users:
-            user = {
-                'id': user_data[0],
-                'username': user_data[1],
-                'email': user_data[2],
-                'created_at': user_data[3],
-                'is_google_user': user_data[4],
-                'total_habits': user_data[5],
-                'total_tracking_records': user_data[6],
-                'last_activity': user_data[7]
-            }
-            users.append(user)
+        users = cursor.fetchall()
         
         total_pages = (total_users + per_page - 1) // per_page
         
