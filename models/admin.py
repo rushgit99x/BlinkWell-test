@@ -133,3 +133,143 @@ def list_eye_habits(limit: int = 100):
 	conn.close()
 	return rows
 
+
+def get_eye_habit_by_id(habit_id: int):
+	conn = current_app.config['get_db_connection']()
+	cursor = conn.cursor(MySQLdb.cursors.DictCursor)
+	cursor.execute("SELECT * FROM eye_habits WHERE id = %s", (habit_id,))
+	row = cursor.fetchone()
+	cursor.close()
+	conn.close()
+	return row
+
+
+def update_eye_habit(habit_id: int, **fields):
+	"""Update fields for an existing eye habit by id."""
+	if not fields:
+		return
+	allowed = {
+		'name', 'description', 'category', 'icon', 'target_frequency', 'target_count', 'target_unit',
+		'instructions', 'benefits', 'difficulty_level', 'estimated_time_minutes', 'is_active'
+	}
+	updates = []
+	values = []
+	for key, value in fields.items():
+		if key in allowed:
+			updates.append(f"{key} = %s")
+			values.append(value)
+	if not updates:
+		return
+	values.append(habit_id)
+	conn = current_app.config['get_db_connection']()
+	cursor = conn.cursor()
+	cursor.execute(f"UPDATE eye_habits SET {', '.join(updates)} WHERE id = %s", tuple(values))
+	conn.commit()
+	cursor.close()
+	conn.close()
+
+
+def delete_eye_habit(habit_id: int):
+	"""Delete an eye habit by id."""
+	conn = current_app.config['get_db_connection']()
+	cursor = conn.cursor()
+	cursor.execute("DELETE FROM eye_habits WHERE id = %s", (habit_id,))
+	conn.commit()
+	cursor.close()
+	conn.close()
+
+
+# Admin user management
+def list_admin_users(limit: int = 200):
+	conn = current_app.config['get_db_connection']()
+	cursor = conn.cursor(MySQLdb.cursors.DictCursor)
+	cursor.execute("SELECT id, username, email, is_superadmin, is_active, created_at, updated_at FROM admin_users ORDER BY created_at DESC LIMIT %s", (limit,))
+	rows = cursor.fetchall()
+	cursor.close()
+	conn.close()
+	return rows
+
+
+def get_admin_by_id(admin_id: int):
+	conn = current_app.config['get_db_connection']()
+	cursor = conn.cursor(MySQLdb.cursors.DictCursor)
+	cursor.execute("SELECT id, username, email, is_superadmin, is_active FROM admin_users WHERE id = %s", (admin_id,))
+	row = cursor.fetchone()
+	cursor.close()
+	conn.close()
+	return row
+
+
+def create_admin_user(username: str, email: str, password: str, is_superadmin: int = 0, is_active: int = 1):
+	password_hash = generate_password_hash(password)
+	conn = current_app.config['get_db_connection']()
+	cursor = conn.cursor()
+	cursor.execute(
+		"INSERT INTO admin_users (username, email, password_hash, is_superadmin, is_active) VALUES (%s, %s, %s, %s, %s)",
+		(username, email, password_hash, is_superadmin, is_active),
+	)
+	conn.commit()
+	cursor.close()
+	conn.close()
+
+
+def update_admin_user(admin_id: int, **fields):
+	allowed = {'username', 'email', 'is_superadmin', 'is_active'}
+	updates = []
+	values = []
+	for key, value in fields.items():
+		if key in allowed:
+			updates.append(f"{key} = %s")
+			values.append(value)
+	if not updates:
+		return
+	values.append(admin_id)
+	conn = current_app.config['get_db_connection']()
+	cursor = conn.cursor()
+	cursor.execute(f"UPDATE admin_users SET {', '.join(updates)} WHERE id = %s", tuple(values))
+	conn.commit()
+	cursor.close()
+	conn.close()
+
+
+def set_admin_password(admin_id: int, new_password: str):
+	password_hash = generate_password_hash(new_password)
+	conn = current_app.config['get_db_connection']()
+	cursor = conn.cursor()
+	cursor.execute("UPDATE admin_users SET password_hash = %s WHERE id = %s", (password_hash, admin_id))
+	conn.commit()
+	cursor.close()
+	conn.close()
+
+
+def delete_admin_user(admin_id: int):
+	conn = current_app.config['get_db_connection']()
+	cursor = conn.cursor()
+	cursor.execute("DELETE FROM admin_users WHERE id = %s", (admin_id,))
+	conn.commit()
+	cursor.close()
+	conn.close()
+
+
+def update_admin_profile(admin_id: int, username: str = None, email: str = None, password: str = None):
+	updates = []
+	values = []
+	if username:
+		updates.append("username = %s")
+		values.append(username)
+	if email:
+		updates.append("email = %s")
+		values.append(email)
+	if password:
+		updates.append("password_hash = %s")
+		values.append(generate_password_hash(password))
+	if not updates:
+		return
+	values.append(admin_id)
+	conn = current_app.config['get_db_connection']()
+	cursor = conn.cursor()
+	cursor.execute(f"UPDATE admin_users SET {', '.join(updates)} WHERE id = %s", tuple(values))
+	conn.commit()
+	cursor.close()
+	conn.close()
+
