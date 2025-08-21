@@ -41,6 +41,12 @@ th,td{border-bottom:1px solid #1f2937;padding:8px;text-align:left}
 .flash.success{background:#0a2e1a;color:#86efac;border:1px solid #064e3b}
 .flash.error{background:#2e0a0a;color:#fca5a5;border:1px solid #7f1d1d}
 .flash.info{background:#0a1f2e;color:#93c5fd;border:1px solid #1e3a8a}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;transition:opacity .2s;opacity:0;pointer-events:none;z-index:1000}
+.modal-overlay[aria-hidden="false"]{opacity:1;pointer-events:auto}
+.modal{background:#0f172a;border:1px solid #1f2937;border-radius:12px;max-width:420px;width:92%;padding:16px;box-shadow:0 10px 30px rgba(0,0,0,.4)}
+.modal-header{font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.modal-body{color:#cbd5e1;margin-bottom:12px}
+.modal-actions{display:flex;justify-content:flex-end;gap:8px}
 .sidebar nav a{display:block;color:#cbd5e1;padding:10px 12px;border-radius:8px;text-decoration:none;margin-bottom:6px}
 .sidebar nav a.active,.sidebar nav a:hover{background:#0f172a;color:#fff}
 .content{padding:24px}
