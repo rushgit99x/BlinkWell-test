@@ -15,6 +15,9 @@
             <nav>
                 <a href="{{ url_for('admin.dashboard') }}"><i class="fas fa-home"></i> Overview</a>
                 <a href="{{ url_for('admin.eye_habits') }}" class="active"><i class="fas fa-dumbbell"></i> Eye Habits</a>
+                <a href="{{ url_for('admin.admin_users') }}"><i class="fas fa-users-cog"></i> Admin Users</a>
+                <a href="{{ url_for('admin.training') }}"><i class="fas fa-robot"></i> Training</a>
+                <a href="{{ url_for('admin.profile') }}"><i class="fas fa-user-cog"></i> Profile</a>
                 <a href="{{ url_for('admin.logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a>
             </nav>
         </aside>
@@ -84,6 +87,7 @@
                             <th>Difficulty</th>
                             <th>Active</th>
                             <th>Created</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -96,6 +100,14 @@
                             <td>{{ h.difficulty_level }}</td>
                             <td>{{ 'Yes' if h.is_active else 'No' }}</td>
                             <td>{{ h.created_at }}</td>
+                            <td>
+                                <a class="btn" href="{{ url_for('admin.eye_habit_detail', habit_id=h.id) }}"><i class="fas fa-edit"></i> Edit</a>
+                                <form method="post" action="{{ url_for('admin.eye_habits') }}" style="display:inline" onsubmit="return confirm('Delete this habit?');">
+                                    <input type="hidden" name="action" value="delete">
+                                    <input type="hidden" name="habit_id" value="{{ h.id }}">
+                                    <button type="submit" class="btn danger"><i class="fas fa-trash"></i> Delete</button>
+                                </form>
+                            </td>
                         </tr>
                         {% endfor %}
                     </tbody>

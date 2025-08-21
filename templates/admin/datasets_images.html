@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Datasets</title>
+    <link rel="stylesheet" href="/static/css/style-admin-dashboard.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="admin-layout">
+        <aside class="sidebar">
+            <div class="brand"><i class="fas fa-shield-alt"></i> Admin</div>
+            <nav>
+                <a href="{{ url_for('admin.dashboard') }}"><i class="fas fa-home"></i> Overview</a>
+                <a href="{{ url_for('admin.eye_habits') }}"><i class="fas fa-dumbbell"></i> Eye Habits</a>
+                <a href="{{ url_for('admin.admin_users') }}"><i class="fas fa-users-cog"></i> Admin Users</a>
+                <a href="{{ url_for('admin.training') }}"><i class="fas fa-robot"></i> Training</a>
+                <a href="{{ url_for('admin.datasets_images') }}" class="active"><i class="fas fa-images"></i> Image Datasets</a>
+                <a href="{{ url_for('admin.profile') }}"><i class="fas fa-user-cog"></i> Profile</a>
+                <a href="{{ url_for('admin.logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            </nav>
+        </aside>
+        <main class="content">
+            <h1>Manage Image Dataset</h1>
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash {{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+            {% endwith %}
+
+            <div class="cards">
+                <div class="card"><div class="label">Dry eyes images</div><div class="value">{{ dry_count }}</div></div>
+                <div class="card"><div class="label">Healthy eyes images</div><div class="value">{{ healthy_count }}</div></div>
+                <div class="card"><div class="label">Dataset path</div><div class="value" style="font-size:12px">{{ base_path }}</div></div>
+            </div>
+
+            <section class="form-section">
+                <h2>Upload Images</h2>
+                <form method="post" enctype="multipart/form-data">
+                    <div class="grid">
+                        <label>Category
+                            <select name="category" required>
+                                <option value="dry_eyes">dry_eyes</option>
+                                <option value="no_dry_eyes">no_dry_eyes</option>
+                            </select>
+                        </label>
+                        <label>Images<input type="file" name="images" multiple accept=".png,.jpg,.jpeg"></label>
+                    </div>
+                    <button type="submit" class="btn-primary"><i class="fas fa-upload"></i> Upload</button>
+                </form>
+            </section>
+
+            <section class="form-section">
+                <h2>Next Steps</h2>
+                <p>After uploading, go to Training and start the image model retraining with the dataset path above.</p>
+            </section>
+        </main>
+    </div>
+</body>
+</html>
+

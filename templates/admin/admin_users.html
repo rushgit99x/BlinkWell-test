@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Users</title>
+    <link rel="stylesheet" href="/static/css/style-admin-dashboard.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="admin-layout">
+        <aside class="sidebar">
+            <div class="brand"><i class="fas fa-shield-alt"></i> Admin</div>
+            <nav>
+                <a href="{{ url_for('admin.dashboard') }}"><i class="fas fa-home"></i> Overview</a>
+                <a href="{{ url_for('admin.admin_users') }}" class="active"><i class="fas fa-users-cog"></i> Admin Users</a>
+                <a href="{{ url_for('admin.eye_habits') }}"><i class="fas fa-dumbbell"></i> Eye Habits</a>
+                <a href="{{ url_for('admin.training') }}"><i class="fas fa-robot"></i> Training</a>
+                <a href="{{ url_for('admin.profile') }}"><i class="fas fa-user-cog"></i> Profile</a>
+                <a href="{{ url_for('admin.logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            </nav>
+        </aside>
+        <main class="content">
+            <h1>Manage Admin Users</h1>
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash {{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+            {% endwith %}
+
+            <section class="form-section">
+                <h2>Create New Admin</h2>
+                <form method="post">
+                    <div class="grid">
+                        <label>Username<input type="text" name="username" required></label>
+                        <label>Email<input type="email" name="email" required></label>
+                        <label>Password<input type="password" name="password" required></label>
+                        <label>Superadmin
+                            <select name="is_superadmin">
+                                <option value="0" selected>No</option>
+                                <option value="1">Yes</option>
+                            </select>
+                        </label>
+                        <label>Active
+                            <select name="is_active">
+                                <option value="1" selected>Yes</option>
+                                <option value="0">No</option>
+                            </select>
+                        </label>
+                    </div>
+                    <button type="submit" class="btn-primary"><i class="fas fa-plus"></i> Create Admin</button>
+                </form>
+            </section>
+
+            <section class="list-section">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Username</th>
+                            <th>Email</th>
+                            <th>Superadmin</th>
+                            <th>Active</th>
+                            <th>Created</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for u in users %}
+                        <tr>
+                            <td>{{ u.id }}</td>
+                            <td>{{ u.username }}</td>
+                            <td>{{ u.email }}</td>
+                            <td>{{ 'Yes' if u.is_superadmin else 'No' }}</td>
+                            <td>{{ 'Yes' if u.is_active else 'No' }}</td>
+                            <td>{{ u.created_at }}</td>
+                            <td>
+                                <a class="btn" href="{{ url_for('admin.admin_user_detail', admin_id=u.id) }}"><i class="fas fa-edit"></i> Edit</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </section>
+        </main>
+    </div>
+</body>
+</html>
+

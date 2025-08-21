@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Eye Habit</title>
+    <link rel="stylesheet" href="/static/css/style-admin-eye-habits.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="admin-layout">
+        <aside class="sidebar">
+            <div class="brand"><i class="fas fa-shield-alt"></i> Admin</div>
+            <nav>
+                <a href="{{ url_for('admin.dashboard') }}"><i class="fas fa-home"></i> Overview</a>
+                <a href="{{ url_for('admin.eye_habits') }}" class="active"><i class="fas fa-dumbbell"></i> Eye Habits</a>
+                <a href="{{ url_for('admin.logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            </nav>
+        </aside>
+        <main class="content">
+            <h1>Edit Habit #{{ habit.id }}</h1>
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash {{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+            {% endwith %}
+
+            <section class="form-section">
+                <form method="post" action="{{ url_for('admin.eye_habits') }}">
+                    <input type="hidden" name="action" value="update">
+                    <input type="hidden" name="habit_id" value="{{ habit.id }}">
+                    <div class="grid">
+                        <label>Name<input type="text" name="name" value="{{ habit.name }}" required></label>
+                        <label>Category
+                            <select name="category" required>
+                                {% for c in ['screen_health','exercise','hydration','sleep','environment','nutrition'] %}
+                                <option value="{{ c }}" {% if habit.category == c %}selected{% endif %}>{{ c }}</option>
+                                {% endfor %}
+                            </select>
+                        </label>
+                        <label>Icon<input type="text" name="icon" value="{{ habit.icon or '' }}" placeholder="fa-eye"></label>
+                        <label>Target Frequency
+                            <select name="target_frequency">
+                                {% for f in ['daily','weekly','custom'] %}
+                                <option value="{{ f }}" {% if habit.target_frequency == f %}selected{% endif %}>{{ f }}</option>
+                                {% endfor %}
+                            </select>
+                        </label>
+                        <label>Target Count<input type="number" name="target_count" value="{{ habit.target_count }}" min="0"></label>
+                        <label>Target Unit<input type="text" name="target_unit" value="{{ habit.target_unit }}"></label>
+                        <label>Estimated Minutes<input type="number" name="estimated_time_minutes" value="{{ habit.estimated_time_minutes }}" min="0"></label>
+                        <label>Difficulty
+                            <select name="difficulty_level">
+                                {% for d in ['easy','medium','hard'] %}
+                                <option value="{{ d }}" {% if habit.difficulty_level == d %}selected{% endif %}>{{ d }}</option>
+                                {% endfor %}
+                            </select>
+                        </label>
+                        <label>Active
+                            <select name="is_active">
+                                <option value="1" {% if habit.is_active %}selected{% endif %}>Yes</option>
+                                <option value="0" {% if not habit.is_active %}selected{% endif %}>No</option>
+                            </select>
+                        </label>
+                        <label class="wide">Description<textarea name="description" rows="3" required>{{ habit.description }}</textarea></label>
+                        <label class="wide">Instructions<textarea name="instructions" rows="3">{{ habit.instructions or '' }}</textarea></label>
+                        <label class="wide">Benefits<textarea name="benefits" rows="3">{{ habit.benefits or '' }}</textarea></label>
+                    </div>
+                    <button type="submit" class="btn-primary"><i class="fas fa-save"></i> Save Changes</button>
+                    <a class="btn" href="{{ url_for('admin.eye_habits') }}">Cancel</a>
+                </form>
+            </section>
+        </main>
+    </div>
+</body>
+</html>
+
