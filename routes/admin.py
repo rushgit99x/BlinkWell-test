@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session, current_app
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session, current_app, jsonify
 from werkzeug.utils import secure_filename
 from flask_login import login_required
 from models.admin import (
@@ -236,6 +236,12 @@ def profile():
 
 
 # Training and datasets -----------------------------------------------------
+_training_status = {
+	'image': {'running': False, 'started_at': None, 'ended_at': None, 'message': ''},
+	'text': {'running': False, 'started_at': None, 'ended_at': None, 'message': ''},
+}
+
+
 @admin_bp.route('/training', methods=['GET', 'POST'])
 def training():
 	guard = _require_admin()
@@ -246,23 +252,48 @@ def training():
 		text_dataset = request.form.get('text_dataset_path')
 		image_epochs = int(request.form.get('image_epochs') or 25)
 		text_epochs = int(request.form.get('text_epochs') or 150)
-		import subprocess, sys
+		import subprocess, sys, datetime
 		try:
 			if image_dataset:
-				subprocess.Popen([
+				_training_status['image'] = {'running': True, 'started_at': datetime.datetime.utcnow().isoformat() + 'Z', 'ended_at': None, 'message': 'Training image model...'}
+				proc = subprocess.Popen([
 					sys.executable, 'train_model.py', '--dataset_path', image_dataset, '--epochs', str(image_epochs), '--model_save_path', 'models/best_eye_model.pth', '--plot_results'
 				])
+				# Detach a lightweight waiter that flips status when done
+				def _wait_image(p):
+					code = p.wait()
+					_training_status['image']['running'] = False
+					_training_status['image']['ended_at'] = datetime.datetime.utcnow().isoformat() + 'Z'
+					_training_status['image']['message'] = 'Training completed' if code == 0 else f'Training failed (exit {code})'
+				import threading
+				threading.Thread(target=_wait_image, args=(proc,), daemon=True).start()
 				log_admin_activity(session['admin']['id'], 'train_image_model', f"dataset={image_dataset}, epochs={image_epochs}")
 			if text_dataset:
-				subprocess.Popen([
+				_training_status['text'] = {'running': True, 'started_at': datetime.datetime.utcnow().isoformat() + 'Z', 'ended_at': None, 'message': 'Training text model...'}
+				proc2 = subprocess.Popen([
 					sys.executable, 'train_text_model.py', '--dataset_path', text_dataset, '--epochs', str(text_epochs), '--model_save_path', 'models/best_text_model.pth'
 				])
+				def _wait_text(p):
+					code = p.wait()
+					_training_status['text']['running'] = False
+					_training_status['text']['ended_at'] = datetime.datetime.utcnow().isoformat() + 'Z'
+					_training_status['text']['message'] = 'Training completed' if code == 0 else f'Training failed (exit {code})'
+				import threading
+				threading.Thread(target=_wait_text, args=(proc2,), daemon=True).start()
 				log_admin_activity(session['admin']['id'], 'train_text_model', f"dataset={text_dataset}, epochs={text_epochs}")
 			flash('Training started in background. Check logs and models directory for progress.', 'info')
 		except Exception as exc:
 			flash(f'Failed to start training: {exc}', 'error')
 		return redirect(url_for('admin.training'))
 	return render_template('admin/training.html', admin=session['admin'])
+
+
+@admin_bp.route('/training/status')
+def training_status():
+	guard = _require_admin()
+	if guard:
+		return guard
+	return jsonify(_training_status)
 
 
 @admin_bp.route('/datasets/images', methods=['GET', 'POST'])
