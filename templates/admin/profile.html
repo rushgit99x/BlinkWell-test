@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Profile</title>
+    <link rel="stylesheet" href="/static/css/style-admin-dashboard.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="admin-layout">
+        <aside class="sidebar">
+            <div class="brand"><i class="fas fa-shield-alt"></i> Admin</div>
+            <nav>
+                <a href="{{ url_for('admin.dashboard') }}"><i class="fas fa-home"></i> Overview</a>
+                <a href="{{ url_for('admin.eye_habits') }}"><i class="fas fa-dumbbell"></i> Eye Habits</a>
+                <a href="{{ url_for('admin.admin_users') }}"><i class="fas fa-users-cog"></i> Admin Users</a>
+                <a href="{{ url_for('admin.training') }}"><i class="fas fa-robot"></i> Training</a>
+                <a href="{{ url_for('admin.datasets_images') }}" ><i class="fas fa-images"></i> Image Datasets</a>
+                <a href="{{ url_for('admin.profile') }}" class="active"><i class="fas fa-user-cog"></i> Profile</a>
+                <a href="{{ url_for('admin.logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            </nav>
+        </aside>
+        <main class="content">
+            <h1>My Profile</h1>
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash {{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+            {% endwith %}
+
+            <section class="form-section">
+                <form method="post">
+                    <div class="grid">
+                        <label>Username<input type="text" name="username" value="{{ admin.username }}"></label>
+                        <label>Email<input type="email" name="email" value="{{ admin.email }}"></label>
+                        <label>New Password<input type="password" name="password" placeholder="Leave blank to keep current"></label>
+                    </div>
+                    <button type="submit" class="btn-primary"><i class="fas fa-save"></i> Save Changes</button>
+                </form>
+            </section>
+        </main>
+    </div>
+</body>
+</html>
+

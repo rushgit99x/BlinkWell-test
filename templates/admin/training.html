@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Model Training</title>
+    <link rel="stylesheet" href="/static/css/style-admin-dashboard.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="admin-layout">
+        <aside class="sidebar">
+            <div class="brand"><i class="fas fa-shield-alt"></i> Admin</div>
+            <nav>
+                <a href="{{ url_for('admin.dashboard') }}"><i class="fas fa-home"></i> Overview</a>
+                <a href="{{ url_for('admin.eye_habits') }}"><i class="fas fa-dumbbell"></i> Eye Habits</a>
+                <a href="{{ url_for('admin.admin_users') }}"><i class="fas fa-users-cog"></i> Admin Users</a>
+                <a href="{{ url_for('admin.training') }}" class="active"><i class="fas fa-robot"></i> Training</a>
+                <a href="{{ url_for('admin.datasets_images') }}" ><i class="fas fa-images"></i> Image Datasets</a>
+                <a href="{{ url_for('admin.profile') }}"><i class="fas fa-user-cog"></i> Profile</a>
+                <a href="{{ url_for('admin.logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            </nav>
+        </aside>
+        <main class="content">
+            <h1>Retrain Models</h1>
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash {{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+            {% endwith %}
+
+            <section class="form-section">
+                <h2>Image Model</h2>
+                <form method="post">
+                    <div class="grid">
+                        <label>Dataset Path
+                            <input type="text" name="image_dataset_path" placeholder="/absolute/path/to/datasets/eyes">
+                        </label>
+                        <label>Epochs<input type="number" name="image_epochs" value="25" min="1"></label>
+                    </div>
+                    <button type="submit" class="btn"><i class="fas fa-play"></i> Start Image Training</button>
+                </form>
+            </section>
+
+            <section class="form-section">
+                <h2>Text Model</h2>
+                <form method="post">
+                    <div class="grid">
+                        <label>CSV Dataset Path
+                            <input type="text" name="text_dataset_path" placeholder="/absolute/path/to/datasets/eyes/Dry_Eye_Dataset.csv">
+                        </label>
+                        <label>Epochs<input type="number" name="text_epochs" value="150" min="1"></label>
+                    </div>
+                    <button type="submit" class="btn"><i class="fas fa-play"></i> Start Text Training</button>
+                </form>
+            </section>
+
+            <section class="form-section">
+                <h2>Notes</h2>
+                <p>Training runs in the background. Monitor server logs and the <code>models/</code> folder for progress. Ensure the dataset paths are accessible by the server process.</p>
+            </section>
+        </main>
+    </div>
+</body>
+</html>
+
