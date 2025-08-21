@@ -1,0 +1,36 @@
+BlinkWell Chatbot - Classification Report
+==================================================
+Generated on: 2025-08-19 11:33:18
+
+                       precision    recall  f1-score   support
+
+       aging_and_eyes       1.00      1.00      1.00         3
+   blinkwell_features       1.00      1.00      1.00        31
+           blue_light       1.00      1.00      1.00         3
+  children_eye_health       1.00      0.33      0.50         3
+       contact_lenses       1.00      0.67      0.80         3
+      diet_eye_health       1.00      1.00      1.00        33
+      dry_eyes_causes       0.89      1.00      0.94        25
+    dry_eyes_symptoms       0.92      0.96      0.94        23
+   emergency_eye_care       1.00      1.00      1.00         3
+environmental_factors       0.33      0.33      0.33         3
+ eye_exam_preparation       0.67      0.67      0.67         3
+        eye_exercises       1.00      1.00      1.00         3
+              goodbye       1.00      0.50      0.67         4
+             greeting       0.97      1.00      0.99        33
+       hydration_eyes       1.00      1.00      1.00        23
+ medications_and_eyes       0.50      0.67      0.57         3
+      prevention_tips       1.00      1.00      1.00        23
+      risk_assessment       1.00      0.95      0.97        20
+          screen_time       0.88      0.97      0.92        31
+    seasonal_eye_care       1.00      1.00      1.00         3
+     sleep_eye_health       1.00      1.00      1.00         3
+technology_eye_health       0.50      0.33      0.40         3
+               thanks       1.00      1.00      1.00         3
+    treatment_options       0.93      0.93      0.93        27
+      when_see_doctor       0.50      0.33      0.40         3
+ workplace_eye_health       1.00      0.67      0.80         3
+
+             accuracy                           0.94       318
+            macro avg       0.89      0.82      0.84       318
+         weighted avg       0.94      0.94      0.94       318
