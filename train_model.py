@@ -64,6 +64,31 @@ def validate_dataset_structure(dataset_path):
     
     return dry_eyes_count, no_dry_eyes_count
 
+def validate_model_on_test_images(predictor, test_dir, epoch=None):
+    """Validate model on test images and report validation performance"""
+    if not os.path.exists(test_dir):
+        print(f"Test directory {test_dir} does not exist, skipping validation test")
+        return
+    
+    print(f"\n{'='*50}")
+    print(f"VALIDATION TESTING (Epoch {epoch if epoch else 'N/A'})")
+    print(f"{'='*50}")
+    
+    # Test validation system
+    validation_results = predictor.test_validation_on_directory(test_dir)
+    
+    # Calculate validation metrics
+    total_images = len(validation_results)
+    eye_images = sum(1 for r in validation_results if r['is_eye'])
+    avg_confidence = sum(r['confidence'] for r in validation_results) / total_images if total_images > 0 else 0
+    
+    print(f"\nValidation Summary:")
+    print(f"Total test images: {total_images}")
+    print(f"Detected as eyes: {eye_images} ({eye_images/total_images*100:.1f}%)")
+    print(f"Average confidence: {avg_confidence:.3f}")
+    
+    return validation_results
+
 def main():
     parser = argparse.ArgumentParser(description='Train dry eye disease detection model')
     parser.add_argument('--dataset_path', type=str, required=True,
@@ -78,6 +103,10 @@ def main():
                        help='Path to save the trained model')
     parser.add_argument('--plot_results', action='store_true',
                        help='Generate training results plot')
+    parser.add_argument('--test_validation_dir', type=str, default=None,
+                       help='Directory with test images for validation testing during training')
+    parser.add_argument('--validation_test_interval', type=int, default=5,
+                       help='Test validation every N epochs (default: 5)')
     
     args = parser.parse_args()
     

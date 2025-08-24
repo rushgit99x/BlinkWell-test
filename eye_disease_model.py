@@ -53,56 +53,229 @@ class EyeDataset(Dataset):
         return image, label
 
 class EyeValidator:
-    """Validate if an image contains an eye"""
+    """Enhanced validator to check if an image contains an eye with multiple validation methods"""
     def __init__(self):
-        # Load OpenCV's pre-trained eye cascade classifier
+        # Load OpenCV's pre-trained cascade classifiers
         self.eye_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_eye.xml')
         self.face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+        
+        # Additional eye cascade for better detection
+        self.eye_tree_eyeglasses = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_eye_tree_eyeglasses.xml')
+        
+        # Validation thresholds
+        self.min_confidence = 0.6  # Increased from previous lower threshold
+        self.min_eye_size = (40, 40)  # Increased minimum eye size
+        self.max_eye_size = (200, 200)  # Maximum reasonable eye size
+        
+    def preprocess_image(self, img):
+        """Preprocess image for better eye detection"""
+        # Convert to grayscale
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        
+        # Apply histogram equalization for better contrast
+        gray = cv2.equalizeHist(gray)
+        
+        # Apply Gaussian blur to reduce noise
+        gray = cv2.GaussianBlur(gray, (5, 5), 0)
+        
+        return gray
+    
+    def detect_eyes_haar(self, gray):
+        """Detect eyes using Haar cascades with multiple classifiers"""
+        eyes = []
+        
+        # Try different Haar cascade parameters
+        scale_factors = [1.05, 1.1, 1.15]
+        min_neighbors_list = [3, 5, 7]
+        
+        for scale_factor in scale_factors:
+            for min_neighbors in min_neighbors_list:
+                # Primary eye cascade
+                detected = self.eye_cascade.detectMultiScale(
+                    gray,
+                    scaleFactor=scale_factor,
+                    minNeighbors=min_neighbors,
+                    minSize=self.min_eye_size,
+                    maxSize=self.max_eye_size
+                )
+                eyes.extend(detected)
+                
+                # Secondary eye cascade (for glasses)
+                detected_glasses = self.eye_tree_eyeglasses.detectMultiScale(
+                    gray,
+                    scaleFactor=scale_factor,
+                    minNeighbors=min_neighbors,
+                    minSize=self.min_eye_size,
+                    maxSize=self.max_eye_size
+                )
+                eyes.extend(detected_glasses)
+        
+        return eyes
+    
+    def validate_eye_characteristics(self, gray, eyes):
+        """Validate detected regions have eye-like characteristics"""
+        valid_eyes = []
+        
+        for (x, y, w, h) in eyes:
+            # Extract eye region
+            eye_roi = gray[y:y+h, x:x+w]
+            
+            if eye_roi.size == 0:
+                continue
+            
+            # Check aspect ratio (eyes are typically wider than tall)
+            aspect_ratio = w / h
+            if aspect_ratio < 1.2 or aspect_ratio > 3.0:
+                continue
+            
+            # Check size constraints
+            if w < self.min_eye_size[0] or h < self.min_eye_size[1]:
+                continue
+            if w > self.max_eye_size[0] or h > self.max_eye_size[1]:
+                continue
+            
+            # Check for circular/elliptical shape using contour analysis
+            try:
+                # Apply threshold to get binary image
+                _, thresh = cv2.threshold(eye_roi, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+                
+                # Find contours
+                contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+                
+                if contours:
+                    # Get the largest contour
+                    largest_contour = max(contours, key=cv2.contourArea)
+                    area = cv2.contourArea(largest_contour)
+                    
+                    # Check if contour area is reasonable (not too small, not too large)
+                    roi_area = w * h
+                    if area < roi_area * 0.1 or area > roi_area * 0.9:
+                        continue
+                    
+                    # Check circularity
+                    perimeter = cv2.arcLength(largest_contour, True)
+                    if perimeter > 0:
+                        circularity = 4 * np.pi * area / (perimeter * perimeter)
+                        if circularity > 0.3:  # Eyes are not perfectly circular but have some roundness
+                            valid_eyes.append((x, y, w, h))
+            except:
+                continue
+        
+        return valid_eyes
+    
+    def check_face_context(self, gray):
+        """Check if eyes are within a face context"""
+        faces = self.face_cascade.detectMultiScale(
+            gray,
+            scaleFactor=1.1,
+            minNeighbors=5,
+            minSize=(80, 80)
+        )
+        return len(faces) > 0
+    
+    def analyze_image_quality(self, img):
+        """Analyze image quality and characteristics"""
+        # Check image size
+        height, width = img.shape[:2]
+        if width < 100 or height < 100:
+            return False, "Image too small"
+        
+        # Check if image is too blurry
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        laplacian_var = cv2.Laplacian(gray, cv2.CV_64F).var()
+        if laplacian_var < 50:  # Threshold for blur detection
+            return False, "Image too blurry"
+        
+        # Check brightness
+        mean_brightness = np.mean(gray)
+        if mean_brightness < 30 or mean_brightness > 220:
+            return False, "Image too dark or too bright"
+        
+        return True, "Good quality"
     
     def is_eye_image(self, image_path):
         """
-        Check if image contains an eye
-        Returns: (is_eye, confidence_score)
+        Enhanced eye validation with multiple checks
+        Returns: (is_eye, confidence_score, validation_details)
         """
         try:
             # Read image
             img = cv2.imread(image_path)
             if img is None:
-                return False, 0.0
+                return False, 0.0, "Failed to read image"
             
-            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+            # Analyze image quality first
+            quality_ok, quality_msg = self.analyze_image_quality(img)
+            if not quality_ok:
+                return False, 0.0, quality_msg
             
-            # Detect eyes
-            eyes = self.eye_cascade.detectMultiScale(
-                gray, 
-                scaleFactor=1.1, 
-                minNeighbors=5, 
-                minSize=(30, 30)
-            )
+            # Preprocess image
+            gray = self.preprocess_image(img)
             
-            # Additional validation: check for face (eyes are usually in faces)
-            faces = self.face_cascade.detectMultiScale(
-                gray,
-                scaleFactor=1.1,
-                minNeighbors=5,
-                minSize=(50, 50)
-            )
+            # Detect eyes using Haar cascades
+            detected_eyes = self.detect_eyes_haar(gray)
             
-            # Calculate confidence based on detections
-            eye_confidence = min(len(eyes) / 2.0, 1.0)  # Expect 1-2 eyes
-            face_confidence = min(len(faces) / 1.0, 1.0)  # Expect 1 face
+            # Validate eye characteristics
+            valid_eyes = self.validate_eye_characteristics(gray, detected_eyes)
             
-            # Combined confidence
-            total_confidence = (eye_confidence * 0.7 + face_confidence * 0.3)
+            # Check face context
+            has_face = self.check_face_context(gray)
             
-            # Consider it an eye image if we detect at least one eye
-            is_eye = len(eyes) > 0
+            # Calculate confidence scores
+            eye_count = len(valid_eyes)
+            face_bonus = 0.2 if has_face else 0.0
             
-            return is_eye, total_confidence
+            # Base confidence on number of valid eyes
+            if eye_count == 0:
+                confidence = 0.0
+            elif eye_count == 1:
+                confidence = 0.4 + face_bonus
+            elif eye_count == 2:
+                confidence = 0.7 + face_bonus
+            else:
+                confidence = 0.8 + face_bonus
+            
+            # Apply additional penalties for suspicious cases
+            if eye_count > 4:  # Too many eyes detected
+                confidence *= 0.5
+            
+            # Check for reasonable eye positioning
+            if eye_count >= 2:
+                # Check if eyes are roughly at same height and reasonable distance apart
+                eyes_sorted = sorted(valid_eyes, key=lambda x: x[0])  # Sort by x coordinate
+                if len(eyes_sorted) >= 2:
+                    eye1, eye2 = eyes_sorted[0], eyes_sorted[1]
+                    y_diff = abs(eye1[1] - eye2[1])
+                    x_diff = abs(eye2[0] - eye1[0])
+                    
+                    # Eyes should be roughly at same height (within 20% of eye height)
+                    if y_diff > max(eye1[3], eye2[3]) * 0.2:
+                        confidence *= 0.7
+                    
+                    # Eyes should be reasonable distance apart
+                    avg_eye_width = (eye1[2] + eye2[2]) / 2
+                    if x_diff < avg_eye_width * 0.5 or x_diff > avg_eye_width * 4:
+                        confidence *= 0.6
+            
+            # Final decision
+            is_eye = confidence >= self.min_confidence
+            
+            validation_details = {
+                'eye_count': eye_count,
+                'has_face': has_face,
+                'quality_check': quality_msg,
+                'confidence_breakdown': {
+                    'base_confidence': confidence - face_bonus,
+                    'face_bonus': face_bonus,
+                    'final_confidence': confidence
+                }
+            }
+            
+            return is_eye, confidence, validation_details
             
         except Exception as e:
-            print(f"Error in eye validation: {e}")
-            return False, 0.0
+            print(f"Error in enhanced eye validation: {e}")
+            return False, 0.0, f"Validation error: {str(e)}"
 
 class DryEyeClassifier(nn.Module):
     """Neural network for dry eye classification"""
@@ -256,13 +429,13 @@ class EyeDiseasePredictor:
     def predict(self, image_path):
         """
         Predict dry eye disease from image
-        Returns: (prediction, confidence, is_valid_eye)
+        Returns: (prediction, confidence, is_valid_eye, validation_details)
         """
         # First validate if it's an eye image
-        is_eye, eye_confidence = self.validator.is_eye_image(image_path)
+        is_eye, eye_confidence, validation_details = self.validator.is_eye_image(image_path)
         
         if not is_eye:
-            return None, 0.0, False
+            return None, 0.0, False, validation_details
         
         try:
             # Load and preprocess image
@@ -279,11 +452,11 @@ class EyeDiseasePredictor:
                 prediction = self.class_names[predicted.item()]
                 confidence_score = confidence.item()
                 
-                return prediction, confidence_score, True
+                return prediction, confidence_score, True, validation_details
         
         except Exception as e:
             print(f"Error in prediction: {e}")
-            return None, 0.0, False
+            return None, 0.0, False, validation_details
     
     def save_model(self, path):
         """Save the trained model"""
@@ -301,6 +474,56 @@ class EyeDiseasePredictor:
             self.class_names = checkpoint['class_names']
         print(f"Model loaded from {path}")
 
+    def test_validation_on_directory(self, test_dir, output_file=None):
+        """
+        Test the validation system on a directory of images
+        Useful for evaluating validation performance
+        """
+        results = []
+        
+        if not os.path.exists(test_dir):
+            print(f"Test directory {test_dir} does not exist")
+            return results
+        
+        image_extensions = ('.jpg', '.jpeg', '.png', '.bmp', '.tiff')
+        image_files = [f for f in os.listdir(test_dir) 
+                      if f.lower().endswith(image_extensions)]
+        
+        print(f"Testing validation on {len(image_files)} images...")
+        
+        for i, img_file in enumerate(image_files):
+            img_path = os.path.join(test_dir, img_file)
+            print(f"Processing {i+1}/{len(image_files)}: {img_file}")
+            
+            is_eye, confidence, details = self.validator.is_eye_image(img_path)
+            
+            result = {
+                'filename': img_file,
+                'is_eye': is_eye,
+                'confidence': confidence,
+                'validation_details': details
+            }
+            results.append(result)
+        
+        # Print summary
+        total_images = len(results)
+        eye_images = sum(1 for r in results if r['is_eye'])
+        avg_confidence = sum(r['confidence'] for r in results) / total_images if total_images > 0 else 0
+        
+        print(f"\nValidation Test Summary:")
+        print(f"Total images: {total_images}")
+        print(f"Detected as eyes: {eye_images} ({eye_images/total_images*100:.1f}%)")
+        print(f"Average confidence: {avg_confidence:.3f}")
+        
+        # Save results if output file specified
+        if output_file:
+            import json
+            with open(output_file, 'w') as f:
+                json.dump(results, f, indent=2)
+            print(f"Results saved to {output_file}")
+        
+        return results
+
 # Usage example
 def main():
     # Initialize predictor
@@ -312,13 +535,15 @@ def main():
     
     # Make a prediction (uncomment to test)
     image_path = "path_to_test_image.jpg"
-    prediction, confidence, is_valid = predictor.predict(image_path)
+    prediction, confidence, is_valid, validation_details = predictor.predict(image_path)
     
     if is_valid:
         print(f"Prediction: {prediction}")
         print(f"Confidence: {confidence:.2f}")
+        print("Validation Details:", validation_details)
     else:
         print("Invalid eye image or no eye detected")
+        print("Validation Details:", validation_details)
 
 if __name__ == "__main__":
     main()
