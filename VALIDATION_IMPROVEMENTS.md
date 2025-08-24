@@ -25,9 +25,10 @@ The eye disease model validation has been significantly improved to reduce false
 - **Eye Positioning**: Validates that multiple eyes are at similar heights
 - **Distance Validation**: Ensures reasonable spacing between detected eyes
 
-### 5. Stricter Confidence Thresholds
-- **Minimum Confidence**: Increased from previous lower threshold to 0.6
+### 5. Balanced Confidence Thresholds
+- **Minimum Confidence**: Set to 0.3 (balanced to avoid false negatives)
 - **Confidence Calculation**: Based on number of valid eyes + face context bonus
+- **Fallback System**: Accepts images with eye detections + face context even if below threshold
 - **Penalty System**: Applies penalties for suspicious cases (too many eyes, poor positioning)
 
 ## Usage
@@ -64,9 +65,9 @@ The improved validation returns detailed information:
 ## Configuration
 
 You can adjust validation parameters in the `EyeValidator` class:
-- `min_confidence`: Minimum confidence threshold (default: 0.6)
-- `min_eye_size`: Minimum eye size (default: 40x40)
-- `max_eye_size`: Maximum eye size (default: 200x200)
+- `min_confidence`: Minimum confidence threshold (default: 0.3)
+- `min_eye_size`: Minimum eye size (default: 20x20)
+- `max_eye_size`: Maximum eye size (default: 300x300)
 
 ## Performance Expectations
 

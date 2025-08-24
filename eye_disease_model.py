@@ -62,10 +62,10 @@ class EyeValidator:
         # Additional eye cascade for better detection
         self.eye_tree_eyeglasses = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_eye_tree_eyeglasses.xml')
         
-        # Validation thresholds
-        self.min_confidence = 0.6  # Increased from previous lower threshold
-        self.min_eye_size = (40, 40)  # Increased minimum eye size
-        self.max_eye_size = (200, 200)  # Maximum reasonable eye size
+        # Validation thresholds - adjusted to be more reasonable
+        self.min_confidence = 0.3  # Lowered from 0.6 to be less strict
+        self.min_eye_size = (20, 20)  # Lowered from 40x40 to be more permissive
+        self.max_eye_size = (300, 300)  # Increased from 200x200 for larger eyes
         
     def preprocess_image(self, img):
         """Preprocess image for better eye detection"""
@@ -123,9 +123,9 @@ class EyeValidator:
             if eye_roi.size == 0:
                 continue
             
-            # Check aspect ratio (eyes are typically wider than tall)
+            # Check aspect ratio (eyes are typically wider than tall) - made less strict
             aspect_ratio = w / h
-            if aspect_ratio < 1.2 or aspect_ratio > 3.0:
+            if aspect_ratio < 0.8 or aspect_ratio > 4.0:  # More permissive range
                 continue
             
             # Check size constraints
@@ -152,11 +152,11 @@ class EyeValidator:
                     if area < roi_area * 0.1 or area > roi_area * 0.9:
                         continue
                     
-                    # Check circularity
+                    # Check circularity - made less strict
                     perimeter = cv2.arcLength(largest_contour, True)
                     if perimeter > 0:
                         circularity = 4 * np.pi * area / (perimeter * perimeter)
-                        if circularity > 0.3:  # Eyes are not perfectly circular but have some roundness
+                        if circularity > 0.1:  # Lowered from 0.3 to be more permissive
                             valid_eyes.append((x, y, w, h))
             except:
                 continue
@@ -175,20 +175,20 @@ class EyeValidator:
     
     def analyze_image_quality(self, img):
         """Analyze image quality and characteristics"""
-        # Check image size
+        # Check image size - made less strict
         height, width = img.shape[:2]
-        if width < 100 or height < 100:
+        if width < 50 or height < 50:  # Lowered from 100x100
             return False, "Image too small"
         
-        # Check if image is too blurry
+        # Check if image is too blurry - made less strict
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         laplacian_var = cv2.Laplacian(gray, cv2.CV_64F).var()
-        if laplacian_var < 50:  # Threshold for blur detection
+        if laplacian_var < 20:  # Lowered from 50 to be more permissive
             return False, "Image too blurry"
         
-        # Check brightness
+        # Check brightness - made less strict
         mean_brightness = np.mean(gray)
-        if mean_brightness < 30 or mean_brightness > 220:
+        if mean_brightness < 20 or mean_brightness > 240:  # More permissive range
             return False, "Image too dark or too bright"
         
         return True, "Good quality"
@@ -225,15 +225,15 @@ class EyeValidator:
             eye_count = len(valid_eyes)
             face_bonus = 0.2 if has_face else 0.0
             
-            # Base confidence on number of valid eyes
+            # Base confidence on number of valid eyes - adjusted to be more generous
             if eye_count == 0:
                 confidence = 0.0
             elif eye_count == 1:
-                confidence = 0.4 + face_bonus
+                confidence = 0.5 + face_bonus  # Increased from 0.4
             elif eye_count == 2:
-                confidence = 0.7 + face_bonus
+                confidence = 0.8 + face_bonus  # Increased from 0.7
             else:
-                confidence = 0.8 + face_bonus
+                confidence = 0.9 + face_bonus  # Increased from 0.8
             
             # Apply additional penalties for suspicious cases
             if eye_count > 4:  # Too many eyes detected
@@ -257,8 +257,14 @@ class EyeValidator:
                     if x_diff < avg_eye_width * 0.5 or x_diff > avg_eye_width * 4:
                         confidence *= 0.6
             
-            # Final decision
+            # Final decision with fallback
             is_eye = confidence >= self.min_confidence
+            
+            # Fallback: if we have any eye detections and face context, be more permissive
+            if not is_eye and eye_count > 0 and has_face:
+                is_eye = True
+                confidence = max(confidence, 0.4)  # Ensure minimum confidence
+                print(f"Fallback validation: Accepted image with {eye_count} eyes and face context")
             
             validation_details = {
                 'eye_count': eye_count,
@@ -268,7 +274,8 @@ class EyeValidator:
                     'base_confidence': confidence - face_bonus,
                     'face_bonus': face_bonus,
                     'final_confidence': confidence
-                }
+                },
+                'fallback_used': not is_eye and eye_count > 0 and has_face
             }
             
             return is_eye, confidence, validation_details
