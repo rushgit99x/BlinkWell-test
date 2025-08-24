@@ -339,13 +339,22 @@ def analyze_eye_image():
         
         try:
             # Analyze the image
-            prediction, confidence, is_valid_eye = image_predictor.predict(file_path)
+            prediction, confidence, is_valid_eye, validation_details = image_predictor.predict(file_path)
             
             if not is_valid_eye:
+                # Include validation details for debugging
+                validation_info = {
+                    'eye_count': validation_details.get('eye_count', 0),
+                    'has_face': validation_details.get('has_face', False),
+                    'quality_check': validation_details.get('quality_check', 'Unknown'),
+                    'confidence': round(confidence * 100, 2)
+                }
+                
                 return jsonify({
                     'success': False,
                     'error': 'The uploaded image does not appear to contain a valid eye. Please upload a clear eye image.',
-                    'is_valid_eye': False
+                    'is_valid_eye': False,
+                    'validation_details': validation_info
                 })
             
             # Store image analysis result in session for later combination
@@ -357,6 +366,13 @@ def analyze_eye_image():
             }
             
             # Prepare response - only basic info, no recommendations yet
+            validation_info = {
+                'eye_count': validation_details.get('eye_count', 0),
+                'has_face': validation_details.get('has_face', False),
+                'quality_check': validation_details.get('quality_check', 'Unknown'),
+                'validation_confidence': round(confidence * 100, 2)
+            }
+            
             result = {
                 'success': True,
                 'is_valid_eye': True,
@@ -364,7 +380,8 @@ def analyze_eye_image():
                 'confidence': round(confidence * 100, 2),
                 'message': 'Image analysis completed. Please fill out the questionnaire for comprehensive analysis.',
                 'next_step': 'questionnaire',
-                'data_cleared': True  # Confirmation that data was cleared
+                'data_cleared': True,  # Confirmation that data was cleared
+                'validation_details': validation_info
             }
             
             return jsonify(result)
