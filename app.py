@@ -17,6 +17,7 @@ import os
 # Add this to your app.py after the existing imports
 from routes.habits import habits_bp
 from routes.admin import admin_bp
+from routes.reports import reports_bp  # Add reports blueprint
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -59,6 +60,7 @@ app.register_blueprint(chatbot_bp)
 app.register_blueprint(notifications_bp)
 app.register_blueprint(settings_bp)
 app.register_blueprint(admin_bp)
+app.register_blueprint(reports_bp)  # Register reports blueprint
 
 if __name__ == '__main__':
     # Start the notification scheduler

@@ -166,6 +166,11 @@
         </div>
     </div>
 
+    <script>
+        // Provide the eye analysis URL to the static JS file via a global variable so
+        // the static JS doesn't need to contain Jinja template tags.
+        window.EYE_ANALYSIS_URL = "{{ url_for('main.eye_analysis') }}";
+    </script>
     <script src="static/js/js-recommendations.js"></script>
 </body>
 </html>

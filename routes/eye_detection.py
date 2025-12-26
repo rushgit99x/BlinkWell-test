@@ -41,13 +41,30 @@ def init_predictors():
     print("Starting predictor initialization...")
     
     # Initialize image predictor
-    image_model_path = os.path.join('models', 'best_eye_model.pth')
-    print(f"Looking for image model at: {os.path.abspath(image_model_path)}")
-    print(f"Image model exists: {os.path.exists(image_model_path)}")
-    
+    # Search multiple common locations for the trained model file
+    candidate_image_paths = [
+        os.path.join('models', 'best_eye_model.pth'),
+        os.path.join('models', 'eye_model.pth'),
+        'best_eye_model.pth',
+        'eye_model.pth'
+    ]
+
+    found_image_path = None
+    for p in candidate_image_paths:
+        abs_p = os.path.abspath(p)
+        print(f"Checking image model location: {abs_p} -> exists={os.path.exists(p)}")
+        if os.path.exists(p):
+            found_image_path = p
+            break
+
     try:
         if EyeDiseasePredictor:
-            image_predictor = EyeDiseasePredictor(image_model_path if os.path.exists(image_model_path) else None)
+            if found_image_path:
+                print(f"Using image model at: {os.path.abspath(found_image_path)}")
+            else:
+                print("No image model file found in candidates; initializing predictor without weights")
+
+            image_predictor = EyeDiseasePredictor(found_image_path)
             print("✓ Image predictor initialized successfully")
         else:
             print("✗ Image predictor class not available")
@@ -57,13 +74,30 @@ def init_predictors():
         image_predictor = None
     
     # Initialize text predictor
-    text_model_path = os.path.join('models', 'best_text_model.pth')
-    print(f"Looking for text model at: {os.path.abspath(text_model_path)}")
-    print(f"Text model exists: {os.path.exists(text_model_path)}")
-    
+    # Initialize text predictor (search root and models/)
+    candidate_text_paths = [
+        os.path.join('models', 'best_text_model.pth'),
+        'best_text_model.pth',
+        os.path.join('models', 'text_model.pth'),
+        'text_model.pth'
+    ]
+
+    found_text_path = None
+    for p in candidate_text_paths:
+        abs_p = os.path.abspath(p)
+        print(f"Checking text model location: {abs_p} -> exists={os.path.exists(p)}")
+        if os.path.exists(p):
+            found_text_path = p
+            break
+
     try:
         if AdvancedDryEyeTextPredictor:
-            text_predictor = AdvancedDryEyeTextPredictor(text_model_path if os.path.exists(text_model_path) else None)
+            if found_text_path:
+                print(f"Using text model at: {os.path.abspath(found_text_path)}")
+            else:
+                print("No text model file found in candidates; initializing text predictor without weights")
+
+            text_predictor = AdvancedDryEyeTextPredictor(found_text_path)
             print("✓ Text predictor initialized successfully")
         else:
             print("✗ Text predictor class not available")
